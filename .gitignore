@@ -1,0 +1,30 @@
+# Build directories
+build/
+build-*/
+
+# CMake generated files
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+Makefile
+*.ninja
+.ninja_*
+
+# Compiled firmware / binaries
+*.uf2
+*.elf
+*.bin
+*.hex
+*.map
+
+# IDE
+.vscode/
+.idea/
+
+# Windows / macOS
+Thumbs.db
+.DS_Store
+
+# Network credentials / secrets
+config/network_config.h
+.env

@@ -1,0 +1,9 @@
+#ifndef NETWORK_CONFIG_EXAMPLE_H
+#define NETWORK_CONFIG_EXAMPLE_H
+
+#define WIFI_SSID       "YOUR_SSID"
+#define WIFI_PASSWORD   "YOUR_PASSWORD"
+
+#define MQTT_BROKER     "TBD"
+
+#endif

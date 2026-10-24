@@ -1,30 +1,26 @@
-# Build directories
-build/
-build-*/
+﻿Debug
+Release
 
-# CMake generated files
-CMakeCache.txt
-CMakeFiles/
-cmake_install.cmake
-Makefile
-*.ninja
-.ninja_*
-
-# Compiled firmware / binaries
-*.uf2
+# Build artifacts
 *.elf
-*.bin
-*.hex
+*.uf2
 *.map
+*.o
+*.d
+build_make/tools/elf2uf2
+tools/elf2uf2/elf2uf2
+build_make/.build_profile
 
-# IDE
-.vscode/
-.idea/
+# Real WiFi credentials -- never commit these. Copy config/wifi_secrets.example.h
+# to config/wifi_secrets.h and fill in your own network's SSID/password.
+config/wifi_secrets.h
 
-# Windows / macOS
-Thumbs.db
+# Videos are shared as unlisted YouTube links (videos/README.md), never committed
+*.mp4
+*.mov
+*.webm
+*.avi
+*.mkv
+
+# macOS
 .DS_Store
-
-# Network credentials / secrets
-config/network_config.h
-.env

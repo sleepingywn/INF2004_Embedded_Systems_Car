@@ -35,3 +35,10 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-27 | S3-U02 | `644ecee` | Buddy 3 | PASS | `logs/2026-10-27_ir_bench_test.txt` | White ≈ 150–250, black up to ≈ 3360 (contrast ≈ 3200 counts). Reading is higher on black. Run on the bench-test code before it was committed; same code as `644ecee`. |
 | 2026-10-27 | S3-U03 | `644ecee` | Buddy 3 | PASS | `logs/2026-10-27_ir_bench_test.txt` | White ≈ 150–170, black up to ≈ 3340. Higher on black. Intermediate values (1000–2000) seen on the line edge. |
 | 2026-10-27 | S3-U04 | `644ecee` | Buddy 3 | FAIL | `logs/2026-10-27_ir_bench_test.txt` | Stuck at 147–161 (≈ 0.12 V) on white, black and in the air. GP28 is not receiving the sensor's A0. Suspected wiring: right IR A0 not on GP28 (HTML had it on GP5), VBAT-sense jumper closed, or a motor lead previously on GP28. Re-test after rewiring. |
+| 2026-10-27 | S3-U05 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | On target (Pico WH), `ir_line_bench` built from this commit's logic files |
+| 2026-10-27 | S3-U06 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |
+| 2026-10-27 | S3-U07 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | Edge mounting assumed; outside mounting would show LOST when centred (see `app_program/subsystem3/README_IR.md`) |
+| 2026-10-27 | S3-U08 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |
+| 2026-10-27 | S3-U09 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |
+| 2026-10-27 | S3-U10 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |
+| 2026-10-27 | S3-U11 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |

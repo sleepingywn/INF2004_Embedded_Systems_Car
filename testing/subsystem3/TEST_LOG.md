@@ -11,6 +11,9 @@ Define a test here before running it. Test IDs never change.
 | ID | What is tested | Requirement / interface | Method | Steps / how | Expected result |
 |---|---|---|---|---|---|
 | S3-U01 | statistics self-consistent (min ≤ max, 0..100) | | auto | `subsystem3_test.c` | `[TEST] S3-U01 PASS` |
+| S3-U02 | Barcode sensor (IR Left, GP26/ADC0) distinguishes white from black | B3-FR1, B3-FR2 | manual | Flash `ir_bench_test`; car flat on white, press `r`; slide sensor across black line / barcode bar | min–max ≥ 600 counts; label flips WHITE/BLACK correctly |
+| S3-U03 | Line sensor A (IR Centre, GP27/ADC1) distinguishes white from black | B3-FR1, B3-FR2 | manual | As S3-U02 | As S3-U02 |
+| S3-U04 | Line sensor B (IR Right, GP28/ADC2) distinguishes white from black | B3-FR1, B3-FR2 | manual | As S3-U02 | As S3-U02 |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).
@@ -22,3 +25,6 @@ Add a new row for every run. Never edit or delete old rows.
 | Date | Test ID | Commit | Tester | Result | Log / evidence | Notes |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | S3-U01 | `abc1234` | | PASS / FAIL | `logs/YYYY-MM-DD_….txt` | |
+| 2026-10-27 | S3-U02 | `644ecee` | Buddy 3 | PASS | `logs/2026-10-27_ir_bench_test.txt` | White ≈ 150–250, black up to ≈ 3360 (contrast ≈ 3200 counts). Reading is higher on black. Run on the bench-test code before it was committed; same code as `644ecee`. |
+| 2026-10-27 | S3-U03 | `644ecee` | Buddy 3 | PASS | `logs/2026-10-27_ir_bench_test.txt` | White ≈ 150–170, black up to ≈ 3340. Higher on black. Intermediate values (1000–2000) seen on the line edge. |
+| 2026-10-27 | S3-U04 | `644ecee` | Buddy 3 | FAIL | `logs/2026-10-27_ir_bench_test.txt` | Stuck at 147–161 (≈ 0.12 V) on white, black and in the air. GP28 is not receiving the sensor's A0. Suspected wiring: right IR A0 not on GP28 (HTML had it on GP5), VBAT-sense jumper closed, or a motor lead previously on GP28. Re-test after rewiring. |

@@ -71,9 +71,9 @@ fixed.
 | GP20 | | |
 | GP21 | | |
 | GP22 | | |
-| GP26 | | (ADC0 capable) |
-| GP27 | | (ADC1 capable) |
-| GP28 | | (ADC2 capable) |
+| GP26 | S3 | IR Left A0 – barcode sensor (ADC0) |
+| GP27 | S3 | IR Centre A0 – line sensor A, left-hand (ADC1) |
+| GP28 | S3 | IR Right A0 – line sensor B, right-hand (ADC2); Robo Pico VBAT-sense jumper must be open |
 
 ## 3. Peripherals
 
@@ -110,7 +110,7 @@ the drivers have no locking to stop it.
 | I2C1 | | | |
 | SPI0 | | | |
 | SPI1 | | | |
-| ADC | | | GP26–GP28 |
+| ADC | S3 | IR sampling task (TBC) | GP26–GP28 |
 | PWM slices (list) | | | |
 | WiFi radio, TCP/IP, MQTT | *kernel* | `cyw43_utk_task` (built in) | GP23–25, GP29 |
 

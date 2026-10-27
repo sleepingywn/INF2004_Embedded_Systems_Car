@@ -35,17 +35,19 @@ uint8_t	ir_cal_finish(const ir_cal_acc_t *acc, ir_cal_t cal[IR_NUM_CH]);
 uint8_t	ir_normalise(const ir_cal_t *cal, uint16_t raw);
 
 /* ---- Line error (B3-FR3, B3-FR5) ------------------------------------
- *  Edge placement: line sensor A on the left edge of the line, B on the
- *  right edge.  Call every period with the normalised readings.
+ *  Call every period with the normalised readings of line sensor A
+ *  (left) and B (right).  Result -100 .. +100, + = line to the LEFT.
  *
- *    e = 100 * (nA - nB) / (nA + nB)      (-100 .. +100, + = line left)
- *
- *  Dividing by the sum cancels changes common to both sensors (e.g.
- *  sensor height changing on a hump).
+ *    LINE_MODE_OUTSIDE:  e = nA - nB.  Both white = centred (e = 0,
+ *                        LINE_ON); LINE_LOST after LINE_UNSEEN_MS with
+ *                        neither sensor seeing the line.
+ *    LINE_MODE_EDGE:     e = 100 * (nA - nB) / (nA + nB).  Dividing by
+ *                        the sum cancels changes common to both sensors
+ *                        (e.g. height on a hump).  Both white = line lost.
  * --------------------------------------------------------------------- */
 typedef struct {
-	int8_t		last_err;	/* last error while the line was seen     */
-	uint16_t	white_ms;	/* how long both sensors have seen white  */
+	int8_t		last_err;	/* EDGE: last error while the line was seen */
+	uint16_t	white_ms;	/* how long the line has not been seen      */
 } line_tracker_t;
 
 void	line_init(line_tracker_t *t);

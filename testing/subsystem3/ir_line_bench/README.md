@@ -36,6 +36,9 @@ the unit tests, then calibrates.
    `LOW CONTRAST -> IR FAULT` and reads 0. Press `c` to calibrate again.
 2. Line: `err` is −100 (line far right) … 0 (centred) … +100 (line far
    left). `state` is ON, EDGE, LOST_HOLD, LOST, BOTH_BLACK or FAULT.
+   In OUTSIDE mode (the default) the sensors sit on white either side of
+   the line, so A ≈ B ≈ 0 with `state=ON` is the normal centred reading.
+   Build with `-DLINE_MODE=0` for the EDGE-mode variant.
 3. Barcode: push the car across a barcode at a steady speed. The capture
    prints the width of each bar/space in ms, bar first.
 

@@ -16,7 +16,7 @@ Define a test here before running it. Test IDs never change.
 | S3-U04 | Line sensor B (IR Right, GP28/ADC2) distinguishes white from black | B3-FR1, B3-FR2 | manual | As S3-U02 | As S3-U02 |
 | S3-U05 | `ir_normalise`: raw → 0..100 for both polarities, clamped, uncalibrated → 0 | B3-FR2 | auto (on target) | `ir_line_bench` unit tests | `[TEST] S3-U05 PASS` |
 | S3-U06 | Calibration flags a channel with < 600 counts contrast and forces it to read 0 | B3-FR2, B3-FR10 | auto (on target) | `ir_line_bench` | `[TEST] S3-U06 PASS` |
-| S3-U07 | Line error sign/scale, EDGE_ONLY, BOTH_BLACK, LOST_HOLD → LOST after 200 ms, common-mode rejection | B3-FR3, B3-FR5 | auto (on target) | `ir_line_bench` | `[TEST] S3-U07 PASS` |
+| S3-U07 | Line error and states for the selected `LINE_MODE` (OUTSIDE: e = A − B, both white = centred, LOST after 2 s; EDGE: ratio, LOST after 200 ms, common-mode rejection) | B3-FR3, B3-FR5 | auto (on target) | `ir_line_bench` (EDGE variant: `cmake -DLINE_MODE=0`) | `[TEST] S3-U07 PASS` |
 | S3-U08 | 29-element barcode: every width exact, sent on the first sample after the last bar | B3-FR6, B3-FR7, B3-FR9 | auto (on target) | `ir_line_bench` | `[TEST] S3-U08 PASS` |
 | S3-U09 | Short blip (< 5 elements) is not sent | B3-FR11 | auto (on target) | `ir_line_bench` | `[TEST] S3-U09 PASS` |
 | S3-U10 | Shorter barcode ends after 150 ms of white and is sent with its real count (< 29) | B3-FR9, B3-FR11 | auto (on target) | `ir_line_bench` | `[TEST] S3-U10 PASS` |

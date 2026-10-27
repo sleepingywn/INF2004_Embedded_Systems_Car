@@ -38,12 +38,30 @@
 #define IR_CAL_MIN_CONTRAST	600u
 
 /* ---------------------------------------------------------------------
+ *  Line sensor placement (Buddy 3 doc section 4.1):
+ *    EDGE    - each sensor over one edge of the line; centred = A ~ B ~ 50.
+ *              e = 100*(A-B)/(A+B); both white = line lost.
+ *    OUTSIDE - both sensors on white, one each side of the line;
+ *              centred = A ~ B ~ 0.  e = A-B; both white = normal
+ *              (going straight), LOST only after LINE_UNSEEN_MS.
+ *  OUTSIDE selected 2026-10-27: on the car the sensor eyes cannot be
+ *  brought closer than the line width (sliding test showed a gap where
+ *  both read white), so EDGE gave almost only +/-100.
+ * --------------------------------------------------------------------- */
+#define LINE_MODE_EDGE		0
+#define LINE_MODE_OUTSIDE	1
+#ifndef LINE_MODE			/* can be overridden with -DLINE_MODE=0 for testing */
+#define LINE_MODE		LINE_MODE_OUTSIDE
+#endif
+
+/* ---------------------------------------------------------------------
  *  Line tracing thresholds on the normalised 0 (white) .. 100 (black)
  *  scale.  All TBC on the real track.
  * --------------------------------------------------------------------- */
 #define LINE_ON_BLACK		75u	/* sensor counts as "on black" at or above   */
 #define LINE_OFF_WHITE		15u	/* sensor counts as "on white" at or below   */
-#define LINE_LOST_TIMEOUT_MS	200u	/* both white this long -> LINE_LOST         */
+#define LINE_LOST_TIMEOUT_MS	200u	/* EDGE: both white this long -> LINE_LOST   */
+#define LINE_UNSEEN_MS		2000u	/* OUTSIDE: neither sensor saw the line this long -> LINE_LOST */
 
 /* ---------------------------------------------------------------------
  *  Barcode capture (barcode sensor only).  Widths are counted in samples;
@@ -62,10 +80,10 @@
  * --------------------------------------------------------------------- */
 typedef enum {
 	LINE_CALIBRATING = 0,	/* not calibrated yet                          */
-	LINE_ON,		/* line between the two sensors                */
-	LINE_EDGE_ONLY,		/* one sensor on black, the other on white     */
-	LINE_LOST_HOLD,		/* both white, shorter than LINE_LOST_TIMEOUT_MS */
-	LINE_LOST,		/* both white for LINE_LOST_TIMEOUT_MS or more  */
+	LINE_ON,		/* following the line                          */
+	LINE_EDGE_ONLY,		/* a sensor is fully on black: sharp correction */
+	LINE_LOST_HOLD,		/* EDGE only: both white, shorter than LINE_LOST_TIMEOUT_MS */
+	LINE_LOST,		/* line not seen for the timeout               */
 	LINE_BOTH_BLACK,	/* both black: junction candidate              */
 	LINE_FAULT		/* IR fault (calibration failed, stale samples) */
 } line_state_t;

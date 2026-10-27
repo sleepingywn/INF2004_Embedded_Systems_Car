@@ -81,14 +81,29 @@ static void run_unit_tests(void)
 		report("S3-U06", ok, "calibration: stuck channel flagged and forced to 0, others accepted");
 	}
 
-	/* S3-U07: line error and states */
+	/* S3-U07: line error and states for the selected LINE_MODE */
 	{
 		line_tracker_t t;
 		line_state_t st;
 		int8_t e;
 		line_init(&t);
 		bool k = true;
-
+#if LINE_MODE == LINE_MODE_OUTSIDE
+		/* values taken from the 2026-10-27 sliding test on the car */
+		e = line_update(&t, 2, 2, 10, &st);    k &= (e == 0   && st == LINE_ON);         /* centred */
+		e = line_update(&t, 35, 2, 10, &st);   k &= (e == 33  && st == LINE_ON);         /* line drifts left */
+		e = line_update(&t, 85, 1, 10, &st);   k &= (e == 84  && st == LINE_EDGE_ONLY);
+		e = line_update(&t, 2, 28, 10, &st);   k &= (e == -26 && st == LINE_ON);         /* line drifts right */
+		e = line_update(&t, 1, 80, 10, &st);   k &= (e == -79 && st == LINE_EDGE_ONLY);
+		e = line_update(&t, 80, 80, 10, &st);  k &= (e == 0   && st == LINE_BOTH_BLACK);
+		/* both white stays ON (straight) until LINE_UNSEEN_MS = 2000 ms */
+		for (int i = 0; i < 199; i++) e = line_update(&t, 3, 3, 10, &st);
+		k &= (e == 0 && st == LINE_ON);       /* 1990 ms */
+		e = line_update(&t, 3, 3, 10, &st);    k &= (e == 0 && st == LINE_LOST);         /* 2000 ms */
+		e = line_update(&t, 40, 2, 10, &st);   k &= (e == 38 && st == LINE_ON);          /* reacquired */
+		e = line_update(&t, 3, 3, 10, &st);    k &= (e == 0 && st == LINE_ON);           /* timer was reset */
+		report("S3-U07", k, "OUTSIDE mode: e = A-B, both white = centred, LOST after 2 s, edge, junction");
+#else
 		e = line_update(&t, 50, 50, 10, &st);  k &= (e == 0   && st == LINE_ON);
 		e = line_update(&t, 60, 40, 10, &st);  k &= (e == 20  && st == LINE_ON);       /* line drifts left */
 		e = line_update(&t, 30, 70, 10, &st);  k &= (e == -40 && st == LINE_ON);       /* line drifts right */
@@ -108,7 +123,8 @@ static void run_unit_tests(void)
 		int8_t e1 = line_update(&t, 60, 40, 10, &st);
 		int8_t e2 = line_update(&t, 45, 30, 10, &st);
 		k &= (e1 == 20 && e2 == 20);
-		report("S3-U07", k, "line error sign/scale, edge, junction, lost timeout, common-mode");
+		report("S3-U07", k, "EDGE mode: line error sign/scale, edge, junction, lost timeout, common-mode");
+#endif
 	}
 
 	/* S3-U08: a full 29-element barcode is sent as soon as it ends */
@@ -251,6 +267,11 @@ static void calibrate(void)
 	printf("  BC  = barcode sensor GP26   A = left line sensor GP27   B = right line sensor GP28\n");
 	printf("        (0 = white ... 100 = black)\n");
 	printf("  err = line position: -100 line far RIGHT ... 0 centred ... +100 line far LEFT\n");
+#if LINE_MODE == LINE_MODE_OUTSIDE
+	printf("  LINE_MODE = OUTSIDE: centred = A and B both white (~0); LOST = line unseen 2 s\n");
+#else
+	printf("  LINE_MODE = EDGE: centred = A and B both ~50; LOST = both white 0.2 s\n");
+#endif
 	printf("  state = ON / EDGE / LOST_HOLD / LOST / BOTH_BLACK (junction) / FAULT\n");
 	printf("  barcode = idle / CAPTURING\n");
 	printf("Barcode output: widths in ms in the order crossed, bar first (B = bar, S = space).\n\n");

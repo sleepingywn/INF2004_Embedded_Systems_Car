@@ -11,12 +11,18 @@ interface with Buddy 2 still has to be agreed).
 | `sensor_line.c/.h` | Calibration (min/max, rejects a sensor with < 600 counts contrast), raw → 0 white … 100 black, proportional line error and line state |
 | `barcode_sense.c/.h` | Barcode capture: width of each bar/space in ms, sent as soon as the 29th element ends or after 150 ms of white; blips < 5 elements dropped |
 
-**Line error:** `e = 100 × (A − B) / (A + B)`, −100 = line far right,
-0 = centred, +100 = line far left. States: ON, EDGE_ONLY, LOST_HOLD,
-LOST (both white ≥ 200 ms), BOTH_BLACK (junction), FAULT.
-Assumes *edge* mounting (each sensor over one edge of the line). With the
-sensors outside the line, "both white" is normal and would show LOST; an
-outside mode is not implemented yet.
+**Line error** (`LINE_MODE` in `ir_types.h`, currently **OUTSIDE**):
+
+- *OUTSIDE* (selected – the sensor eyes cannot be placed closer than the
+  line width): both sensors sit on white, one each side of the line.
+  `e = A − B`; both white = centred (err 0, ON); LOST only after 2 s with
+  neither sensor seeing the line.
+- *EDGE* (kept for if the sensors are remounted): each sensor over one
+  edge. `e = 100 × (A − B) / (A + B)`; both white = line lost after 200 ms.
+
+Both modes: −100 = line far right, 0 = centred, +100 = line far left.
+States: ON, EDGE_ONLY (a sensor fully black), LOST_HOLD (edge mode only),
+LOST, BOTH_BLACK (junction), FAULT.
 
 **Barcode:** only measured here. Narrow/wide classification and decoding
 are done by Buddy 2 (Tribunal 1 decision). Widths are timed at 1 kHz, so

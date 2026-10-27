@@ -90,20 +90,34 @@ int8_t line_update(line_tracker_t *t, uint8_t n_a, uint8_t n_b,
 		return 0;
 	}
 
-	if (a_wht && b_wht) {			/* line has left both sensors */
+	if (a_wht && b_wht) {			/* neither sensor sees the line */
 		uint32_t w = (uint32_t)t->white_ms + dt_ms;
 		t->white_ms = (w > 0xFFFFu) ? 0xFFFFu : (uint16_t)w;
+#if LINE_MODE == LINE_MODE_OUTSIDE
+		/* Normal while centred: the line runs between the sensors.  Only
+		   a long time without seeing it means it is gone. */
+		*state = (t->white_ms >= LINE_UNSEEN_MS) ? LINE_LOST : LINE_ON;
+		t->last_err = 0;
+		return 0;
+#else
 		*state = (t->white_ms >= LINE_LOST_TIMEOUT_MS) ? LINE_LOST : LINE_LOST_HOLD;
 		/* Two sensors cannot see where the line went; the last error
 		   says which side it left on. */
 		return (t->last_err >= 0) ? 100 : -100;
+#endif
 	}
 
 	t->white_ms = 0;
+	int16_t e;
+#if LINE_MODE == LINE_MODE_OUTSIDE
+	e = (int16_t)((int16_t)n_a - (int16_t)n_b);	/* already -100..+100 */
+	*state = (a_blk || b_blk) ? LINE_EDGE_ONLY : LINE_ON;
+#else
 	/* n_a + n_b > 0 here: both being 0 is caught by the both-white case. */
-	int16_t e = (int16_t)(100 * ((int16_t)n_a - (int16_t)n_b) /
-			      ((int16_t)n_a + (int16_t)n_b));
+	e = (int16_t)(100 * ((int16_t)n_a - (int16_t)n_b) /
+		      ((int16_t)n_a + (int16_t)n_b));
 	*state = ((a_blk && b_wht) || (b_blk && a_wht)) ? LINE_EDGE_ONLY : LINE_ON;
+#endif
 	t->last_err = (int8_t)e;
 	return (int8_t)e;
 }

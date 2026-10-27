@@ -18,6 +18,10 @@ add_executable(ir_line_bench
         )
 target_include_directories(ir_line_bench PRIVATE ${S3_DIR})
 target_compile_options(ir_line_bench PRIVATE -Wall -Wextra)
+# Optional: cmake -DLINE_MODE=0 builds the EDGE-mode variant (default comes from ir_types.h)
+if(DEFINED LINE_MODE)
+    target_compile_definitions(ir_line_bench PRIVATE LINE_MODE=${LINE_MODE})
+endif()
 target_link_libraries(ir_line_bench pico_stdlib hardware_adc hardware_sync)
 
 pico_enable_stdio_usb(ir_line_bench 1)

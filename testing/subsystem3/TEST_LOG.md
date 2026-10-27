@@ -42,3 +42,4 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-27 | S3-U09 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |
 | 2026-10-27 | S3-U10 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |
 | 2026-10-27 | S3-U11 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |
+| 2026-10-27 | S3-U05..U11 | `f7ac6f5` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit_line_modes.txt` | After adding LINE_MODE. All 7 pass in both the EDGE variant and the default OUTSIDE build. |

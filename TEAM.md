@@ -20,7 +20,7 @@ subsystem, ask its owner or open a pull request for them to review.
 | 1 | *example:* LED heartbeat on GP19 | | | `app_program/subsystem1/` | `testing/subsystem1/` |
 | 2 | *example:* Producer: makes a sample every 300 ms | | | `app_program/subsystem2/` | `testing/subsystem2/` |
 | 3 | *example:* Consumer: collects samples into statistics | | | `app_program/subsystem3/` | `testing/subsystem3/` |
-| 4 | *example:* Monitor: prints reports, pauses the LED | | | `app_program/subsystem4/` | `testing/subsystem4/` |
+| 4 | IMU / terrain monitoring: pitch, roll, humps, tilt, collision (GY-511, LSM303D) | | | `app_program/subsystem4/` | `testing/subsystem4/` |
 | 5 | | | | `app_program/subsystem5/` | `testing/subsystem5/` |
 
 Shared files (`app_program/app_main.c`, `app_program/app.h`, this file)
@@ -64,8 +64,8 @@ fixed.
 | GP13 | | |
 | GP14 | | |
 | GP15 | | |
-| GP16 | | |
-| GP17 | | |
+| GP16 | S4 | I2C0 SDA: GY-511 (Robo Pico Grove 4) |
+| GP17 | S4 | I2C0 SCL: GY-511 (Robo Pico Grove 4) |
 | GP18 | | |
 | GP19 | *example:* S1 | external LED (LED + 330 Ω to GND) |
 | GP20 | | |
@@ -106,7 +106,7 @@ the drivers have no locking to stop it.
 | Peripheral | Owner subsystem | Owning task | Pins |
 |---|---|---|---|
 | UART1 | | | |
-| I2C0 | | | |
+| I2C0 | S4 | `terrain_task` (kernel driver `iica`, `DEVCNF_USE_IIC = 1`) | GP16 SDA, GP17 SCL |
 | I2C1 | | | |
 | SPI0 | | | |
 | SPI1 | | | |
@@ -149,7 +149,7 @@ change it only by team agreement. Write down every task you create.
 | 1 | 12–13 | *example:* led_task – 12 – any |
 | 2 | 14–15 | *example:* producer_task – 14 – core 1 |
 | 3 | 16–17 | *example:* consumer_task – 16 – core 0 |
-| 4 | 18–19 | *example:* monitor_task – 18 – any |
+| 4 | 18–19 | terrain_task – 18 – any (woken every 20 ms by `cyc_terrain`) |
 | 5 | 20–21 | |
 
 Core: `TP_PRC1` = core 0, `TP_PRC2` = core 1, or "any".
@@ -164,10 +164,12 @@ sends to it or waits on it. Agree on the data format before coding.
 |---|---|---|---|---|---|
 | IF-01 | S2 → S3 | mailbox (owned by S3) | `mbx_samples` | `SAMPLE_MSG` in `subsystem2.h` | *example* |
 | IF-02 | S3 → S2 | semaphore + fixed memory pool (owned by S2) | `sem_slots`, `mpf_samples` | receiver returns the block, then 1 slot | *example* |
-| IF-03 | S3 → S4 | message buffer + event flag (owned by S4) | `mbf_summary`, `flg_events` | text line ≤ `S4_SUMMARY_MAX` bytes, then `FLG_BATCH` | *example* |
-| IF-04 | S4 → S3 | shared data under a mutex (owned by S3) | `app_stats`, `mtx_stats` | `APP_STATS`, read only while locked | *example* |
-| IF-05 | S4 → S1 | task control | `tid_led` | `tk_sus_tsk` / `tk_rsm_tsk` / `tk_chg_pri` | *example* |
-| IF-06 | | | | | |
+| IF-03 | S3 → S4 | message buffer + event flag (owned by S4) | `mbf_summary`, `flg_events` | text line ≤ `S4_SUMMARY_MAX` bytes, then `FLG_BATCH` | *example* (S4 keeps these objects until S3 removes its example) |
+| IF-04 | S4 → S3 | shared data under a mutex (owned by S3) | `app_stats`, `mtx_stats` | `APP_STATS`, read only while locked | *example* (no longer used by S4) |
+| IF-05 | S4 → S1 | task control | `tid_led` | `tk_sus_tsk` / `tk_rsm_tsk` / `tk_chg_pri` | *example* (no longer used by S4) |
+| IF-06 | S4 → any (Vehicle Controller, S1 telemetry) | shared data under a mutex (owned by S4) | `s4_get_terrain()`, `mtx_terrain` | `S4_TERRAIN` in `subsystem4.h`: pitch/roll (0.1°), hump state, current/highest peak (0.1 mm), count, timestamp; stale after `S4_STALE_MS` | proposed by S4 |
+| IF-07 | S4 → Vehicle Controller | event flag (owned by S4) | `flg_terrain` | `S4_EVT_HUMP_ENTRY/HUMP_DONE/TILT/COLLISION` latched until the VC clears them; `S4_EVT_IMU_FAULT` level | proposed by S4 |
+| IF-08 | S2 → S4 | to agree (contract C04) | | wheel speeds, distance, timestamp, valid flag; until then S4 assumes "not moving" | open |
 
 Each interface is tested by at least one integration test
 (`testing/integration/TEST_LOG.md`).
@@ -181,13 +183,13 @@ limit there. The numbers below are the example's usage.
 |---|---|---|---|---|---|---|
 | Task | 32 | 1 | 1 | 1 | 1 | |
 | Semaphore | 16 | | 1 | | | |
-| Event flag | 16 | | | | 1 | |
+| Event flag | 16 | | | | 2 | |
 | Mailbox | 12 | | | 1 | | |
-| Mutex | 12 | | | 1 | | |
+| Mutex | 12 | | | 1 | 1 | |
 | Message buffer | 12 | | | | 1 | |
 | Fixed memory pool | 12 | | 1 | | | |
 | Variable memory pool | 12 | | | | | |
-| Cyclic handler | 12 | 1 | | | | |
-| Alarm handler | 12 | | | | 1 | |
+| Cyclic handler | 12 | 1 | | | 1 | |
+| Alarm handler | 12 | | | | | |
 
 (The kernel's USB and WiFi service tasks also use a few of these.)

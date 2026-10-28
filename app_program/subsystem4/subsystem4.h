@@ -1,9 +1,20 @@
 /*
  *	subsystem4.h
- *	Subsystem 4 -- Monitor (reporting).  Student ID: <student ID>.
+ *	Subsystem 4 -- IMU / terrain monitoring.  Owner: Andy (Buddy 4).
  *
  *	Public interface of subsystem 4.  Other subsystems include it as
  *	"../subsystem4/subsystem4.h".
+ *
+ *	What subsystem 4 does
+ *	  terrain_task (priority 18) is woken every 20 ms by a cyclic handler,
+ *	  reads the GY-511 accelerometer over I2C0 (GP16 SDA / GP17 SCL) and
+ *	  runs imu_logic: pitch, roll, hump detection and height, tilt and
+ *	  collision.  The CAR MUST STAND STILL ON LEVEL GROUND FOR THE FIRST
+ *	  2 s after power-up: that is the calibration.
+ *
+ *	What other subsystems can use
+ *	  IF-06  s4_get_terrain()  latest terrain snapshot, copied under a mutex
+ *	  IF-07  flg_terrain       event flag: hump, tilt, collision, IMU fault
  */
 
 #ifndef SUBSYSTEM4_H
@@ -11,23 +22,89 @@
 
 #include "../app.h"
 
-#define S4_PRI_MONITOR		18	/* priority band 18-19 (TEAM.md) */
-#define S4_ALARM_MS		2000	/* report anyway if nothing for 2 s */
-#define S4_LED_TOGGLE_REPORTS	6	/* pause/resume the LED every N reports */
+#define S4_PRI_TERRAIN		18	/* priority band 18-19 (TEAM.md section 4) */
+#define S4_PERIOD_MS		20	/* terrain task period                     */
 
-/* IF-03: send one text line (at most S4_SUMMARY_MAX bytes, no '\0'
-   needed) to mbf_summary, then set FLG_BATCH in flg_events. */
+/* ---------------------------------------------------------------------
+ *  IF-06: terrain snapshot (owned by S4)
+ *  Units are integers so they print with tm_printf (no %f).
+ * --------------------------------------------------------------------- */
+typedef struct {
+	BOOL	valid;			/* TRUE: sensor working and calibrated     */
+	BOOL	imu_fault;		/* TRUE: sensor not answering (see IF-07)   */
+	H	pitch_ddeg;		/* pitch, 0.1 deg, + = nose up              */
+	H	roll_ddeg;		/* roll,  0.1 deg, + = left side up         */
+	UB	hump_state;		/* 0 flat, 1 climbing, 2 descending         */
+	UH	current_peak_dmm;	/* peak of the latest hump, 0.1 mm          */
+	UH	highest_peak_dmm;	/* highest hump this run, 0.1 mm (FR5)      */
+	UH	hump_count;		/* humps completed this run                 */
+	UW	timestamp_ms;		/* kernel time of this update (tk_get_tim)  */
+} S4_TERRAIN;
+
+/* Copy the latest snapshot.  Waits at most 2 ms for the mutex.
+   Returns E_OK, or an error (then *out is unchanged).  Task context only. */
+IMPORT ER s4_get_terrain(S4_TERRAIN *out);
+
+/* Treat the snapshot as stale if it is older than this. */
+#define S4_STALE_MS		100
+
+/* ---------------------------------------------------------------------
+ *  IF-07: terrain events (event flag owned by S4)
+ *  Event bits are SET by S4 and stay set until a consumer clears them, so
+ *  a tilt or collision can never be lost the way a full queue can lose
+ *  a message.  Only ONE consumer (the Vehicle Controller) should clear the
+ *  event bits, e.g.
+ *	tk_wai_flg(flg_terrain, S4_EVT_TILT | S4_EVT_COLLISION,
+ *		   TWF_ORW | TWF_BITCLR, &ptn, TMO_POL);
+ *  S4_EVT_IMU_FAULT is a LEVEL: S4 sets it while the sensor is failing and
+ *  clears it on recovery.  Never clear it yourself.
+ * --------------------------------------------------------------------- */
+#define S4_EVT_HUMP_ENTRY	0x0001	/* started climbing a hump              */
+#define S4_EVT_HUMP_DONE	0x0002	/* finished a hump: peak in IF-06       */
+#define S4_EVT_TILT		0x0004	/* abnormal tilt (> 25 deg) off a hump  */
+#define S4_EVT_COLLISION	0x0008	/* sudden impact (> 0.8 g spike)        */
+#define S4_EVT_IMU_FAULT	0x0010	/* level: sensor not answering          */
+
+IMPORT ID	flg_terrain;
+
+/* ---------------------------------------------------------------------
+ *  Temporary, until subsystem 2 publishes its wheel data (contract C04):
+ *  hump detection needs to know the car is moving.  0 = not moving (hump
+ *  detection off; pitch, roll, tilt and collision still work).  Set to
+ *  e.g. 100 to test humps by hand on the bench.
+ * --------------------------------------------------------------------- */
+#define S4_PRETEND_SPEED_MM_S	0
+
+/* ---------------------------------------------------------------------
+ *  LEGACY IF-03 (template example): subsystem 3's example consumer still
+ *  sends text lines here.  Kept ONLY so the build works while subsystem 3
+ *  still has its example code; terrain_task just empties the buffer.
+ *  Remove together with subsystem 3's example.
+ * --------------------------------------------------------------------- */
 #define S4_SUMMARY_MAX		48
-#define FLG_BATCH		0x0002	/* set by subsystem 3 */
-#define FLG_ALARM		0x0001	/* private: set by our alarm handler */
+#define FLG_BATCH		0x0002	/* set by subsystem 3's example */
 
 IMPORT ID	mbf_summary;
 IMPORT ID	flg_events;
 
-/* Private to subsystem 4 */
-IMPORT ID	alm_monitor;
-IMPORT UW	s4_lines_received;	/* for the tests */
-IMPORT void	monitor_task(INT stacd, void *exinf);
-IMPORT void	monitor_alarm_handler(void *exinf);
+/* ---------------------------------------------------------------------
+ *  Private to subsystem 4 (also read by subsystem4_test.c)
+ * --------------------------------------------------------------------- */
+typedef struct {
+	UW	cycles;			/* terrain_task cycles run               */
+	UW	overruns;		/* cycles still running at the next tick */
+	UW	exec_max_us;		/* longest read + process time           */
+	UW	jitter_max_us;		/* longest delay from tick to task start */
+	UW	mtx_timeouts;		/* snapshot updates skipped (mutex busy) */
+	BOOL	sensor_found;
+	INT	accel_mag_mg;		/* |a| in milli-g (1000 at rest)         */
+} S4_DIAG;
+
+IMPORT S4_DIAG	s4_diag;
+IMPORT ID	mtx_terrain;
+IMPORT ID	cyc_terrain;
+IMPORT ID	tid_terrain;
+IMPORT void	terrain_task(INT stacd, void *exinf);
+IMPORT void	terrain_cyclic_handler(void *exinf);
 
 #endif /* SUBSYSTEM4_H */

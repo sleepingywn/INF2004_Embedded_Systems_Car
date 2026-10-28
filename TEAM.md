@@ -167,8 +167,8 @@ sends to it or waits on it. Agree on the data format before coding.
 | IF-03 | S3 → S4 | message buffer + event flag (owned by S4) | `mbf_summary`, `flg_events` | text line ≤ `S4_SUMMARY_MAX` bytes, then `FLG_BATCH` | *example* (S4 keeps these objects until S3 removes its example) |
 | IF-04 | S4 → S3 | shared data under a mutex (owned by S3) | `app_stats`, `mtx_stats` | `APP_STATS`, read only while locked | *example* (no longer used by S4) |
 | IF-05 | S4 → S1 | task control | `tid_led` | `tk_sus_tsk` / `tk_rsm_tsk` / `tk_chg_pri` | *example* (no longer used by S4) |
-| IF-06 | S4 → any (Vehicle Controller, S1 telemetry) | shared data under a mutex (owned by S4) | `s4_get_terrain()`, `mtx_terrain` | `S4_TERRAIN` in `subsystem4.h`: pitch/roll (0.1°), hump state, current/highest peak (0.1 mm), count, timestamp; stale after `S4_STALE_MS` | proposed by S4 |
-| IF-07 | S4 → Vehicle Controller | event flag (owned by S4) | `flg_terrain` | `S4_EVT_HUMP_ENTRY/HUMP_DONE/TILT/COLLISION` latched until the VC clears them; `S4_EVT_IMU_FAULT` level | proposed by S4 |
+| IF-06 | S4 → any (Vehicle Controller, S1 telemetry) | shared data under a mutex (owned by S4) | `s4_get_terrain()`, `mtx_terrain` | `S4_TERRAIN`: minimum-bit, 64 bits (field table in `subsystem4/terrain_pack.h`): pitch/roll 0.5°, turn rate 2°/s, peaks 1 mm, hump state, motion class, count, calibrated, IMU fault, 15-bit time; decode with `S4_PITCH_DDEG()`, `S4_VALID()`, `S4_AGE_MS()`; stale after `S4_STALE_MS` | proposed by S4 |
+| IF-07 | S4 → Vehicle Controller | event flag (owned by S4) | `flg_terrain` | `S4_EVT_HUMP_ENTRY/HUMP_DONE/TILT/COLLISION` latched until the VC clears them; `S4_EVT_IMU_FAULT` level, copied by Buddy 2 into the shared fault bitmask (single writer, C06) | proposed by S4 |
 | IF-08 | S2 → S4 | to agree (contract C04) | | wheel speeds, distance, timestamp, valid flag; until then S4 assumes "not moving" | open |
 
 Each interface is tested by at least one integration test

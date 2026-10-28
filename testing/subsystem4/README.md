@@ -32,4 +32,7 @@ gcc -O2 -I../../../app_program/subsystem4 -o imu_sim imu_sim.c ../../../app_prog
 
 gcc -O2 -I../../../app_program/subsystem4 -o math_check math_check.c -lm
 ./math_check                     # S4-U13
+
+gcc -O2 -I../../../app_program/subsystem4 -o pack_check pack_check.c ../../../app_program/subsystem4/terrain_pack.c -lm
+./pack_check                     # S4-U15: minimum-bit snapshot
 ```

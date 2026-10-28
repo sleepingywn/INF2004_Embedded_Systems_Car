@@ -27,22 +27,20 @@
 
 /* ---------------------------------------------------------------------
  *  IF-06: terrain snapshot (owned by S4)
- *  Units are integers so they print with tm_printf (no %f).
+ *  S4_TERRAIN is the minimum-bit, 64-bit (8-byte) packed snapshot; its
+ *  field table and decoding macros (S4_PITCH_DDEG, S4_VALID, S4_AGE_MS...)
+ *  are in terrain_pack.h.
  * --------------------------------------------------------------------- */
-typedef struct {
-	BOOL	valid;			/* TRUE: sensor working and calibrated     */
-	BOOL	imu_fault;		/* TRUE: sensor not answering (see IF-07)   */
-	H	pitch_ddeg;		/* pitch, 0.1 deg, + = nose up              */
-	H	roll_ddeg;		/* roll,  0.1 deg, + = left side up         */
-	UB	hump_state;		/* 0 flat, 1 climbing, 2 descending         */
-	UH	current_peak_dmm;	/* peak of the latest hump, 0.1 mm          */
-	UH	highest_peak_dmm;	/* highest hump this run, 0.1 mm (FR5)      */
-	UH	hump_count;		/* humps completed this run                 */
-	UW	timestamp_ms;		/* kernel time of this update (tk_get_tim)  */
-} S4_TERRAIN;
+#include "terrain_pack.h"
 
 /* Copy the latest snapshot.  Waits at most 2 ms for the mutex.
-   Returns E_OK, or an error (then *out is unchanged).  Task context only. */
+   Returns E_OK, or an error (then *out is unchanged).  Task context only.
+   Example:
+	S4_TERRAIN t;  SYSTIM now;
+	if (s4_get_terrain(&t) == E_OK && S4_VALID(t)) {
+		tk_get_tim(&now);
+		if (S4_AGE_MS(t, now.lo) <= S4_STALE_MS) { ... S4_PITCH_DDEG(t) ... }
+	} */
 IMPORT ER s4_get_terrain(S4_TERRAIN *out);
 
 /* Treat the snapshot as stale if it is older than this. */
@@ -57,7 +55,9 @@ IMPORT ER s4_get_terrain(S4_TERRAIN *out);
  *	tk_wai_flg(flg_terrain, S4_EVT_TILT | S4_EVT_COLLISION,
  *		   TWF_ORW | TWF_BITCLR, &ptn, TMO_POL);
  *  S4_EVT_IMU_FAULT is a LEVEL: S4 sets it while the sensor is failing and
- *  clears it on recovery.  Never clear it yourself.
+ *  clears it on recovery.  Never clear it yourself.  The team's shared
+ *  fault bitmask has a single writer (Buddy 2, C06): Buddy 2 copies this
+ *  bit into it, so S4 never writes the shared bitmask directly.
  * --------------------------------------------------------------------- */
 #define S4_EVT_HUMP_ENTRY	0x0001	/* started climbing a hump              */
 #define S4_EVT_HUMP_DONE	0x0002	/* finished a hump: peak in IF-06       */

@@ -28,10 +28,14 @@ LOCAL S4_TERRAIN	snapshot;	/* IF-06, guarded by mtx_terrain */
 LOCAL imu_logic_t	logic;
 
 /* Shared between the cyclic handler and the task */
+/* Shared between the cyclic handler and the task.  Each flag is its own
+   byte (the smallest unit the CPU stores in one instruction), NOT a bit in
+   a shared word: packing them together would need a read-modify-write
+   that the handler could interrupt (minimum-bit requirement, safe access). */
 LOCAL volatile UW	release_us;	/* when the handler last fired          */
-LOCAL volatile BOOL	busy = TRUE;	/* task still working on the last cycle */
-LOCAL volatile BOOL	counting;	/* FALSE while (re)initialising the
-					   sensor, so that is not an overrun    */
+LOCAL volatile UB	busy = 1;	/* task still working on the last cycle */
+LOCAL volatile UB	counting;	/* 0 while (re)initialising the sensor,
+					   so that is not an overrun            */
 
 /* Free-running 1 MHz hardware timer (RP2040 TIMERAWL), for timing only */
 LOCAL UW now_us(void)
@@ -112,37 +116,46 @@ LOCAL void print_events(UINT ev)
 LOCAL void print_status(void)
 {
 	tm_printf((UB*)"terrain:");
-	print_tenths(" pitch", snapshot.pitch_ddeg);
-	print_tenths(" roll", snapshot.roll_ddeg);
-	tm_printf((UB*)" |a| %d mg  %s  humps %u", s4_diag.accel_mag_mg,
-		  imu_hump_state_name(logic.hump_state), (UINT)snapshot.hump_count);
-	print_tenths("  highest mm", snapshot.highest_peak_dmm);
+	print_tenths(" pitch", S4_PITCH_DDEG(snapshot));
+	print_tenths(" roll", S4_ROLL_DDEG(snapshot));
+	tm_printf((UB*)" |a| %d mg  %s  humps %u  highest %u mm",
+		  s4_diag.accel_mag_mg, imu_hump_state_name(logic.hump_state),
+		  (UINT)snapshot.hump_count, (UINT)snapshot.high_peak_mm);
 	tm_printf((UB*)"  | exec max %u us  jitter max %u us  overruns %u  i2c err %u%s\n",
 		  s4_diag.exec_max_us, s4_diag.jitter_max_us, s4_diag.overruns,
 		  gy511_error_count(), snapshot.imu_fault ? "  IMU FAULT" : "");
 }
 
-/* Copy the logic's results into the snapshot under the mutex.
-   If the lock is busy for 2 ms, skip this update (the next one is
-   only 20 ms away) rather than block the task. */
+/* Pack the logic's results into the 64-bit snapshot OUTSIDE the lock,
+   then copy it in with one assignment under the mutex (no field-by-field
+   read-modify-write on shared data).  If the lock is busy for 2 ms, skip
+   this update (the next one is only 20 ms away) rather than block. */
 LOCAL void publish(BOOL fault)
 {
-	SYSTIM	now;
+	SYSTIM			now;
+	terrain_values_t	v;
+	S4_TERRAIN		packed;
+
 	tk_get_tim(&now);
+	v.pitch_deg    = logic.pitch_deg;
+	v.roll_deg     = logic.roll_deg;
+	v.turn_dps     = 0.0f;
+	v.turn_valid   = false;		/* TODO(IF-08): from subsystem 2's wheel speeds */
+	v.cur_peak_mm  = logic.current_hump_peak_mm;
+	v.high_peak_mm = logic.highest_hump_peak_mm;
+	v.hump_state   = (uint8_t)logic.hump_state;
+	v.motion_class = 0;			/* TODO(B4-FR11): motion classification */
+	v.hump_count   = logic.hump_count;
+	v.calibrated   = logic.calibrated;
+	v.imu_fault    = fault ? true : false;
+	v.time_ms      = now.lo;
+	packed = terrain_pack(&v);
 
 	if (tk_loc_mtx(mtx_terrain, MTX_WAIT_MS) < E_OK) {
 		s4_diag.mtx_timeouts++;
 		return;
 	}
-	snapshot.valid            = (!fault && logic.calibrated) ? TRUE : FALSE;
-	snapshot.imu_fault        = fault ? TRUE : FALSE;
-	snapshot.pitch_ddeg       = to_tenths(logic.pitch_deg);
-	snapshot.roll_ddeg        = to_tenths(logic.roll_deg);
-	snapshot.hump_state       = (UB)logic.hump_state;
-	snapshot.current_peak_dmm = (UH)to_tenths(logic.current_hump_peak_mm);
-	snapshot.highest_peak_dmm = (UH)to_tenths(logic.highest_hump_peak_mm);
-	snapshot.hump_count       = (UH)logic.hump_count;
-	snapshot.timestamp_ms     = now.lo;
+	snapshot = packed;
 	tk_unl_mtx(mtx_terrain);
 }
 
@@ -185,12 +198,12 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 	imu_logic_init(&logic, &cfg);
 	tm_printf((UB*)"terrain: calibrating -- keep the car STILL and LEVEL for 2 s\n");
 	prev_us  = now_us();
-	counting = TRUE;
-	busy     = FALSE;			/* from now on, accept 20 ms ticks */
+	counting = 1;
+	busy     = 0;			/* from now on, accept 20 ms ticks */
 
 	for (;;) {
 		tk_slp_tsk(TMO_FEVR);			/* woken by the 20 ms tick */
-		busy     = TRUE;
+		busy     = 1;
 		start_us = now_us();
 		s4_diag.cycles++;
 		if (logic.calibrated && start_us - release_us > s4_diag.jitter_max_us) {
@@ -240,9 +253,9 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			tm_printf((UB*)"terrain: IMU FAULT (%u failed reads in a row)\n", fail_run);
 		} else if (fault && s4_diag.cycles % REINIT_EVERY == 0) {
 			BOOL ok;
-			counting = FALSE;	/* init takes > 20 ms: not an overrun */
+			counting = 0;	/* init takes > 20 ms: not an overrun */
 			ok = gy511_init();
-			counting = TRUE;
+			counting = 1;
 			if (ok) {
 				fault = FALSE;
 				fail_run = 0;
@@ -260,6 +273,6 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		if (s4_diag.cycles % PRINT_EVERY == 0 && logic.calibrated) {
 			print_status();
 		}
-		busy = FALSE;
+		busy = 0;
 	}
 }

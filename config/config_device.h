@@ -26,7 +26,9 @@
  */
 
 #define DEVCNF_USE_SER		1		// Serial communication device 
-#define DEVCNF_USE_ADC		1		// A/D conversion device
+#define DEVCNF_USE_ADC		0		// S3 owns ADC0-2 and ADC IRQ 22
+		/* ir_acquisition.c provides 1 kHz acquisition for line/barcode.
+		   Do not also enable the sample ADC device driver. */
 #define DEVCNF_USE_IIC		0		// I2C communication device
 		/* Off by default so no pins are claimed at boot.  To use I2C,
 		   set this to 1 and choose the pins in

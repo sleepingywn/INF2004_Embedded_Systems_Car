@@ -48,6 +48,7 @@ LOCAL const UW module_tbl[] = {
 	RESETS_RESET_IO_BANK0,		/* IO_BANK0 */
 	RESETS_RESET_PADS_BANK0,	/* PADS_BANK0 */
 	RESETS_RESET_UART0,		/* UART0 */
+	RESETS_RESET_TIMER,		/* Shared monotonic microsecond counter */
 
 #if TM_WIFI_CYW43
 	/* The Pico W radio transport runs a PIO state machine with two DMA
@@ -186,6 +187,13 @@ EXPORT void knl_startup_hw(void)
 
 	/* Startup System Clock */
 	startup_clock(CLKATR_USB | CLKATR_ADC | CLKATR_RTC | CLKATR_PREI);
+
+	/* RP2040 TIMER uses the watchdog tick generator. CLK_REF is the 12 MHz
+	   XOSC above: 12 cycles per tick gives 1 us. Establish this once at boot,
+	   before the SMP port, B2 deadlines or S3 alarm 3 can read the timer.
+	   This enables tick generation only, NOT the watchdog reset function.
+	   WATCHDOG_TICK = 0x4005802c; ENABLE bit 9, CYCLES bits 8:0. */
+	out_w(0x4005802cu, (1u << 9) | XOSC_MHz);
 
 	for(INT i = 0; (rst = module_tbl[i]); i++) {
 		set_w(RESETS_RESET, rst);

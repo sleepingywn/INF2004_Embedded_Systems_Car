@@ -18,7 +18,7 @@ subsystem, ask its owner or open a pull request for them to review.
 | # | Subsystem (what it does) | Student ID | GitHub username | Code | Tests |
 |---|---|---|---|---|---|
 | 1 | *example:* LED heartbeat on GP19 | | | `app_program/subsystem1/` | `testing/subsystem1/` |
-| 2 | *example:* Producer: makes a sample every 300 ms | | | `app_program/subsystem2/` | `testing/subsystem2/` |
+| 2 | Motors, encoders, PID, motion controller and barcode decoding; example producer retained for compatibility | 2501308 | | `app_program/subsystem2/` | `testing/subsystem2/` |
 | 3 | *example:* Consumer: collects samples into statistics | | | `app_program/subsystem3/` | `testing/subsystem3/` |
 | 4 | *example:* Monitor: prints reports, pauses the LED | | | `app_program/subsystem4/` | `testing/subsystem4/` |
 | 5 | | | | `app_program/subsystem5/` | `testing/subsystem5/` |
@@ -50,16 +50,16 @@ fixed.
 | GP23, GP24, GP25, GP29 | *reserved* | Pico W radio |
 | GP0 | | (taken whenever the team builds with `CRASH_REPORT=1`) |
 | GP1 | | (taken whenever the team builds with `CRASH_REPORT=1`) |
-| GP2 | | |
-| GP3 | | |
-| GP4 | | |
-| GP5 | | |
+| GP2 | S2 | right encoder A (proposed; disabled until electrical/mapping verification) |
+| GP3 | S2 | right encoder B (proposed; disabled until electrical/mapping verification) |
+| GP4 | S2 | left encoder A (proposed; disabled until electrical/mapping verification) |
+| GP5 | S2 | left encoder B (proposed; disabled until electrical/mapping verification) |
 | GP6 | | |
 | GP7 | | |
-| GP8 | | |
-| GP9 | | |
-| GP10 | | |
-| GP11 | | |
+| GP8 | S2 | left motor M1 input A; user confirmed wheel identity |
+| GP9 | S2 | left motor M1 input B |
+| GP10 | S2 | right motor M2 input A; user confirmed wheel identity |
+| GP11 | S2 | right motor M2 input B |
 | GP12 | | |
 | GP13 | | |
 | GP14 | | |
@@ -71,9 +71,9 @@ fixed.
 | GP20 | | |
 | GP21 | | |
 | GP22 | | |
-| GP26 | | (ADC0 capable) |
-| GP27 | | (ADC1 capable) |
-| GP28 | | (ADC2 capable) |
+| GP26 | S3 | IR Left A0 – barcode sensor (ADC0) |
+| GP27 | S3 | IR Centre A0 – line sensor A, left-hand (ADC1) |
+| GP28 | S3 | IR Right A0 – line sensor B, right-hand (ADC2); Robo Pico VBAT-sense jumper must be open |
 
 ## 3. Peripherals
 
@@ -110,8 +110,10 @@ the drivers have no locking to stop it.
 | I2C1 | | | |
 | SPI0 | | | |
 | SPI1 | | | |
-| ADC | | | GP26–GP28 |
-| PWM slices (list) | | | |
+| ADC, ADC IRQ 22 | S3 | ir_task + ADC ISR on core 0; sample ADC driver disabled | GP26–GP28 |
+| Hardware TIMER alarm 3, IRQ 3 | S3 | 1 kHz scan trigger on core 0; shared counter initialized by BSP | no GPIO |
+| PWM slices 4 and 5 | S2 | motion_task | GP8-11; 10 kHz; no physical-timer sharing |
+| IO_BANK0 IRQ 13, encoder edge capture | S2 | encoder ISR on motion task's core | GP2-5; exclusive handler, no SDK GPIO IRQ registration |
 | WiFi radio, TCP/IP, MQTT | *kernel* | `cyw43_utk_task` (built in) | GP23–25, GP29 |
 
 ### WiFi and MQTT are special
@@ -147,8 +149,8 @@ change it only by team agreement. Write down every task you create.
 | Subsystem | Priority band | Tasks (name – priority – core) |
 |---|---|---|
 | 1 | 12–13 | *example:* led_task – 12 – any |
-| 2 | 14–15 | *example:* producer_task – 14 – core 1 |
-| 3 | 16–17 | *example:* consumer_task – 16 – core 0 |
+| 2 | 14–15 | motion_task - 14 - core 1; compatibility producer_task - 15 - core 1 |
+| 3 | 16–17 | ir_task - 16 - core 0; compatibility consumer_task - 17 - core 0 |
 | 4 | 18–19 | *example:* monitor_task – 18 – any |
 | 5 | 20–21 | |
 
@@ -167,7 +169,11 @@ sends to it or waits on it. Agree on the data format before coding.
 | IF-03 | S3 → S4 | message buffer + event flag (owned by S4) | `mbf_summary`, `flg_events` | text line ≤ `S4_SUMMARY_MAX` bytes, then `FLG_BATCH` | *example* |
 | IF-04 | S4 → S3 | shared data under a mutex (owned by S3) | `app_stats`, `mtx_stats` | `APP_STATS`, read only while locked | *example* |
 | IF-05 | S4 → S1 | task control | `tid_led` | `tk_sus_tsk` / `tk_rsm_tsk` / `tk_chg_pri` | *example* |
-| IF-06 | | | | | |
+| IF-06 | Controller/local operator -> S2 | one copied request slot + mutex, event wake | motion_submit / motion_renew | motion_request_t; id, epoch, TTL; reject busy, no replay | implemented proposal; provider review pending |
+| IF-07 | B1/B3/B4/local -> S2 | persistent event bits + atomic generations | motion_stop / motion_set_fault | stop independent of ordinary requests; local reset only | implemented proposal; provider review pending |
+| IF-08 | S3 -> S2 | latest line snapshot + one barcode slot under mutex | motion_publish_line / motion_publish_barcode | existing line_msg_t / bc_msg_t plus bounded acquisition timestamp and epoch | live sampler implemented; validation pending |
+| IF-09 | S2 -> B1/B4 | coherent snapshot, nonblocking mutex copy | motion_get_status | wheel speeds mm/s, signed travel mm, counts, acquisition time, epoch and validity | consumer implementation pending |
+| IF-10 | Local controller -> S3 | copied command slot + mutex + event | ir_runtime_calibration / ir_runtime_get_status | BEGIN/FINISH calibration, raw/normalized readings, validity and fault/timing status; no automatic motion | implemented proposal; validation pending |
 
 Each interface is tested by at least one integration test
 (`testing/integration/TEST_LOG.md`).
@@ -175,19 +181,19 @@ Each interface is tested by at least one integration test
 ## 6. Kernel object budget
 
 Limits are set in `config/config.h`. If the team needs more, raise the
-limit there. The numbers below are the example's usage.
+limit there. The numbers below include the examples, B2 motion and S3 IR runtime.
 
 | Object | Limit | S1 | S2 | S3 | S4 | S5 |
 |---|---|---|---|---|---|---|
-| Task | 32 | 1 | 1 | 1 | 1 | |
+| Task | 32 | 1 | 2 | 2 | 1 | |
 | Semaphore | 16 | | 1 | | | |
-| Event flag | 16 | | | | 1 | |
+| Event flag | 16 | | 1 | 1 | 1 | |
 | Mailbox | 12 | | | 1 | | |
-| Mutex | 12 | | | 1 | | |
+| Mutex | 12 | | 1 | 2 | | |
 | Message buffer | 12 | | | | 1 | |
 | Fixed memory pool | 12 | | 1 | | | |
 | Variable memory pool | 12 | | | | | |
-| Cyclic handler | 12 | 1 | | | | |
+| Cyclic handler | 12 | 1 | 1 | | | |
 | Alarm handler | 12 | | | | 1 | |
 
 (The kernel's USB and WiFi service tasks also use a few of these.)

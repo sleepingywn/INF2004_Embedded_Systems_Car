@@ -6,6 +6,7 @@
  */
 
 #include "subsystem3.h"
+#include "ir_runtime.h"
 
 EXPORT ID		mbx_samples;	/* IF-01 */
 EXPORT ID		mtx_stats;	/* IF-04 */
@@ -15,6 +16,10 @@ EXPORT ER subsystem3_init(void)
 {
 	T_CMBX	cmbx = {0};
 	T_CMTX	cmtx = {0};
+	ER error = ir_runtime_init();
+	if (error < E_OK) {
+		return error;
+	}
 
 	/* Mailbox: passes a POINTER to a message (zero copy).  The message
 	   memory must stay valid until the receiver is done with it, which
@@ -35,6 +40,10 @@ EXPORT ER subsystem3_init(void)
 
 EXPORT ER subsystem3_start(void)
 {
+	ER error = ir_runtime_start();
+	if (error < E_OK) {
+		return error;
+	}
 	/* Pinned to core 0 (TP_PRC1): opposite core to the producer */
 	ID tid = app_start_task(consumer_task, S3_PRI_CONSUMER, TP_PRC1,
 				"consumer_task");

@@ -1,6 +1,7 @@
 /*
  *	subsystem2.h
- *	Subsystem 2 -- Producer (sample source).  Student ID: <student ID>.
+ *	Subsystem 2 -- Buddy 2 motion; compatibility sample interface retained.
+ *      New consumers use motion.h. Student ID: 2501308.
  *
  *	Public interface of subsystem 2.  Other subsystems include it as
  *	"../subsystem2/subsystem2.h".
@@ -11,7 +12,7 @@
 
 #include "../app.h"
 
-#define S2_PRI_PRODUCER		14	/* priority band 14-15 (TEAM.md) */
+#define S2_PRI_PRODUCER		15	/* compatibility example; motion owns 14 */
 #define S2_PERIOD_MS		300	/* one sample every 300 ms */
 
 /* ---------------------------------------------------------------------

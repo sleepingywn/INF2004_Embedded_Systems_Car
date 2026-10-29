@@ -43,3 +43,20 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-27 | S3-U10 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |
 | 2026-10-27 | S3-U11 | `488ae26` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit.txt` | |
 | 2026-10-27 | S3-U05..U11 | `f7ac6f5` | Buddy 3 | PASS | `logs/2026-10-27_ir_logic_unit_line_modes.txt` | After adding LINE_MODE. All 7 pass in both the EDGE variant and the default OUTSIDE build. |
+
+## Live runtime cases added 2026-10-29 — NOT RUN
+
+The earlier bench results above are preserved. They do not validate the new
+micro T-Kernel ADC sampler, task, calibration API or B2 handoff. User approval
+is required before builds, host tests or any target execution.
+
+| ID | Case | Planned method / expected evidence |
+|---|---|---|
+| S3-U12 | Alarm/ADC timing and channel order | Motor power disconnected; verify GP26/27/28 independent raw values, 1 kHz frames, maximum launch lateness and scan duration against provisional 100 us bounds; measure under USB/WiFi load |
+| S3-U13 | Live calibration lifecycle | BEGIN, measured white/black on all channels, FINISH; busy/out-of-order rejection; READY only after sufficient contrast; flat GP28 must fail with bit 2; empty calibration must fail |
+| S3-U14 | Fault and restart | Inject ADC/FIFO error, queue saturation, late scan and lost IRQ; acquisition stops, health fault asserted, no partial barcode escapes; BEGIN restarts with empty calibration |
+| S3-U15 | Sample continuity and timestamp wrap | Synthetic adapter cases before hardware; gap/duplicate timestamps return an error; 64-bit-us to 32-bit-ms time across low-word wrap retains exactly 1 ms schedule |
+| S3-U16 | Minimum-bit layout and concurrency | Record sizeof raw frame/status/calibration, ring RAM and stack watermark; concurrent status/command operations never expose torn packed fields; IRQ/task ring copies remain coherent |
+
+GP28's existing S3-U04 FAIL is still unresolved. Retest wiring and the open
+VBAT jumper before accepting calibration or moving the vehicle.

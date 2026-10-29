@@ -1,9 +1,16 @@
 # Subsystem 3 – IR line tracing and barcode sensing (Buddy 3)
 
-Logic only: no kernel or hardware calls, so it is tested on the Pico with
-`testing/subsystem3/ir_line_bench`. The S3 task that samples the ADC and
-sends the messages to the Vehicle Controller is not written yet (the
-interface with Buddy 2 still has to be agreed).
+The original algorithm files remain hardware-independent and are used by
+`testing/subsystem3/ir_line_bench`. The integration branch now adds
+`ir_acquisition.c` and `ir_runtime.c`: a hardware-paced ADC sampler and an S3
+task that calibrates the sensors and calls Buddy 2's `motion_ir_bridge_sample()`.
+That bridge reuses the logic below unchanged, publishes line state every 10 ms
+and sends completed barcode widths to B2 for decoding.
+
+See [runtime ownership, calibration and recovery](README_RUNTIME.md) and
+`../subsystem2/README_MOTION.md`. **The new runtime is not built, tested or
+flashed.** Older bench results validate only the code/configurations recorded
+in those results; the GP28 wiring failure remains unresolved evidence.
 
 | File | Feature |
 |---|---|

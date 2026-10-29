@@ -54,6 +54,22 @@
  */
 
 #include "app.h"
+#include "subsystem2/motion.h"
+
+/* Startup failure must not proceed into partially initialized consumers.
+ * Keep the kernel alive so the output owner can service its stop signal. */
+static void startup_check(ER startup_error, const char *name)
+{
+    if (startup_error < E_OK)
+    {
+        CHECK(startup_error, name);
+        (void)motion_stop();
+        for (;;)
+        {
+            tk_slp_tsk(TMO_FEVR);
+        }
+    }
+}
 
 /*
  * Create and start one task (declared in app.h for every subsystem).
@@ -89,6 +105,10 @@ EXPORT ID app_start_task(FP entry, PRI pri, UW prc, const char *name)
 	/* tk_sta_tsk: DORMANT -> READY.  The int is passed as stacd. */
 	er = tk_sta_tsk(tid, 0);
 	CHECK(er, name);
+	if (er < E_OK) {
+		tk_del_tsk(tid);
+		return er;
+	}
 	return tid;
 }
 
@@ -108,18 +128,18 @@ EXPORT INT usermain(void)
 #endif
 
 	/* Phase 1: every subsystem creates its kernel objects */
-	CHECK(subsystem1_init(), "subsystem1_init");
-	CHECK(subsystem2_init(), "subsystem2_init");
-	CHECK(subsystem3_init(), "subsystem3_init");
-	CHECK(subsystem4_init(), "subsystem4_init");
-	CHECK(subsystem5_init(), "subsystem5_init");
+	startup_check(subsystem1_init(), "subsystem1_init");
+	startup_check(subsystem2_init(), "subsystem2_init");
+	startup_check(subsystem3_init(), "subsystem3_init");
+	startup_check(subsystem4_init(), "subsystem4_init");
+	startup_check(subsystem5_init(), "subsystem5_init");
 
 	/* Phase 2: every subsystem starts its tasks */
-	CHECK(subsystem1_start(), "subsystem1_start");
-	CHECK(subsystem2_start(), "subsystem2_start");
-	CHECK(subsystem3_start(), "subsystem3_start");
-	CHECK(subsystem4_start(), "subsystem4_start");
-	CHECK(subsystem5_start(), "subsystem5_start");
+	startup_check(subsystem1_start(), "subsystem1_start");
+	startup_check(subsystem2_start(), "subsystem2_start");
+	startup_check(subsystem3_start(), "subsystem3_start");
+	startup_check(subsystem4_start(), "subsystem4_start");
+	startup_check(subsystem5_start(), "subsystem5_start");
 
 	tm_printf((UB*)"all subsystems started\n\n");
 

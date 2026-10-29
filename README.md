@@ -3,6 +3,14 @@
 A starting point for your project: micro T-Kernel 3.0 running on **both cores**
 of the Pico W's RP2040, with a USB serial console and the WiFi driver built in.
 
+This integration branch adds Buddy 2's motion implementation on top of Buddy 3's
+IR logic. See [the motion integration notes](app_program/subsystem2/README_MOTION.md)
+for APIs, confirmed motor pins and calibration gates. The added
+[S3 runtime](app_program/subsystem3/README_RUNTIME.md) connects live IR sampling
+and calibration to line following and barcode capture.
+It is an unbuilt/untested candidate; no flashing or test execution is authorised
+until the user approves the next stage. Startup does not request movement.
+
 You need a **Raspberry Pi Pico W**, a USB cable, and a computer running
 macOS, Linux, or Windows with **WSL (Ubuntu)**. On Windows, run every
 command below inside the WSL Ubuntu terminal.

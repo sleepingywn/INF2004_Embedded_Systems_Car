@@ -147,6 +147,9 @@ EXPORT INT usermain(void)
 	/* Test build (make TEST=1): run every subsystem's tests in turn,
 	   here in the initial task, while the system is running.  Tests may
 	   call tk_dly_tsk() to let the other tasks work for a while. */
+	/* Give the USB serial monitor time to connect: output printed before
+	   the host opens the port is lost (S1/S2 results went missing). */
+	tk_dly_tsk(5000);
 	tm_printf((UB*)"[TEST] === test run start ===\n");
 	subsystem1_test();
 	subsystem2_test();

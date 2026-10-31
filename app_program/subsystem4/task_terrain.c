@@ -101,6 +101,37 @@ EXPORT ER s4_get_terrain(S4_TERRAIN *out)
 #define S4_TURN_HOLD_S		0.2f	/* keep blocking this long after turning */
 LOCAL float	turn_hold_s;
 
+/* Forward acceleration of the car from the wheel speeds (tribunal design:
+   "subtract the car's forward acceleration from B2's encoders so that
+   speeding up or braking is not mistaken for a hump"; Buddy 4 derives it
+   from consecutive samples).  Speed over the last 100 ms minus speed over
+   the 100 ms before, divided by 100 ms: a 1-count error is only 0.001 g. */
+#define S4_ACC_WIN	5			/* samples per 100 ms window */
+LOCAL float	acc_dist[2 * S4_ACC_WIN];	/* forward mm per sample      */
+LOCAL float	acc_dt[2 * S4_ACC_WIN];		/* s per sample               */
+LOCAL UINT	acc_i;
+LOCAL float	car_accel_g;			/* last value (for printing)  */
+
+LOCAL float car_forward_accel_g(float dist_mm, float dt)
+{
+	float	d_new = 0.0f, t_new = 0.0f, d_old = 0.0f, t_old = 0.0f;
+	UINT	k;
+
+	acc_dist[acc_i] = dist_mm;
+	acc_dt[acc_i]   = dt;
+	acc_i = (acc_i + 1) % (2 * S4_ACC_WIN);
+	for (k = 0; k < S4_ACC_WIN; k++) {	/* newest S4_ACC_WIN samples */
+		UINT j = (acc_i + 2 * S4_ACC_WIN - 1 - k) % (2 * S4_ACC_WIN);
+		d_new += acc_dist[j];  t_new += acc_dt[j];
+	}
+	for (; k < 2 * S4_ACC_WIN; k++) {	/* the window before that   */
+		UINT j = (acc_i + 2 * S4_ACC_WIN - 1 - k) % (2 * S4_ACC_WIN);
+		d_old += acc_dist[j];  t_old += acc_dt[j];
+	}
+	if (t_new <= 0.0f || t_old <= 0.0f) return 0.0f;
+	/* (v_new - v_old) / time between window centres, mm/s^2 -> g */
+	return (d_new / t_new - d_old / t_old) / (0.5f * (t_new + t_old)) / 9810.0f;
+}
 
 LOCAL BOOL	wheel_have;		/* previous counts valid              */
 LOCAL UW	wheel_prev_l, wheel_prev_r;
@@ -213,8 +244,9 @@ LOCAL void print_status(void)
 		float turn = (wheel_heading_deg - heading_at_print)
 			     * (1000.0f / (float)(PRINT_EVERY * S4_PERIOD_MS));
 		heading_at_print = wheel_heading_deg;
-		tm_printf((UB*)"  v %d mm/s  turn %+d dps  hdg %+d deg",
-			  (INT)wheel_speed_mm_s, (INT)turn, (INT)wheel_heading_deg);
+		tm_printf((UB*)"  v %d mm/s  acc %+d mg  turn %+d dps  hdg %+d deg",
+			  (INT)wheel_speed_mm_s, (INT)(car_accel_g * 1000.0f),
+			  (INT)turn, (INT)wheel_heading_deg);
 	} else {
 		tm_printf((UB*)"  v --");
 	}
@@ -319,6 +351,15 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			UW    read_us = now_us() - start_us, logic_start;
 			float dt = (float)(start_us - prev_us) * 1e-6f;
 			float dist = wheel_travel_mm(dt);
+			float acc_g;
+
+			/* car's own forward acceleration, from the raw distance */
+			if (wheel_ok && S4_PRETEND_SPEED_MM_S == 0) {
+				acc_g = car_forward_accel_g(dist, dt);
+			} else {
+				acc_g = car_forward_accel_g(0.0f, dt);
+			}
+			car_accel_g = acc_g;
 
 			/* Bench override: pretend to move (S4_PRETEND_SPEED_MM_S) */
 			if (S4_PRETEND_SPEED_MM_S > 0) {
@@ -338,7 +379,7 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			prev_us  = start_us;
 			fail_run = 0;
 			logic_start = now_us();
-			ev = imu_logic_update(&logic, map_axes(&raw), dt, dist, 0.0f);
+			ev = imu_logic_update(&logic, map_axes(&raw), dt, dist, acc_g);
 			s4_diag.accel_mag_mg = (INT)(logic.accel_mag_g * 1000.0f);
 
 			{

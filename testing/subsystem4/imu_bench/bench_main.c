@@ -63,13 +63,15 @@ static void print_events(uint32_t ev, const imu_logic_t *s, float t, bool csv)
 {
     const char *pre = csv ? "# " : "";
     if (ev & IMU_EVT_HUMP_ENTRY)
-        printf("%s[%7.2f s] HUMP ENTRY     pitch %+5.1f roll %+5.1f\n",
-               pre, t, s->pitch_deg, s->roll_deg);
+        printf("%s[%7.2f s] HUMP ENTRY     pitch %+5.1f roll %+5.1f tilt %.1f\n",
+               pre, t, s->pitch_deg, s->roll_deg, s->tilt_total_deg);
     if (ev & IMU_EVT_HUMP_DONE)
-        printf("%s[%7.2f s] HUMP DETECTED  peak %.1f mm (peak pitch %.1f deg), "
-               "highest %.1f mm, count %u\n", pre, t, s->current_hump_peak_mm,
-               s->current_hump_peak_pitch_deg, s->highest_hump_peak_mm,
-               (unsigned)s->hump_count);
+        printf("%s[%7.2f s] HUMP DETECTED  peak %.1f mm (%s, peak tilt %.1f deg, "
+               "peak roll %.1f deg), highest %.1f mm, count %u\n", pre, t,
+               s->current_hump_peak_mm,
+               s->current_hump_one_sided ? "one-sided" : "full-width",
+               s->current_hump_peak_tilt_deg, s->current_hump_peak_roll_deg,
+               s->highest_hump_peak_mm, (unsigned)s->hump_count);
     if (ev & IMU_EVT_TILT)
         printf("%s[%7.2f s] TILT           pitch %+5.1f roll %+5.1f\n",
                pre, t, s->pitch_deg, s->roll_deg);
@@ -174,10 +176,10 @@ int main(void)
                            "fwd %+6.3f  side %+6.3f  up %+6.3f\n",
                            raw.x, raw.y, raw.z, mag, a.fwd, a.side, a.up);
                 } else if (s.calibrated) {
-                    printf("t %7.2f  pitch %+6.1f  roll %+6.1f  |a| %4.2f  %-10s "
+                    printf("t %7.2f  pitch %+6.1f  roll %+6.1f  tilt %5.1f  |a| %4.2f  %-10s "
                            "moving %s  peak %5.1f  highest %5.1f  humps %u  | "
                            "exec max %u us  overruns %u  i2c err %u\n",
-                           t, s.pitch_deg, s.roll_deg, s.accel_mag_g,
+                           t, s.pitch_deg, s.roll_deg, s.tilt_total_deg, s.accel_mag_g,
                            imu_hump_state_name(s.hump_state), moving ? "Y" : "N",
                            s.current_hump_peak_mm, s.highest_hump_peak_mm,
                            (unsigned)s.hump_count, (unsigned)exec_max_us,

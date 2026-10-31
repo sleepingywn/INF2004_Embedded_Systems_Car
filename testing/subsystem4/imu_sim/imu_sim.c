@@ -6,6 +6,7 @@
  *   ./imu_sim --g bench.csv          replay a GY-511 bench log (bench_main 'c' view:
  *                                    time_s,fwd_g,side_g,up_g,moving)
  *   ./imu_sim --fake                 built-in synthetic test (no phone needed)
+ *   ./imu_sim --fake1 [height_mm]    one-sided hump: one wheel climbs, the car rolls
  *   ./imu_sim --fake --nocomp        same, but WITHOUT encoder compensation
  *
  * Writes imu_out.csv (time, pitch, roll, |a|, state, height) - open it in
@@ -36,12 +37,14 @@ static void report(const imu_logic_t *s, uint32_t ev, float t)
 {
     if (ev & IMU_EVT_HUMP_ENTRY) {
         t_hump_entry = t;
-        printf("[%7.2f s] HUMP ENTRY      pitch %+5.1f deg\n", t, s->pitch_deg);
+        printf("[%7.2f s] HUMP ENTRY      pitch %+5.1f, roll %+5.1f, tilt %.1f deg\n",
+               t, s->pitch_deg, s->roll_deg, s->tilt_total_deg);
     }
     if (ev & IMU_EVT_HUMP_DONE)
-        printf("[%7.2f s] HUMP DETECTED   peak %.1f mm, peak pitch %.1f deg, "
+        printf("[%7.2f s] HUMP DETECTED   peak %.1f mm (%s), peak tilt %.1f deg, "
                "duration %.2f s\n", t, s->current_hump_peak_mm,
-               s->current_hump_peak_pitch_deg, t - t_hump_entry);
+               s->current_hump_one_sided ? "one-sided" : "full-width",
+               s->current_hump_peak_tilt_deg, t - t_hump_entry);
     if (ev & IMU_EVT_TILT)
         printf("[%7.2f s] TILT            pitch %+5.1f, roll %+5.1f deg\n",
                t, s->pitch_deg, s->roll_deg);
@@ -168,11 +171,59 @@ static int run_fake(bool use_comp)
     return 0;
 }
 
+
+/* ---------------- Synthetic one-sided hump ----------------
+ * The car drives at 100 mm/s; the LEFT wheel rolls over a hump of the given
+ * height (smooth bump 200 mm long) while the right wheel stays on the floor,
+ * so the car rolls by asin(h / lever).  The sensor is mounted like ours:
+ * upside down and tilted -15 deg, reading 0.94 g.  Also checks that a
+ * parked car on a slope still gives TILT, not a hump. */
+static imu_accel_t mount(float pitch_deg, float roll_deg)
+{
+    float p = pitch_deg * 0.0174533f, r = roll_deg * 0.0174533f;
+    float c[3] = { sinf(p), cosf(p) * sinf(r), cosf(p) * cosf(r) };
+    float th = -15.0f * 0.0174533f;
+    float y[3] = { cosf(th) * c[0] + sinf(th) * c[2], c[1], -sinf(th) * c[0] + cosf(th) * c[2] };
+    imu_accel_t a = { 0.94f * y[0] + noise(), -0.94f * y[1] + noise(), -0.94f * y[2] + noise() };
+    return a;
+}
+
+static int run_fake_onesided(float height_mm)
+{
+    const float dt = 0.02f, v = 100.0f, len = 200.0f;
+    imu_config_t cfg; imu_logic_default_config(&cfg);
+    imu_logic_t s;    imu_logic_init(&s, &cfg);
+    float lever = cfg.hump_lever_mm, x = 0.0f;
+    srand(2);
+
+    printf("Synthetic one-sided hump: %.0f mm high, %.0f mm long, lever %.0f mm, 100 mm/s\n"
+           "  0-2 s still | 2-3 s drive | then the left wheel crosses the hump |"
+           " 9-11 s parked on a 30 deg slope\n\n", height_mm, len, lever);
+
+    for (float t = 0.0f; t < 12.0f; t += dt) {
+        float dist = 0.0f, h = 0.0f, roll = 0.0f, pitch = 0.0f;
+        if (t >= 2.0f && t < 9.0f) { dist = v * dt; x += dist; }
+        float xh = x - 100.0f;                          /* hump starts after 100 mm */
+        if (xh > 0.0f && xh < len) {
+            float u = sinf(3.14159f * xh / len);
+            h = height_mm * u * u;                      /* smooth bump */
+        }
+        roll = asinf(h / lever) * 57.29578f;
+        if (t >= 9.0f && t < 11.0f) pitch = 30.0f;      /* parked on a slope */
+        uint32_t ev = imu_logic_update(&s, mount(pitch, roll), dt, dist, 0.0f);
+        report(&s, ev, t);
+        log_row(&s, t);
+    }
+    printf("\nTrue hump height %.1f mm vs measured %.1f mm (one-sided: %s)\n",
+           height_mm, s.highest_hump_peak_mm, s.current_hump_one_sided ? "yes" : "no");
+    return 0;
+}
+
 int main(int argc, char **argv)
 {
     if (argc < 2) {
         fprintf(stderr, "usage: %s run.csv [speed_mm_s] | --g bench.csv [speed_mm_s]"
-                        " | --fake [--nocomp]\n", argv[0]);
+                        " | --fake [--nocomp] | --fake1 [height_mm]\n", argv[0]);
         return 1;
     }
     out = fopen("imu_out.csv", "w");
@@ -180,7 +231,9 @@ int main(int argc, char **argv)
     fprintf(out, "time_s,pitch_deg,roll_deg,accel_mag_g,hump_state,height_mm\n");
 
     int rc;
-    if (strcmp(argv[1], "--fake") == 0)
+    if (strcmp(argv[1], "--fake1") == 0)
+        rc = run_fake_onesided(argc > 2 ? strtof(argv[2], NULL) : 25.0f);
+    else if (strcmp(argv[1], "--fake") == 0)
         rc = run_fake(!(argc > 2 && strcmp(argv[2], "--nocomp") == 0));
     else if (strcmp(argv[1], "--g") == 0 && argc > 2)
         rc = run_csv(argv[2], argc > 3 ? strtof(argv[3], NULL) : 100.0f, true);

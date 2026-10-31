@@ -36,6 +36,9 @@ typedef struct {
 #define IMU_EVT_TILT        (1u << 2)  /* abnormal tilt outside a hump      */
 #define IMU_EVT_COLLISION   (1u << 3)  /* sudden impact                     */
 
+#define IMU_HUMP_ANY        0
+#define IMU_HUMP_ONE_SIDED  1
+
 typedef enum {
     HUMP_FLAT = 0,
     HUMP_CLIMBING,
@@ -47,8 +50,12 @@ typedef struct {
     float calib_time_s;           /* how long to stay still at start (B4-FR2)   */
     float filter_tau_s;           /* low-pass smoothing; bigger = smoother/slower */
     float accel_gate_g;           /* ignore samples where |a| is this far from 1 g */
-    float hump_enter_deg;         /* total tilt above this = on a hump           */
-    float hump_exit_deg;          /* total tilt below this = flat again          */
+    int   hump_mode;              /* IMU_HUMP_ONE_SIDED: hump angle = |roll|
+                                     (immune to speeding up/braking, which only
+                                     shows as pitch); IMU_HUMP_ANY: total tilt,
+                                     for full-width or unknown layouts            */
+    float hump_enter_deg;         /* hump angle above this = on a hump           */
+    float hump_exit_deg;          /* hump angle below this = flat again          */
     float hump_hold_s;            /* condition must last this long (debounce)    */
     float hump_timeout_s;         /* give up if a hump phase lasts longer        */
     float hump_lever_mm;          /* one-sided hump: distance from the climbing

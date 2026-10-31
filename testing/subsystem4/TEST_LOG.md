@@ -26,7 +26,7 @@ Define a test here before running it. Test IDs never change.
 | S4-U14 | logic regression (synthetic hump, knock, slope) | imu_logic.c | auto (laptop) | `imu_sim --fake` | hump 18.8 mm vs 19.9 mm true; COLLISION; TILT on the slope |
 | S4-U15 | minimum-bit snapshot: size, round trip, saturation, wrap | change requirement, C06 | auto (laptop) | `imu_sim/pack_check.c` | `PASS`; 8 bytes; error ≤ half a step |
 | S4-U16 | packed snapshot on target: 8 bytes, saturates, 15-bit age | change requirement, C06 | auto | `subsystem4_test.c` | `[TEST] S4-U16 PASS` |
-| S4-U17 | one-sided hump (one wheel climbs, car rolls) detected from total tilt; height = lever × sin(peak tilt) | FR5, one-sided layout | auto (laptop) | `imu_sim --fake1 15/25/40` | `HUMP DETECTED (one-sided)` within ±10 mm |
+| S4-U17 | one-sided right-side hump (10–13 mm) detected from roll; height = lever × sin(peak tilt); no false hump from speeding up/braking | FR5, one-sided layout | auto (laptop) | `imu_sim --fake1 10`, `11.5`, `13` | `HUMP DETECTED (one-sided)` within ±10 mm; no hump at the 0.15 g speed-up/brake |
 | S4-U18 | lever calibration on the car | FR5 | manual | wheel on a block of known height h, car still; read roll θ; lever = h / sin(θ) | lever recorded; then S4-U12 on the real hump within ±10 mm |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
@@ -41,7 +41,7 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-28 | S4-U13 | (this commit) | Claude, for Andy | PASS | laptop | sqrt rel. error 1.1e-7, atan2 1.9e-6 rad, sin 7.4e-7 |
 | 2026-10-28 | S4-U14 | (this commit) | Claude, for Andy | PASS | laptop | same results as before the maths change |
 | 2026-10-28 | S4-U15 | (this commit) | Claude, for Andy | PASS | laptop | 8 bytes (was 38); worst error 0.25°, 1°/s, 0.5 mm |
-| 2026-10-31 | S4-U17 | (this commit) | Claude, for Andy | PASS | laptop | 15→14.6, 25→23.9, 40→38.1 mm (lever 120 mm placeholder); full-width and tilt unchanged |
+| 2026-10-31 | S4-U17 | (this commit) | Claude, for Andy | PASS | laptop | 10→9.3, 11.5→10.7, 13→12.1 mm (lever 120 mm placeholder); no false hump at 0.15 g speed-up/brake; full-width (mode ANY) 18.9 vs 19.9 mm |
 
 ## Bench evidence (before integration)
 

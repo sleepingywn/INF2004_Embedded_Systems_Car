@@ -14,8 +14,9 @@ void imu_logic_default_config(imu_config_t *c)
     c->calib_time_s           = 2.0f;
     c->filter_tau_s           = 0.15f;
     c->accel_gate_g           = 0.15f;
-    c->hump_enter_deg         = 5.0f;
-    c->hump_exit_deg          = 2.0f;
+    c->hump_mode              = IMU_HUMP_ONE_SIDED;  /* our track: hump on the right only */
+    c->hump_enter_deg         = 3.0f;    /* a 10-13 mm one-sided hump tilts only ~4-5 deg */
+    c->hump_exit_deg          = 1.5f;
     c->hump_hold_s            = 0.10f;
     c->hump_timeout_s         = 5.0f;    /* a slow pass over a one-sided hump takes a few s */
     c->hump_lever_mm          = 120.0f;  /* PLACEHOLDER until calibrated on the car */
@@ -193,14 +194,17 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
     float tilt = imu_atan2f(imu_sqrtf(s->filt.fwd * s->filt.fwd + s->filt.side * s->filt.side),
                             s->filt.up) * RAD2DEG;
     s->tilt_total_deg = tilt;
+    /* the angle the hump detector watches */
+    float ha = (c->hump_mode == IMU_HUMP_ONE_SIDED) ? imu_fabsf(s->roll_deg) : tilt;
 
     /* ---------- 6. Hump state machine (B4-FR4, FR5) ----------
      * Detected from TOTAL tilt, so it works for both layouts:
-     *   FLAT --tilt > 5 deg for 0.1 s while moving--> CLIMBING
+     * "hump angle" = |roll| (one-sided mode, default) or total tilt (any mode)
+ *   FLAT --hump angle > 3 deg for 0.1 s while moving--> CLIMBING
      *   CLIMBING --past the top--> DESCENDING
      *       full-width: pitch < -5 deg for 0.1 s (nose going down)
      *       one-sided:  tilt below 70 % of its peak for 0.1 s
-     *   DESCENDING --tilt < 2 deg for 0.1 s--> FLAT + HUMP_DONE
+     *   DESCENDING --hump angle < 1.5 deg for 0.1 s--> FLAT + HUMP_DONE
      * Height:
      *   full-width (pitch dominated): sum of sin(pitch) x distance moved
      *   one-sided  (roll dominated):  lever x sin(peak tilt)
@@ -210,10 +214,10 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
         s->hump_h_mm += imu_sinf(p * DEG2RAD) * dist_delta_mm;
         if (s->hump_h_mm > s->pitch_peak_mm)               s->pitch_peak_mm = s->hump_h_mm;
         if (p > s->current_hump_peak_pitch_deg)            s->current_hump_peak_pitch_deg = p;
-        if (tilt > s->current_hump_peak_tilt_deg)          s->current_hump_peak_tilt_deg = tilt;
+        if (ha > s->current_hump_peak_tilt_deg)            s->current_hump_peak_tilt_deg = ha;
         if (imu_fabsf(s->roll_deg) > s->current_hump_peak_roll_deg)
             s->current_hump_peak_roll_deg = imu_fabsf(s->roll_deg);
-        s->current_hump_one_sided =
+        s->current_hump_one_sided = (c->hump_mode == IMU_HUMP_ONE_SIDED) ||
             s->current_hump_peak_roll_deg > imu_fabsf(s->current_hump_peak_pitch_deg);
         s->current_hump_peak_mm = s->current_hump_one_sided
             ? c->hump_lever_mm * imu_sinf(s->current_hump_peak_tilt_deg * DEG2RAD)
@@ -226,7 +230,7 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
     switch (s->hump_state) {
     case HUMP_FLAT:
         if (s->rearm_needed) {
-            if (tilt < c->hump_exit_deg) s->rearm_needed = false;
+            if (ha < c->hump_exit_deg) s->rearm_needed = false;
             break;
         }
         /* Count pitch height from the moment the nose starts rising, so the
@@ -234,26 +238,26 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
         s->pre_h_mm = (p > c->hump_exit_deg)
                     ? s->pre_h_mm + imu_sinf(p * DEG2RAD) * dist_delta_mm : 0.0f;
         /* Only a MOVING car can be climbing a hump; parked on a slope is not. */
-        s->enter_timer = (tilt > c->hump_enter_deg && moving) ? s->enter_timer + dt_s : 0.0f;
+        s->enter_timer = (ha > c->hump_enter_deg && moving) ? s->enter_timer + dt_s : 0.0f;
         if (s->enter_timer >= c->hump_hold_s) {
             s->hump_state = HUMP_CLIMBING;
             s->enter_timer = s->state_timer = 0.0f;
             s->hump_h_mm = s->pre_h_mm;
             s->pitch_peak_mm = s->pre_h_mm;
             s->current_hump_peak_pitch_deg = p;
-            s->current_hump_peak_tilt_deg = tilt;
+            s->current_hump_peak_tilt_deg = ha;
             s->current_hump_peak_roll_deg = imu_fabsf(s->roll_deg);
-            s->current_hump_one_sided =
+            s->current_hump_one_sided = (c->hump_mode == IMU_HUMP_ONE_SIDED) ||
                 s->current_hump_peak_roll_deg > imu_fabsf(p);
             s->current_hump_peak_mm = s->current_hump_one_sided
-                ? c->hump_lever_mm * imu_sinf(tilt * DEG2RAD) : s->pre_h_mm;
+                ? c->hump_lever_mm * imu_sinf(ha * DEG2RAD) : s->pre_h_mm;
             ev |= IMU_EVT_HUMP_ENTRY;
         }
         break;
 
     case HUMP_CLIMBING: {
         bool over_top = s->current_hump_one_sided
-            ? (tilt < 0.7f * s->current_hump_peak_tilt_deg)   /* one-sided: tilt falling */
+            ? (ha < 0.7f * s->current_hump_peak_tilt_deg)     /* one-sided: tilt falling */
             : (p < -c->hump_enter_deg);                        /* full-width: nose down   */
         s->desc_timer = over_top ? s->desc_timer + dt_s : 0.0f;
         if (s->desc_timer >= c->hump_hold_s) {
@@ -266,7 +270,7 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
     }
 
     case HUMP_DESCENDING:
-        s->exit_timer = (tilt < c->hump_exit_deg) ? s->exit_timer + dt_s : 0.0f;
+        s->exit_timer = (ha < c->hump_exit_deg) ? s->exit_timer + dt_s : 0.0f;
         if (s->exit_timer >= c->hump_hold_s) {
             s->hump_state = HUMP_FLAT;
             s->exit_timer = s->state_timer = 0.0f;

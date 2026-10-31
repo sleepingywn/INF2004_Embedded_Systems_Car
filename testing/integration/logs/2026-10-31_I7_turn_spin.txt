@@ -1,0 +1,15 @@
+Spin 1: q, 35 % for 2000 ms (USB cable snagged; car did not finish the spin)
+[con] spin LEFT 35 % for 2000 ms
+[con] spin left: sent (0)
+terrain: pitch +1.5 roll -3.0 tilt +3.2  v 5 mm/s  turn +11 dps  hdg +11 deg |a| 885 mg  FLAT  humps 0  highest 0 mm  | exec max 2592 us (read 2066, logic 625)  slow 0  print max 801 us  jitter max 605 us  overruns 0  i2c err 0
+terrain: COLLISION  |a| 2450 mg
+terrain: pitch +2.0 roll +0.5 tilt +2.2  v 12 mm/s  turn +146 dps  hdg +157 deg |a| 932 mg  FLAT  humps 0  highest 0 mm  | exec max 2592 us (read 2066, logic 625)  slow 0  print max 822 us  jitter max 615 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.5 tilt +0.8  v -1 mm/s  turn +58 dps  hdg +216 deg |a| 1085 mg  FLAT  humps 0  highest 0 mm  | exec max 2592 us (read 2066, logic 625)  slow 0  print max 836 us  jitter max 615 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +1.0 tilt +0.9  v 0 mm/s  turn +0 dps  hdg +216 deg |a| 1004 mg  FLAT  humps 0  highest 0 mm  | exec max 2592 us (read 2066, logic 625)  slow 0  print max 836 us  jitter max 615 us  overruns 0  i2c err 0
+
+Spin 2: z, then q, 35 % for 1000 ms. Observed: car turned a little more than 180 deg.
+[con] spin LEFT 35 % for 1000 ms
+[con] spin left: sent (0)
+terrain: pitch -0.5 roll +0.0 tilt +0.4  v 5 mm/s  turn +19 dps  hdg +19 deg |a| 884 mg  FLAT  humps 0  highest 0 mm  | exec max 2592 us (read 2066, logic 625)  slow 0  print max 836 us  jitter max 615 us  overruns 0  i2c err 0
+terrain: pitch +1.5 roll +1.0 tilt +1.8  v 0 mm/s  turn +145 dps  hdg +165 deg |a| 1084 mg  FLAT  humps 0  highest 0 mm  | exec max 2592 us (read 2066, logic 625)  slow 0  print max 838 us  jitter max 615 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +1.0 tilt +1.1  v 0 mm/s  turn +0 dps  hdg +165 deg |a| 998 mg  FLAT  humps 0  highest 0 mm  | exec max 2592 us (read 2066, logic 625)  slow 0  print max 838 us  jitter max 615 us  overruns 0  i2c err 0

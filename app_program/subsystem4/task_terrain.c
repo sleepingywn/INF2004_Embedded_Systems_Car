@@ -82,6 +82,11 @@ EXPORT ER s4_get_terrain(S4_TERRAIN *out)
  * --------------------------------------------------------------------- */
 #define S4_MIN_MOVING_MM_S	20	/* below this the car counts as stopped */
 
+/* Turn-rate scale: a motor spin on the mat (2026-10-31) turned the car a
+   little over 180 deg while the wheel calculation said 165 deg, so the raw
+   value reads ~12 % low (rough counts-per-turn and tyre scrub).  A 1 m push
+   test would show whether MOTION_*_COUNTS_REV should change instead. */
+#define S4_TURN_SCALE		1.14f
 
 LOCAL BOOL	wheel_have;		/* previous counts valid              */
 LOCAL UW	wheel_prev_l, wheel_prev_r;
@@ -127,11 +132,12 @@ LOCAL float wheel_travel_mm(float dt)
 		wheel_heading_deg = heading_at_print = 0.0f;
 		s4_heading_zero_req = FALSE;
 	}
-	wheel_heading_deg += (right_mm - left_mm) / (float)MOTION_TRACK_WIDTH_MM * 57.29578f;
+	wheel_heading_deg += (right_mm - left_mm) / (float)MOTION_TRACK_WIDTH_MM
+			     * 57.29578f * S4_TURN_SCALE;
 	if (dt > 0.0f) {
 		wheel_speed_mm_s = 0.5f * (left_mm + right_mm) / dt;
 		wheel_turn_dps   = (right_mm - left_mm) / (float)MOTION_TRACK_WIDTH_MM
-				   / dt * 57.29578f;
+				   / dt * 57.29578f * S4_TURN_SCALE;
 	}
 	wheel_ok = TRUE;
 	return 0.5f * (left_mm + right_mm);

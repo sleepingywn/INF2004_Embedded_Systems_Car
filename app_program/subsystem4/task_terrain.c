@@ -96,8 +96,10 @@ LOCAL void print_events(UINT ev)
 		tm_printf((UB*)"\n");
 	}
 	if (ev & IMU_EVT_HUMP_DONE) {
-		tm_printf((UB*)"terrain: HUMP DETECTED");
+		tm_printf((UB*)"terrain: HUMP DETECTED (%s)",
+			  logic.current_hump_one_sided ? "one-sided" : "full-width");
 		print_tenths("  peak mm", to_tenths(logic.current_hump_peak_mm));
+		print_tenths("  peak tilt", to_tenths(logic.current_hump_peak_tilt_deg));
 		print_tenths("  highest mm", to_tenths(logic.highest_hump_peak_mm));
 		tm_printf((UB*)"  count %u\n", (UINT)logic.hump_count);
 	}
@@ -118,6 +120,7 @@ LOCAL void print_status(void)
 	tm_printf((UB*)"terrain:");
 	print_tenths(" pitch", S4_PITCH_DDEG(snapshot));
 	print_tenths(" roll", S4_ROLL_DDEG(snapshot));
+	print_tenths(" tilt", to_tenths(logic.tilt_total_deg));
 	tm_printf((UB*)" |a| %d mg  %s  humps %u  highest %u mm",
 		  s4_diag.accel_mag_mg, imu_hump_state_name(logic.hump_state),
 		  (UINT)snapshot.hump_count, (UINT)snapshot.high_peak_mm);

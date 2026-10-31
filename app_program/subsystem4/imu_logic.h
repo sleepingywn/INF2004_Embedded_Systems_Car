@@ -47,10 +47,14 @@ typedef struct {
     float calib_time_s;           /* how long to stay still at start (B4-FR2)   */
     float filter_tau_s;           /* low-pass smoothing; bigger = smoother/slower */
     float accel_gate_g;           /* ignore samples where |a| is this far from 1 g */
-    float hump_enter_deg;         /* pitch above this = climbing                 */
-    float hump_exit_deg;          /* |pitch| below this = flat again             */
+    float hump_enter_deg;         /* total tilt above this = on a hump           */
+    float hump_exit_deg;          /* total tilt below this = flat again          */
     float hump_hold_s;            /* condition must last this long (debounce)    */
     float hump_timeout_s;         /* give up if a hump phase lasts longer        */
+    float hump_lever_mm;          /* one-sided hump: distance from the climbing
+                                     wheel to the line the car tips about;
+                                     height = lever x sin(peak tilt). CALIBRATE
+                                     with a block of known height (see README). */
     float tilt_deg;               /* |pitch| or |roll| above this = tilt         */
     float collision_g;            /* |a| - 1 g above this = collision            */
     float collision_refractory_s; /* ignore further spikes for this long         */
@@ -61,10 +65,14 @@ typedef struct {
     bool         calibrated;
     float        pitch_deg;
     float        roll_deg;
+    float        tilt_total_deg;            /* angle from vertical, pitch+roll combined */
     float        accel_mag_g;
     hump_state_t hump_state;
     float        current_hump_peak_mm;      /* peak of the latest hump       */
     float        current_hump_peak_pitch_deg;
+    float        current_hump_peak_tilt_deg;   /* largest total tilt on this hump   */
+    float        current_hump_peak_roll_deg;   /* largest |roll| on this hump       */
+    bool         current_hump_one_sided;       /* roll dominated: one wheel climbed */
     float        highest_hump_peak_mm;      /* highest hump this run (FR5)   */
     uint32_t     hump_count;
 
@@ -81,6 +89,7 @@ typedef struct {
     float        enter_timer, desc_timer, exit_timer, state_timer;
     bool         rearm_needed;      /* after an abort, wait for flat        */
     float        hump_h_mm;         /* running height during a hump         */
+    float        pitch_peak_mm;     /* peak of hump_h_mm (full-width method) */
     float        pre_h_mm;          /* height gained just before entry      */
     float        tilt_timer;
     bool         tilt_active;

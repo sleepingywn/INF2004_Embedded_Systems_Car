@@ -88,6 +88,20 @@ EXPORT ER s4_get_terrain(S4_TERRAIN *out)
    test would show whether MOTION_*_COUNTS_REV should change instead. */
 #define S4_TURN_SCALE		1.14f
 
+/* No hump detection while the car turns hard (spin on the spot, barcode
+   turn).  Without a gyro, "tilt" is the direction of the total acceleration;
+   turning adds a sideways acceleration of about turn_rate^2 x r at the IMU,
+   which shows up as roll -- what the one-sided hump detector watches.
+   Measured 2026-10-31: a spin at ~160 deg/s (2.8 rad/s) on flat mat gave
+   ~5.4 deg of fake tilt (0.094 g = 0.93 m/s^2), so the IMU sits about
+   r = 0.93 / 2.8^2 = 0.12 m from the turning point.  Keeping the fake tilt
+   below the 1.5 deg hump exit threshold (0.026 g) needs
+   turn_rate < sqrt(0.257 / 0.12) = 1.47 rad/s = 84 deg/s.  60 leaves margin. */
+#define S4_HUMP_MAX_TURN_DPS	60.0f
+#define S4_TURN_HOLD_S		0.2f	/* keep blocking this long after turning */
+LOCAL float	turn_hold_s;
+
+
 LOCAL BOOL	wheel_have;		/* previous counts valid              */
 LOCAL UW	wheel_prev_l, wheel_prev_r;
 LOCAL float	wheel_speed_mm_s;	/* last forward speed (for printing)  */
@@ -312,11 +326,17 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			} else if (dist < (float)S4_MIN_MOVING_MM_S * dt) {
 				dist = 0.0f;		/* stopped, or reversing */
 			}
+			/* turning hard: not "moving forward" for the hump detector */
+			if (wheel_ok && (wheel_turn_dps >  S4_HUMP_MAX_TURN_DPS ||
+					 wheel_turn_dps < -S4_HUMP_MAX_TURN_DPS)) {
+				turn_hold_s = S4_TURN_HOLD_S;
+			} else if (turn_hold_s > 0.0f) {
+				turn_hold_s -= dt;
+			}
+			if (turn_hold_s > 0.0f) dist = 0.0f;
 
 			prev_us  = start_us;
 			fail_run = 0;
-			/* TODO: the car's own acceleration from the wheel speed
-			   (only needed by the full-width hump mode). */
 			logic_start = now_us();
 			ev = imu_logic_update(&logic, map_axes(&raw), dt, dist, 0.0f);
 			s4_diag.accel_mag_mg = (INT)(logic.accel_mag_g * 1000.0f);

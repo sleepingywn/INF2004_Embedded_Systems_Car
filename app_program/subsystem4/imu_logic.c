@@ -13,7 +13,7 @@ void imu_logic_default_config(imu_config_t *c)
 {
     c->calib_time_s           = 2.0f;
     c->filter_tau_s           = 0.15f;
-    c->accel_gate_g           = 0.15f;
+    c->accel_gate_g           = 0.10f;   /* 0.15 let spin-on-the-spot samples (0.85-0.88 g) through */
     c->hump_mode              = IMU_HUMP_ONE_SIDED;  /* our track: hump on the right only */
     c->hump_enter_deg         = 3.0f;    /* a 10-13 mm one-sided hump tilts only ~4-5 deg */
     c->hump_exit_deg          = 1.5f;

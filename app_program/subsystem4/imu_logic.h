@@ -97,6 +97,7 @@ typedef struct {
     bool         rearm_needed;      /* after an abort, wait for flat        */
     float        hump_h_mm;         /* running height during a hump         */
     float        pitch_peak_mm;     /* peak of hump_h_mm (full-width method) */
+    float        hump_peak_angle;   /* peak of the detector angle on this hump */
     float        pre_h_mm;          /* height gained just before entry      */
     float        tilt_timer;
     bool         tilt_active;

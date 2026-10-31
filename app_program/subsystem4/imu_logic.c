@@ -18,7 +18,7 @@ void imu_logic_default_config(imu_config_t *c)
     c->hump_enter_deg         = 3.0f;    /* a 10-13 mm one-sided hump tilts only ~4-5 deg */
     c->hump_exit_deg          = 1.5f;
     c->hump_hold_s            = 0.10f;
-    c->hump_timeout_s         = 5.0f;    /* a slow pass over a one-sided hump takes a few s */
+    c->hump_timeout_s         = 10.0f;   /* a slow hand push kept the wheel on the hump ~5 s */
     c->hump_lever_mm          = 120.0f;  /* PLACEHOLDER until calibrated on the car */
     c->tilt_deg               = 25.0f;
     c->collision_g            = 0.8f;
@@ -207,14 +207,22 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
      *   DESCENDING --hump angle < 1.5 deg for 0.1 s--> FLAT + HUMP_DONE
      * Height:
      *   full-width (pitch dominated): sum of sin(pitch) x distance moved
-     *   one-sided  (roll dominated):  lever x sin(peak tilt)
+     *   one-sided  (roll dominated):  lever x sin(peak TOTAL tilt) - on the real
+ *                                 hump the car tips diagonally (roll + pitch)
      */
     if (s->hump_state != HUMP_FLAT) {
         /* height gained = sin(pitch) x distance moved (full-width method) */
         s->hump_h_mm += imu_sinf(p * DEG2RAD) * dist_delta_mm;
         if (s->hump_h_mm > s->pitch_peak_mm)               s->pitch_peak_mm = s->hump_h_mm;
         if (p > s->current_hump_peak_pitch_deg)            s->current_hump_peak_pitch_deg = p;
-        if (ha > s->current_hump_peak_tilt_deg)            s->current_hump_peak_tilt_deg = ha;
+        if (ha > s->hump_peak_angle)                       s->hump_peak_angle = ha;
+        /* Height uses the tilt only while ROLL dominates (the right wheel is
+           the one lifted).  On the real track the caster/other end also
+           crosses the hump afterwards, which shows as pitch: not the hump
+           height under the wheel, so it is left out. */
+        if ((c->hump_mode != IMU_HUMP_ONE_SIDED || imu_fabsf(s->roll_deg) >= imu_fabsf(p))
+            && tilt > s->current_hump_peak_tilt_deg)
+            s->current_hump_peak_tilt_deg = tilt;
         if (imu_fabsf(s->roll_deg) > s->current_hump_peak_roll_deg)
             s->current_hump_peak_roll_deg = imu_fabsf(s->roll_deg);
         s->current_hump_one_sided = (c->hump_mode == IMU_HUMP_ONE_SIDED) ||
@@ -245,19 +253,20 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
             s->hump_h_mm = s->pre_h_mm;
             s->pitch_peak_mm = s->pre_h_mm;
             s->current_hump_peak_pitch_deg = p;
-            s->current_hump_peak_tilt_deg = ha;
+            s->hump_peak_angle = ha;
+            s->current_hump_peak_tilt_deg = tilt;
             s->current_hump_peak_roll_deg = imu_fabsf(s->roll_deg);
             s->current_hump_one_sided = (c->hump_mode == IMU_HUMP_ONE_SIDED) ||
                 s->current_hump_peak_roll_deg > imu_fabsf(p);
             s->current_hump_peak_mm = s->current_hump_one_sided
-                ? c->hump_lever_mm * imu_sinf(ha * DEG2RAD) : s->pre_h_mm;
+                ? c->hump_lever_mm * imu_sinf(tilt * DEG2RAD) : s->pre_h_mm;
             ev |= IMU_EVT_HUMP_ENTRY;
         }
         break;
 
     case HUMP_CLIMBING: {
         bool over_top = s->current_hump_one_sided
-            ? (ha < 0.7f * s->current_hump_peak_tilt_deg)     /* one-sided: tilt falling */
+            ? (ha < 0.7f * s->hump_peak_angle)                /* one-sided: tilt falling */
             : (p < -c->hump_enter_deg);                        /* full-width: nose down   */
         s->desc_timer = over_top ? s->desc_timer + dt_s : 0.0f;
         if (s->desc_timer >= c->hump_hold_s) {
@@ -270,6 +279,12 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
     }
 
     case HUMP_DESCENDING:
+        /* one-sided: a dip (hand wobble) then rising again = still climbing */
+        if (s->current_hump_one_sided && ha > 0.9f * s->hump_peak_angle) {
+            s->hump_state = HUMP_CLIMBING;
+            s->exit_timer = 0.0f;
+            break;
+        }
         s->exit_timer = (ha < c->hump_exit_deg) ? s->exit_timer + dt_s : 0.0f;
         if (s->exit_timer >= c->hump_hold_s) {
             s->hump_state = HUMP_FLAT;

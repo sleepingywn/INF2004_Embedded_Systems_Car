@@ -149,7 +149,7 @@ change it only by team agreement. Write down every task you create.
 | 1 | 12–13 | *example:* led_task – 12 – any |
 | 2 | 14–15 | *example:* producer_task – 14 – core 1 |
 | 3 | 16–17 | *example:* consumer_task – 16 – core 0 |
-| 4 | 18–19 | terrain_task – 18 – any (woken every 20 ms by `cyc_terrain`) |
+| 4 | 18–19 | terrain_task – 18 – core 1 (woken every 20 ms by `cyc_terrain`; must run on the core that handles the I2C interrupt, see `S4_CORE`) |
 | 5 | 20–21 | |
 
 Core: `TP_PRC1` = core 0, `TP_PRC2` = core 1, or "any".

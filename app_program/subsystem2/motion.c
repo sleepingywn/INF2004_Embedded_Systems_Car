@@ -15,6 +15,22 @@
 #define SOURCE_BIT(s) (1u << (8u + (unsigned)(s)))
 
 static ID mailbox_mutex;
+
+/* INTEGRATION TEST BUILD: a single TMO_POL attempt failed whenever another
+ * core held the lock for a few microseconds, which raised false HANDOFF/IR
+ * faults on the car (2026-10-31). Retry briefly, then wait at most 2 ms. */
+static ER lock_mailbox(void)
+{
+    for (unsigned i = 0; i < 50u; ++i)
+    {
+        ER e = tk_loc_mtx(mailbox_mutex, TMO_POL);
+        if (e != E_TMOUT)
+        {
+            return e;
+        }
+    }
+    return tk_loc_mtx(mailbox_mutex, 2);
+}
 static ID events;
 static ID cyclic;
 static UW stop_generation;
@@ -148,7 +164,7 @@ ER motion_get_status(motion_status_t *status)
     {
         return E_OBJ;
     }
-    ER error = tk_loc_mtx(mailbox_mutex, TMO_POL);
+    ER error = lock_mailbox();
     if (error < E_OK)
     {
         return error;
@@ -285,7 +301,7 @@ ER motion_submit(const motion_request_t *request)
     {
         return E_OBJ;
     }
-    ER error = tk_loc_mtx(mailbox_mutex, TMO_POL);
+    ER error = lock_mailbox();
     if (error < E_OK)
     {
         return error;
@@ -319,7 +335,7 @@ ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source, uint32_t is
     {
         return E_OBJ;
     }
-    ER error = tk_loc_mtx(mailbox_mutex, TMO_POL);
+    ER error = lock_mailbox();
     if (error < E_OK)
     {
         return error;
@@ -355,7 +371,7 @@ ER motion_publish_line(const line_msg_t *line, uint32_t sampled_ms, uint32_t epo
     {
         return E_OBJ;
     }
-    ER error = tk_loc_mtx(mailbox_mutex, TMO_POL);
+    ER error = lock_mailbox();
     if (error < E_OK)
     {
         return error;
@@ -386,7 +402,7 @@ ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t
     {
         return E_OBJ;
     }
-    ER error = tk_loc_mtx(mailbox_mutex, TMO_POL);
+    ER error = lock_mailbox();
     if (error < E_OK)
     {
         return error;
@@ -949,7 +965,7 @@ void motion_task(INT stacd, void *exinf)
         {
             fault_stop(MOTION_FAULT_TIMEOUT);
         }
-        if (tk_loc_mtx(mailbox_mutex, TMO_POL) < E_OK)
+        if (lock_mailbox() < E_OK)
         {
             fault_stop(MOTION_FAULT_HANDOFF);
             continue;
@@ -1038,7 +1054,7 @@ void motion_task(INT stacd, void *exinf)
         }
         state.updated_ms = motion_now_ms();
         ++state.sequence;
-        if (tk_loc_mtx(mailbox_mutex, TMO_POL) == E_OK)
+        if (lock_mailbox() == E_OK)
         {
             /* Preserve rejections that raced with this owner iteration. */
             state.rejected_requests = shared.rejected_requests + owner_rejections;

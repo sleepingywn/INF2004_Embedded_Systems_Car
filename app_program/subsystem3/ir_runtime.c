@@ -9,6 +9,22 @@
 #define IR_MAX_QUEUE_AGE_MS (IR_ACQ_RING_SIZE - 1u)
 
 static ID runtime_mutex;
+
+/* INTEGRATION TEST BUILD: a single TMO_POL attempt failed whenever another
+ * core held the lock for a few microseconds, which raised false HANDOFF/IR
+ * faults on the car (2026-10-31). Retry briefly, then wait at most 2 ms. */
+static ER lock_runtime(void)
+{
+    for (unsigned i = 0; i < 50u; ++i)
+    {
+        ER e = tk_loc_mtx(runtime_mutex, TMO_POL);
+        if (e != E_TMOUT)
+        {
+            return e;
+        }
+    }
+    return tk_loc_mtx(runtime_mutex, 2);
+}
 static ID runtime_event;
 static ir_runtime_status_t published;
 static struct
@@ -33,7 +49,7 @@ static void set_health(bool healthy)
      * clearing its source fault. The command API asserts under this mutex. */
     if (healthy)
     {
-        if (tk_loc_mtx(runtime_mutex, TMO_POL) < E_OK)
+        if (lock_runtime() < E_OK)
         {
             return;
         }
@@ -172,7 +188,7 @@ static void process_frame(const ir_raw_frame_t *frame)
 static void publish_status(void)
 {
     owner.updated_ms = motion_now_ms();
-    if (tk_loc_mtx(runtime_mutex, TMO_POL) == E_OK)
+    if (lock_runtime() == E_OK)
     {
         published = owner;
         pending.processing = false;
@@ -194,7 +210,7 @@ static void ir_task(INT stacd, void *exinf)
     for (;;)
     {
         unsigned command = 0;
-        if (tk_loc_mtx(runtime_mutex, TMO_POL) == E_OK)
+        if (lock_runtime() == E_OK)
         {
             command = pending.command;
             pending.command = 0;
@@ -278,7 +294,7 @@ ER ir_runtime_calibration(ir_runtime_command_t command)
     {
         return E_OBJ;
     }
-    ER error = tk_loc_mtx(runtime_mutex, TMO_POL);
+    ER error = lock_runtime();
     if (error < E_OK)
     {
         return error;
@@ -318,7 +334,7 @@ ER ir_runtime_get_status(ir_runtime_status_t *status)
     {
         return E_OBJ;
     }
-    ER error = tk_loc_mtx(runtime_mutex, TMO_POL);
+    ER error = lock_runtime();
     if (error == E_OK)
     {
         *status = published;

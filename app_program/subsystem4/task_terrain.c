@@ -16,6 +16,7 @@
 #include "subsystem4.h"
 #include "drv_gy511.h"
 #include "imu_logic.h"
+#include "../subsystem2/motion.h"	/* IF-09: Buddy 2's wheel encoder counts */
 
 #define FAULT_AFTER	5	/* failed reads in a row -> IMU fault (100 ms) */
 #define REINIT_EVERY	50	/* while faulted, retry the sensor every 1 s   */
@@ -72,6 +73,61 @@ EXPORT ER s4_get_terrain(S4_TERRAIN *out)
 /* Chip X/Y/Z -> car forward / side / up.  Bench test: chip X = forward
    on our car.  The mounting angle (upside down, ~15 deg tilt) is removed
    by imu_logic's calibration, so only the forward axis must be right. */
+/* ---------------------------------------------------------------------
+ *  Wheel data from subsystem 2 (IF-09, motion_get_status).
+ *  Uses the RAW encoder counts, which Buddy 2 publishes even before his
+ *  speed controller is calibrated, with the wheel geometry from his
+ *  motion_config.h.  Forward travel of the car centre = average of the
+ *  two wheels.
+ * --------------------------------------------------------------------- */
+#define S4_MIN_MOVING_MM_S	20	/* below this the car counts as stopped */
+
+LOCAL BOOL	wheel_have;		/* previous counts valid              */
+LOCAL UW	wheel_prev_l, wheel_prev_r;
+LOCAL float	wheel_speed_mm_s;	/* last forward speed (for printing)  */
+LOCAL float	wheel_turn_dps;		/* last turn rate, + = left (CCW)     */
+LOCAL BOOL	wheel_ok;		/* wheel data available               */
+
+/* Forward distance since the previous call, in mm (negative = reversing).
+   Returns 0 and clears wheel_ok when subsystem 2 has no encoder data. */
+LOCAL float wheel_travel_mm(float dt)
+{
+	motion_status_t	m;
+	INT		dl, dr;
+	float		left_mm, right_mm;
+	const float	mm_per_count_l = (float)MOTION_LEFT_CIRCUMFERENCE_UM * 0.001f
+					/ (float)MOTION_LEFT_COUNTS_REV;
+	const float	mm_per_count_r = (float)MOTION_RIGHT_CIRCUMFERENCE_UM * 0.001f
+					/ (float)MOTION_RIGHT_COUNTS_REV;
+
+	if (MOTION_LEFT_COUNTS_REV == 0 || MOTION_RIGHT_COUNTS_REV == 0 ||
+	    motion_get_status(&m) != E_OK) {
+		wheel_ok = FALSE;
+		return 0.0f;
+	}
+	if (!wheel_have) {			/* first sample: just remember */
+		wheel_prev_l = m.left_count;
+		wheel_prev_r = m.right_count;
+		wheel_have = TRUE;
+		wheel_ok = TRUE;
+		return 0.0f;
+	}
+	dl = (INT)(m.left_count  - wheel_prev_l);	/* wrap-safe */
+	dr = (INT)(m.right_count - wheel_prev_r);
+	wheel_prev_l = m.left_count;
+	wheel_prev_r = m.right_count;
+
+	left_mm  = (float)(dl * MOTION_LEFT_ENCODER_SIGN)  * mm_per_count_l;
+	right_mm = (float)(dr * MOTION_RIGHT_ENCODER_SIGN) * mm_per_count_r;
+	if (dt > 0.0f) {
+		wheel_speed_mm_s = 0.5f * (left_mm + right_mm) / dt;
+		wheel_turn_dps   = (right_mm - left_mm) / (float)MOTION_TRACK_WIDTH_MM
+				   / dt * 57.29578f;
+	}
+	wheel_ok = TRUE;
+	return 0.5f * (left_mm + right_mm);
+}
+
 LOCAL imu_accel_t map_axes(const gy511_accel_t *r)
 {
 	imu_accel_t a = { r->x, r->y, r->z };
@@ -123,6 +179,11 @@ LOCAL void print_status(void)
 	print_tenths(" pitch", S4_PITCH_DDEG(snapshot));
 	print_tenths(" roll", S4_ROLL_DDEG(snapshot));
 	print_tenths(" tilt", to_tenths(logic.tilt_total_deg));
+	if (wheel_ok) {
+		tm_printf((UB*)"  v %d mm/s", (INT)wheel_speed_mm_s);
+	} else {
+		tm_printf((UB*)"  v --");
+	}
 	tm_printf((UB*)" |a| %d mg  %s  humps %u  highest %u mm",
 		  s4_diag.accel_mag_mg, imu_hump_state_name(logic.hump_state),
 		  (UINT)snapshot.hump_count, (UINT)snapshot.high_peak_mm);
@@ -147,8 +208,8 @@ LOCAL void publish(BOOL fault)
 	tk_get_tim(&now);
 	v.pitch_deg    = logic.pitch_deg;
 	v.roll_deg     = logic.roll_deg;
-	v.turn_dps     = 0.0f;
-	v.turn_valid   = false;		/* TODO(IF-08): from subsystem 2's wheel speeds */
+	v.turn_dps     = wheel_turn_dps;	/* from subsystem 2's wheel counts */
+	v.turn_valid   = wheel_ok ? true : false;
 	v.cur_peak_mm  = logic.current_hump_peak_mm;
 	v.high_peak_mm = logic.highest_hump_peak_mm;
 	v.hump_state   = (uint8_t)logic.hump_state;
@@ -223,12 +284,19 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			UINT  ev;
 			UW    read_us = now_us() - start_us, logic_start;
 			float dt = (float)(start_us - prev_us) * 1e-6f;
-			float dist = (float)S4_PRETEND_SPEED_MM_S * dt;
+			float dist = wheel_travel_mm(dt);
+
+			/* Bench override: pretend to move (S4_PRETEND_SPEED_MM_S) */
+			if (S4_PRETEND_SPEED_MM_S > 0) {
+				dist = (float)S4_PRETEND_SPEED_MM_S * dt;
+			} else if (dist < (float)S4_MIN_MOVING_MM_S * dt) {
+				dist = 0.0f;		/* stopped, or reversing */
+			}
 
 			prev_us  = start_us;
 			fail_run = 0;
-			/* TODO(C04): dist and the car's own acceleration come from
-			   subsystem 2's wheel data once that interface is agreed. */
+			/* TODO: the car's own acceleration from the wheel speed
+			   (only needed by the full-width hump mode). */
 			logic_start = now_us();
 			ev = imu_logic_update(&logic, map_axes(&raw), dt, dist, 0.0f);
 			s4_diag.accel_mag_mg = (INT)(logic.accel_mag_g * 1000.0f);

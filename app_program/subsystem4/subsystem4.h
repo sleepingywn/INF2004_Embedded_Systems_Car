@@ -76,10 +76,10 @@ IMPORT ER s4_get_terrain(S4_TERRAIN *out);
 IMPORT ID	flg_terrain;
 
 /* ---------------------------------------------------------------------
- *  Temporary, until subsystem 2 publishes its wheel data (contract C04):
- *  hump detection needs to know the car is moving.  0 = not moving (hump
- *  detection off; pitch, roll, tilt and collision still work).  Set to
- *  e.g. 100 to test humps by hand on the bench.
+ *  Hump detection needs to know the car is moving.  terrain_task reads
+ *  Buddy 2's wheel encoder counts (IF-09, motion_get_status) for that.
+ *  Bench override: set this to e.g. 100 to pretend the car always moves
+ *  at 100 mm/s (ignores the wheels).  0 = use the real wheel data.
  * --------------------------------------------------------------------- */
 #define S4_PRETEND_SPEED_MM_S	0
 

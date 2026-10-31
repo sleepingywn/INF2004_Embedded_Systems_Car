@@ -1,0 +1,443 @@
+---- Opened the serial port COM5 ----
+terrain: calibrated  mounting pitch -15.7  roll +178.7
+
+[con] integration console ready
+
+[con] keys:
+[con]  h help    p status line on/off    t terrain line on/off
+[con]  c IR calibration BEGIN   f IR calibration FINISH   i IR calibration values
+[con]  o clear the IR fault (motor test without IR), then r
+[con]  r motion RESET           x motion STOP
+[con]  w both +20%  s both -20%  a left +20%  d right +20%  A left -20%  D right -20%
+[con]  (each pulse lasts 0.5 s; press r first if motion shows a fault)
+
+terrain: pitch +0.0 roll +0.0 tilt +0.1 |a| 994 mg  FLAT  humps 0  highest 0 mm  | exec max 1977 us (read 1536, logic 600)  slow 0  print max 0 us  jitter max 492 us  overruns 0  i2c err 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 999 mg  FLAT  humps 0  highest 0 mm  | exec max 1977 us (read 1536, logic 600)  slow 0  print max 916 us  jitter max 579 us  overruns 0  i2c err 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1000 mg  FLAT  humps 0  highest 0 mm  | exec max 1977 us (read 1536, logic 600)  slow 0  print max 916 us  jitter max 579 us  overruns 0  i2c err 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 997 mg  FLAT  humps 0  highest 0 mm  | exec max 1977 us (read 1536, logic 600)  slow 0  print max 916 us  jitter max 588 us  overruns 0  i2c err 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+terrain: pitch +0.0 roll +0.0 tilt +0.1 |a| 991 mg  FLAT  humps 0  highest 0 mm  | exec max 1977 us (read 1536, logic 600)  slow 0  print max 916 us  jitter max 588 us  overruns 0  i2c err 0
+---- Sent utf8 encoded message: "t" ----
+[con] terrain line off
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+---- Sent utf8 encoded message: "o" ----
+[con] IR fault cleared for a motor test (0); now press r
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+---- Sent utf8 encoded message: "r" ----
+[con] motion RESET: sent (0)
+[con]   reset done: motion IDLE, faults none
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 0 R 0 bad 0
+---- Sent utf8 encoded message: "a" ----
+[con] left +20%: sent (0)
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION PULSING last ACCEPTED id 2 | faults none| duty L +200 R +0 | enc L 906 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L 998 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L 998 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L 998 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L 998 R 0 bad 0
+---- Sent utf8 encoded message: "a" ----
+[con] left +20%: sent (0)
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION PULSING last ACCEPTED id 3 | faults none| duty L +200 R +0 | enc L 1467 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L 1998 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L 1998 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L 1998 R 0 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L 1998 R 0 bad 0
+---- Sent utf8 encoded message: "d" ----
+[con] right +20%: sent (0)
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION PULSING last ACCEPTED id 4 | faults none| duty L +0 R +200 | enc L 1998 R 673 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 957 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 957 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 957 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 957 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR FAULT FAULT raw bc  156 L  229 R  162 | failed GP26 GP27 GP28 | acq STOPPED n 573 late 236 us scan 55 us flt 8
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L 1998 R 956 bad 0
+---- Sent utf8 encoded message: "c" ----
+[con] IR calibration BEGIN: started (0)
+[con]   hold the car still and move ALL THREE sensors over white and over black, then press f
+[con] IR CALIBRATING FAULT raw bc  168 L  206 R  195 | failed GP26 GP27 GP28 | acq on n 107 late 40 us scan 38 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  164 L  200 R  192 | failed GP26 GP27 GP28 | acq on n 658 late 74 us scan 38 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  152 L  226 R  217 | failed GP26 GP27 GP28 | acq on n 1207 late 74 us scan 63 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  165 L  196 R 2833 | failed GP26 GP27 GP28 | acq on n 1758 late 74 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  826 L  257 R  273 | failed GP26 GP27 GP28 | acq on n 2307 late 74 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  284 L 2449 R 2552 | failed GP26 GP27 GP28 | acq on n 2858 late 75 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc 1941 L 1184 R 1705 | failed GP26 GP27 GP28 | acq on n 3407 late 122 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  241 L  281 R  304 | failed GP26 GP27 GP28 | acq on n 3958 late 122 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  210 L 2304 R 1934 | failed GP26 GP27 GP28 | acq on n 4507 late 122 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  192 L 2633 R 2402 | failed GP26 GP27 GP28 | acq on n 5058 late 122 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  194 L  255 R  852 | failed GP26 GP27 GP28 | acq on n 5607 late 122 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  212 L  304 R 1278 | failed GP26 GP27 GP28 | acq on n 6158 late 122 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  345 L 1705 R 2109 | failed GP26 GP27 GP28 | acq on n 6707 late 122 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  209 L  579 R 1325 | failed GP26 GP27 GP28 | acq on n 7257 late 122 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  181 L  262 R  445 | failed GP26 GP27 GP28 | acq on n 7807 late 468 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  198 L 1994 R 2224 | failed GP26 GP27 GP28 | acq on n 8358 late 468 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  563 L 1739 R 1947 | failed GP26 GP27 GP28 | acq on n 8907 late 468 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  225 L 2534 R 2559 | failed GP26 GP27 GP28 | acq on n 9458 late 468 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  213 L 1398 R 2040 | failed GP26 GP27 GP28 | acq on n 10007 late 468 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  169 L  268 R 1551 | failed GP26 GP27 GP28 | acq on n 10558 late 468 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  188 L 1437 R 2239 | failed GP26 GP27 GP28 | acq on n 11107 late 468 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  181 L  229 R  246 | failed GP26 GP27 GP28 | acq on n 11658 late 468 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  179 L  942 R  424 | failed GP26 GP27 GP28 | acq on n 12207 late 468 us scan 67 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  202 L  217 R  219 | failed GP26 GP27 GP28 | acq on n 12758 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  169 L  188 R  188 | failed GP26 GP27 GP28 | acq on n 13307 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR CALIBRATING FAULT raw bc  169 L  167 R  168 | failed GP26 GP27 GP28 | acq on n 13858 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+---- Sent utf8 encoded message: "f" ----
+[con] IR calibration FINISH: sent (0)
+[con] IR READY, 14298 calibration samples
+[con]   GP26 barcode white  141 black 2038 contrast 1897
+[con]   GP27 line L  white  160 black 2945 contrast 2785
+[con]   GP28 line R  white  160 black 3108 contrast 2948
+[con] IR READY ok raw bc  162 L  172 R  195 | norm   1   0   1 | acq on n 14618 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  172 L  171 R  166 | norm   1   0   0 | acq on n 15167 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  154 L  185 R  195 | norm   0   0   1 | acq on n 15718 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  154 L  164 R  168 | norm   0   0   0 | acq on n 16267 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  152 L  198 R  182 | norm   0   1   0 | acq on n 16818 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  165 L  192 R  192 | norm   1   1   1 | acq on n 17367 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  164 L  186 R  195 | norm   1   0   1 | acq on n 17918 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  156 L  187 R  186 | norm   0   0   0 | acq on n 18467 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  165 L  179 R  173 | norm   1   0   0 | acq on n 19018 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  153 L  185 R  181 | norm   0   0   0 | acq on n 19567 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  161 L  196 R  181 | norm   1   1   0 | acq on n 20118 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  157 L  164 R  164 | norm   0   0   0 | acq on n 20667 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  151 L  187 R  194 | norm   0   0   1 | acq on n 21218 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  163 L  196 R  193 | norm   1   1   1 | acq on n 21767 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  155 L  171 R  161 | norm   0   0   0 | acq on n 22318 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+[con] IR READY ok raw bc  172 L  179 R  177 | norm   1   0   0 | acq on n 22867 late 468 us scan 248 us flt 0
+[con] MOTION ERROR last COMPLETED id 4 | faults external | duty L +0 R +0 | enc L 1998 R 956 bad 0
+---- Closed the serial port COM5 ----

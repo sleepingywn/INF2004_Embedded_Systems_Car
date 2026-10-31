@@ -27,6 +27,10 @@ Add a new row for every run. Never edit or delete old rows.
 | Date | Test ID | Commit | Tester | Result | Log / evidence | Notes |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | INT-01 | `abc1234` | | PASS / FAIL | `logs/YYYY-MM-DD_….txt` | |
+| 2026-10-31 | INT-01 | combined S2+S3+S4 TEST build (this branch) | Andy | PASS | `logs/2026-10-31_I1b_combined_TEST.txt` | All subsystems in one image: S1 2, S2 8, S3 2, S4 9, S5 1 passed, 0 failed; S4 exec max 1557 µs, overruns 0 |
+| 2026-10-31 | INT-07 | combined build + console (before lock fix) | Andy | FAIL | `logs/2026-10-31_I2_console_reset_refused.txt`, `logs/2026-10-31_I4_console_handoff_fault.txt` | At boot IR acquisition stops itself (late 217-262 µs > 100 µs limit; or ring overflow, flt 8, during boot); motion boots with `timeout external` (cleared by reset). After reset, motion latched `handoff` whenever a status reader held the mutex → fixed by the lock retry commit |
+| 2026-10-31 | INT-07 | combined build + console, lock fix, 500 µs IR limit | Andy | PASS (manual) | `logs/2026-10-31_I5_console_motors_ir.txt` | IR BEGIN/FINISH: contrast GP26 1897, GP27 2785, GP28 2948 → READY ok, acquisition stayed on (max late 468 µs); motion IDLE, no faults; BEGIN stops motion as designed (`external` until reset). IR still faults during boot: calibrate after every boot |
+| 2026-10-31 | INT-06 | combined build + console | Andy | PASS (manual) | `logs/2026-10-31_I5_console_motors_ir.txt`, `logs/2026-10-31_I5_encoder_hand_turn.txt` | Raw counts reach motion_get_status: +duty left → left wheel backward, enc L +998/pulse; +duty right → right wheel forward, enc R +956; one hand turn forward: L −2679, R +2869; 0 invalid edges. Signs and geometry recorded in motion_config.h |
 
 2026-10-29 preparation: INT-03..INT-06 are **NOT RUN**. Owner review, calibration,
 live S3 runtime validation and the user's test/flash approval remain prerequisites

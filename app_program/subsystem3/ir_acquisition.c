@@ -15,14 +15,14 @@
 
 _Static_assert(IR_NUM_CH == 3u && IR_CH_BARCODE == 0u && IR_CH_LINE_A == 1u && IR_CH_LINE_B == 2u,
                "ADC scan requires channels 0, 1, 2 in this order");
-_Static_assert(IR_ACQ_RING_SIZE == 16u, "Ring indices use four bits");
+_Static_assert(IR_ACQ_RING_SIZE == 64u, "Ring indices use six bits");
 
 static ID ready_event;
 static volatile ir_raw_frame_t ring[IR_ACQ_RING_SIZE];
 static volatile struct
 {
-    uint8_t head : 4;
-    uint8_t tail : 4;
+    uint16_t head : 6;
+    uint16_t tail : 6;
 } queue;
 static volatile ir_acq_status_t acquisition;
 static struct

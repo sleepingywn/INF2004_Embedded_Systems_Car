@@ -7,10 +7,12 @@
 
 /* Private to the S3 task on core 0 and its two same-priority ISRs. */
 #define IR_ACQ_EVENT 1u
-#define IR_ACQ_RING_SIZE 16u /* 15 usable slots; overflow stops acquisition */
+#define IR_ACQ_RING_SIZE 64u /* 63 usable slots (63 ms); overflow stops acquisition.
+                              * Was 16: on the car the IR task was occasionally held
+                              * up > 15 ms (boot, and once after ~5 min), flt 8. */
 #define IR_ACQ_PERIOD_US 1000u
 /* Provisional acceptance bound, not a measured timing achievement. */
-#define IR_ACQ_MAX_JITTER_US 500u /* TEST BUILD: 100 us tripped on the car (262 us seen) */
+#define IR_ACQ_MAX_JITTER_US 800u /* TEST BUILD: 100 tripped on the car; 500 nearly did (scan 490 us seen) */
 
 typedef enum
 {

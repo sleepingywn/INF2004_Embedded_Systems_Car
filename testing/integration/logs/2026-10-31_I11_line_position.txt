@@ -1,0 +1,246 @@
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  220 L  197 R  188 | norm   1   0   0 | line err +0 LOST | acq on n 200849 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  218 L  222 R  213 | norm   0   1   1 | line err +0 LOST | acq on n 201398 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  220 L  208 R  217 | norm   1   1   1 | line err +0 LOST | acq on n 201949 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  227 L  223 R  188 | norm   1   1   0 | line err +0 LOST | acq on n 202499 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  216 L  227 R  196 | norm   0   1   0 | line err +0 LOST | acq on n 203049 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  227 L  204 R  195 | norm   1   1   0 | line err +0 LOST | acq on n 203598 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  222 L  228 R  201 | norm   1   1   0 | line err +0 LOST | acq on n 204149 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  229 L  202 R  190 | norm   1   1   0 | line err +0 LOST | acq on n 204698 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  208 L  213 R  217 | norm   0   1   1 | line err +0 LOST | acq on n 205249 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  203 L  210 R  198 | norm   0   1   0 | line err +0 LOST | acq on n 205798 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  217 L  224 R  189 | norm   0   1   0 | line err +0 LOST | acq on n 206349 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  228 L  226 R  213 | norm   1   1   1 | line err +0 LOST | acq on n 206898 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  224 L  215 R  212 | norm   1   1   1 | line err +0 LOST | acq on n 207449 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  209 L  197 R  190 | norm   0   0   0 | line err +0 LOST | acq on n 207999 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  212 L  224 R  195 | norm   0   1   0 | line err +0 LOST | acq on n 208549 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  219 L  224 R  214 | norm   0   1   1 | line err +0 LOST | acq on n 209098 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  200 L  214 R  203 | norm   0   1   0 | line err +0 LOST | acq on n 209649 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  203 L  201 R  196 | norm   0   1   0 | line err +0 LOST | acq on n 210198 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  201 L  216 R  210 | norm   0   1   1 | line err +0 LOST | acq on n 210749 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  206 L  207 R  191 | norm   0   1   0 | line err +0 LOST | acq on n 211298 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  210 L  205 R  217 | norm   0   1   1 | line err +0 LOST | acq on n 211849 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  225 L  224 R  216 | norm   1   1   1 | line err +0 LOST | acq on n 212398 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  208 L  195 R  218 | norm   0   0   1 | line err +0 LOST | acq on n 212949 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR READY ok raw bc  209 L  206 R  198 | norm   0   1   0 | line err +0 LOST | acq on n 213499 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+---- Sent utf8 encoded message: "l" ----
+[con] fast line monitor on
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] line err   +0  LOST        norm L   1 R   0  bc   1
+[con] line err   +0  LOST        norm L   1 R   0  bc   1
+[con] IR READY ok raw bc  206 L  221 R  196 | norm   0   1   0 | line err +0 LOST | acq on n 214050 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   1
+[con] line err   +0  LOST        norm L   1 R   0  bc   1
+[con] line err   +0  LOST        norm L   1 R   1  bc   1
+[con] line err   +0  LOST        norm L   1 R   1  bc   1
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] IR READY ok raw bc  208 L  210 R  196 | norm   0   1   0 | line err +0 LOST | acq on n 214599 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   1  bc   1
+[con] line err   +0  LOST        norm L   1 R   1  bc   1
+[con] line err   +0  LOST        norm L   1 R   0  bc   1
+[con] line err   +0  LOST        norm L   1 R   1  bc   1
+[con] IR READY ok raw bc  211 L  210 R  201 | norm   0   1   0 | line err +0 LOST | acq on n 215150 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   1
+[con] line err   +0  LOST        norm L   1 R   1  bc   1
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   1
+[con] line err   +0  LOST        norm L   1 R   0  bc   1
+[con] IR READY ok raw bc  223 L  201 R  193 | norm   1   1   0 | line err +0 LOST | acq on n 215699 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   1
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   2  bc   0
+[con] IR READY ok raw bc  202 L  203 R  246 | norm   0   1   2 | line err +0 LOST | acq on n 216250 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err  -92  EDGE_ONLY   norm L   0 R  92  bc   1
+[con] line err  -67  ON          norm L   0 R  65  bc   1
+[con] line err  -20  ON          norm L   1 R   8  bc   1
+[con] line err   +0  ON          norm L   0 R   1  bc   2
+[con] line err   +0  ON          norm L   0 R   0  bc   9
+[con] IR READY ok raw bc  510 L  197 R  193 | norm   9   0   0 | line err +0 ON | acq on n 216799 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc   4
+[con] line err   +0  ON          norm L   1 R   1  bc   7
+[con] line err   +0  ON          norm L   1 R   0  bc   3
+[con] line err   +0  ON          norm L   1 R   0  bc   2
+[con] line err  -48  ON          norm L   1 R  56  bc   2
+[con] IR READY ok raw bc  264 L  208 R 2015 | norm   2   1  57 | line err -58 ON | acq on n 217350 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err  -93  EDGE_ONLY   norm L   1 R  94  bc   2
+[con] line err  -48  ON          norm L   0 R  39  bc   1
+[con] line err   +0  ON          norm L   2 R   0  bc   1
+[con] line err  +61  ON          norm L  65 R   0  bc   0
+[con] line err  +58  ON          norm L  57 R   0  bc   1
+[con] IR READY ok raw bc  220 L 2063 R  191 | norm   1  57   0 | line err +58 ON | acq on n 217899 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   2 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  189 L  188 R  165 | norm   0   0   0 | line err +0 ON | acq on n 218450 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  206 L  168 R  179 | norm   0   0   0 | line err +0 ON | acq on n 218999 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] line err   +0  ON          norm L   1 R   0  bc   1
+[con] line err  +31  ON          norm L  38 R   0  bc   1
+[con] IR READY ok raw bc  241 L 1450 R  203 | norm   1  38   0 | line err +39 ON | acq on n 219550 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err  +66  ON          norm L  66 R   0  bc   1
+[con] line err   +0  ON          norm L   3 R   0  bc   1
+[con] line err  -18  ON          norm L   0 R  30  bc   1
+[con] line err  -93  EDGE_ONLY   norm L   1 R  94  bc   1
+[con] line err  -23  ON          norm L   1 R  11  bc   1
+[con] IR READY ok raw bc  244 L  201 R  537 | norm   1   1  11 | line err -23 ON | acq on n 220099 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   1 R   0  bc   1
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  236 L  199 R  163 | norm   1   1   0 | line err +0 ON | acq on n 220650 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] line err   +0  ON          norm L   1 R   0  bc   2
+[con] line err   +0  ON          norm L   1 R   2  bc   1
+[con] line err  -87  EDGE_ONLY   norm L   1 R  90  bc   1
+[con] line err  -68  ON          norm L   0 R  57  bc   0
+[con] IR READY ok raw bc  213 L  192 R 2009 | norm   0   0  57 | line err -68 ON | acq on n 221199 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L  18 R   0  bc   0
+[con] line err  +67  ON          norm L  65 R   0  bc   0
+[con] line err   +0  ON          norm L   2 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  197 L  166 R  158 | norm   0   0   0 | line err +0 ON | acq on n 221751 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  238 L  197 R  166 | norm   1   0   0 | line err +0 ON | acq on n 222299 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  207 L  179 R  168 | norm   0   0   0 | line err +0 ON | acq on n 222850 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  ON          norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  236 L  170 R  163 | norm   1   0   0 | line err +0 ON | acq on n 223399 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  227 L  163 R  157 | norm   1   0   0 | line err +0 LOST | acq on n 223950 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  217 L  163 R  158 | norm   0   0   0 | line err +0 LOST | acq on n 224500 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  230 L  175 R  180 | norm   1   0   0 | line err +0 LOST | acq on n 225050 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  214 L  187 R  175 | norm   0   0   0 | line err +0 LOST | acq on n 225599 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  230 L  190 R  183 | norm   1   0   0 | line err +0 LOST | acq on n 226150 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  232 L  190 R  188 | norm   1   0   0 | line err +0 LOST | acq on n 226699 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  222 L  190 R  156 | norm   1   0   0 | line err +0 LOST | acq on n 227251 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  204 L  170 R  160 | norm   0   0   0 | line err +0 LOST | acq on n 227799 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  214 L  189 R  163 | norm   0   0   0 | line err +0 LOST | acq on n 228350 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  232 L  178 R  188 | norm   1   0   0 | line err +0 LOST | acq on n 228899 late 385 us scan 483 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0

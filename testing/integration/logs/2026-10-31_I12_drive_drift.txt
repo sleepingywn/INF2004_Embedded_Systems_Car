@@ -1,0 +1,1183 @@
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] IR READY ok raw bc  267 L  189 R  186 | norm   2   0   0 | line err +0 LOST | acq on n 238989 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 6 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   3
+[con] line err   +0  LOST        norm L   0 R   0  bc   4
+[con] line err   +0  LOST        norm L   0 R   1  bc   5
+[con] IR READY ok raw bc  363 L  185 R  171 | norm   5   0   0 | line err +0 LOST | acq on n 239540 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 6 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   5
+[con] line err   +0  LOST        norm L   0 R   0  bc   3
+[con] line err   +0  LOST        norm L   0 R   0  bc   3
+[con] line err   +0  LOST        norm L   0 R   0  bc   4
+[con] line err   +0  LOST        norm L   0 R   0  bc   3
+[con] IR READY ok raw bc  308 L  181 R  178 | norm   3   0   0 | line err +0 LOST | acq on n 240089 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 6 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  248 L  165 R  177 | norm   1   0   0 | line err +0 LOST | acq on n 240640 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] IR READY ok raw bc  278 L  190 R  189 | norm   2   0   1 | line err +0 LOST | acq on n 241189 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   4
+[con] line err   +0  LOST        norm L   0 R   0  bc   3
+[con] line err   +0  LOST        norm L   0 R   0  bc   4
+[con] IR READY ok raw bc  334 L  162 R  191 | norm   4   0   1 | line err +0 LOST | acq on n 241741 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   4
+[con] line err   +0  LOST        norm L   0 R   0  bc   5
+[con] line err   +0  LOST        norm L   0 R   0  bc   6
+[con] line err   +0  LOST        norm L   0 R   0  bc   4
+[con] line err   +0  LOST        norm L   0 R   0  bc   3
+[con] IR READY ok raw bc  313 L  176 R  168 | norm   3   0   0 | line err +0 LOST | acq on n 242289 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 6 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   5
+[con] line err   +0  LOST        norm L   0 R   0  bc  10
+[con] line err   +0  LOST        norm L   0 R   0  bc  15
+[con] line err   +0  LOST        norm L   1 R   1  bc  16
+[con] line err   +0  LOST        norm L   0 R   0  bc  16
+[con] IR READY ok raw bc  719 L  164 R  172 | norm  16   0   0 | line err +0 LOST | acq on n 242839 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 6 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc  14
+[con] line err   +0  LOST        norm L   1 R   0  bc  12
+[con] line err   +0  LOST        norm L   0 R   0  bc  13
+[con] line err   +0  LOST        norm L   0 R   1  bc  14
+[con] line err   +0  LOST        norm L   0 R   0  bc   9
+[con] IR READY ok raw bc  484 L  180 R  168 | norm   9   0   0 | line err +0 LOST | acq on n 243389 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 6 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   3
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] IR READY ok raw bc  256 L  181 R  176 | norm   2   0   0 | line err +0 LOST | acq on n 243940 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 6 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  227 L  171 R  178 | norm   1   0   0 | line err +0 LOST | acq on n 244489 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   1  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  214 L  162 R  170 | norm   0   0   0 | line err +0 LOST | acq on n 245040 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   2
+[con] IR READY ok raw bc  265 L  174 R  160 | norm   2   0   0 | line err +0 LOST | acq on n 245589 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   1 R   0  bc   2
+[con] line err   +0  LOST        norm L   0 R   0  bc  10
+[con] line err   +0  LOST        norm L   0 R   0  bc   5
+[con] IR READY ok raw bc  366 L  189 R  180 | norm   5   0   0 | line err +0 LOST | acq on n 246140 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] IR READY ok raw bc  236 L  177 R  182 | norm   1   0   0 | line err +0 LOST | acq on n 246689 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] IR READY ok raw bc  233 L  178 R  182 | norm   1   0   0 | line err +0 LOST | acq on n 247240 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] IR READY ok raw bc  235 L  172 R  188 | norm   1   0   1 | line err +0 LOST | acq on n 247789 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   1  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  209 L  187 R  181 | norm   0   0   0 | line err +0 LOST | acq on n 248340 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   1  bc   1
+[con] IR READY ok raw bc  226 L  191 R  188 | norm   1   1   1 | line err +0 LOST | acq on n 248889 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   1
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  193 L  188 R  165 | norm   0   0   0 | line err +0 LOST | acq on n 249440 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] IR READY ok raw bc  203 L  193 R  190 | norm   0   1   1 | line err +0 LOST | acq on n 249989 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  201 L  177 R  179 | norm   0   0   0 | line err +0 LOST | acq on n 250540 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  186 L  162 R  158 | norm   0   0   0 | line err +0 LOST | acq on n 251089 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  194 L  161 R  189 | norm   0   0   1 | line err +0 LOST | acq on n 251640 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  178 L  166 R  164 | norm   0   0   0 | line err +0 LOST | acq on n 252189 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  178 L  172 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 252740 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  186 L  163 R  163 | norm   0   0   0 | line err +0 LOST | acq on n 253289 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  203 L  182 R  162 | norm   0   0   0 | line err +0 LOST | acq on n 253840 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  176 L  187 R  174 | norm   0   0   0 | line err +0 LOST | acq on n 254389 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] IR READY ok raw bc  201 L  192 R  156 | norm   0   1   0 | line err +0 LOST | acq on n 254939 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  179 L  170 R  189 | norm   0   0   1 | line err +0 LOST | acq on n 255489 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  201 L  177 R  171 | norm   0   0   0 | line err +0 LOST | acq on n 256040 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  202 L  190 R  185 | norm   0   0   0 | line err +0 LOST | acq on n 256589 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  194 L  195 R  184 | norm   0   1   0 | line err +0 LOST | acq on n 257140 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  201 L  169 R  177 | norm   0   0   0 | line err +0 LOST | acq on n 257689 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   1
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  208 L  181 R  172 | norm   0   0   0 | line err +0 LOST | acq on n 258240 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  187 L  183 R  174 | norm   0   0   0 | line err +0 LOST | acq on n 258789 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  189 L  160 R  186 | norm   0   0   0 | line err +0 LOST | acq on n 259340 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  206 L  187 R  189 | norm   0   0   1 | line err +0 LOST | acq on n 259889 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  181 L  161 R  171 | norm   0   0   0 | line err +0 LOST | acq on n 260440 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  185 L  164 R  189 | norm   0   0   1 | line err +0 LOST | acq on n 260989 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  178 L  187 R  185 | norm   0   0   0 | line err +0 LOST | acq on n 261539 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  209 L  180 R  163 | norm   0   0   0 | line err +0 LOST | acq on n 262089 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  189 L  170 R  191 | norm   0   0   1 | line err +0 LOST | acq on n 262640 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  198 L  170 R  177 | norm   0   0   0 | line err +0 LOST | acq on n 263189 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  175 L  179 R  167 | norm   0   0   0 | line err +0 LOST | acq on n 263741 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  189 L  165 R  161 | norm   0   0   0 | line err +0 LOST | acq on n 264289 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  181 L  186 R  181 | norm   0   0   0 | line err +0 LOST | acq on n 264840 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  176 L  172 R  157 | norm   0   0   0 | line err +0 LOST | acq on n 265389 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  184 L  170 R  184 | norm   0   0   0 | line err +0 LOST | acq on n 265940 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  197 L  187 R  161 | norm   0   0   0 | line err +0 LOST | acq on n 266489 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  181 L  175 R  162 | norm   0   0   0 | line err +0 LOST | acq on n 267040 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  185 L  161 R  190 | norm   0   0   1 | line err +0 LOST | acq on n 267589 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  195 L  188 R  171 | norm   0   0   0 | line err +0 LOST | acq on n 268140 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  176 L  162 R  185 | norm   0   0   0 | line err +0 LOST | acq on n 268689 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  200 L  166 R  168 | norm   0   0   0 | line err +0 LOST | acq on n 269240 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] IR READY ok raw bc  200 L  194 R  190 | norm   0   1   1 | line err +0 LOST | acq on n 269789 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  177 L  168 R  189 | norm   0   0   1 | line err +0 LOST | acq on n 270340 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  199 L  188 R  173 | norm   0   0   0 | line err +0 LOST | acq on n 270889 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  181 L  166 R  191 | norm   0   0   1 | line err +0 LOST | acq on n 271440 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  204 L  190 R  168 | norm   0   0   0 | line err +0 LOST | acq on n 271989 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] IR READY ok raw bc  195 L  180 R  175 | norm   0   0   0 | line err +0 LOST | acq on n 272540 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  187 L  172 R  170 | norm   0   0   0 | line err +0 LOST | acq on n 273089 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  201 L  170 R  169 | norm   0   0   0 | line err +0 LOST | acq on n 273640 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  180 L  163 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 274189 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  182 L  170 R  156 | norm   0   0   0 | line err +0 LOST | acq on n 274740 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  201 L  181 R  180 | norm   0   0   0 | line err +0 LOST | acq on n 275289 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  189 L  173 R  168 | norm   0   0   0 | line err +0 LOST | acq on n 275841 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  202 L  171 R  176 | norm   0   0   0 | line err +0 LOST | acq on n 276389 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  184 L  171 R  190 | norm   0   0   1 | line err +0 LOST | acq on n 276940 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  206 L  169 R  186 | norm   0   0   0 | line err +0 LOST | acq on n 277489 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  200 L  164 R  164 | norm   0   0   0 | line err +0 LOST | acq on n 278040 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  183 L  177 R  186 | norm   0   0   0 | line err +0 LOST | acq on n 278589 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  172 L  159 R  158 | norm   0   0   0 | line err +0 LOST | acq on n 279140 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  177 L  169 R  173 | norm   0   0   0 | line err +0 LOST | acq on n 279689 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  202 L  187 R  168 | norm   0   0   0 | line err +0 LOST | acq on n 280240 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  189 L  170 R  163 | norm   0   0   0 | line err +0 LOST | acq on n 280790 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  203 L  173 R  158 | norm   0   0   0 | line err +0 LOST | acq on n 281340 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  176 L  184 R  168 | norm   0   0   0 | line err +0 LOST | acq on n 281889 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  198 L  169 R  169 | norm   0   0   0 | line err +0 LOST | acq on n 282441 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  203 L  170 R  179 | norm   0   0   0 | line err +0 LOST | acq on n 282989 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  195 L  190 R  164 | norm   0   0   0 | line err +0 LOST | acq on n 283540 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  180 L  189 R  161 | norm   0   0   0 | line err +0 LOST | acq on n 284089 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] IR READY ok raw bc  179 L  187 R  190 | norm   0   0   1 | line err +0 LOST | acq on n 284640 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  191 L  185 R  178 | norm   0   0   0 | line err +0 LOST | acq on n 285189 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  185 L  171 R  171 | norm   0   0   0 | line err +0 LOST | acq on n 285741 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  178 L  171 R  178 | norm   0   0   0 | line err +0 LOST | acq on n 286289 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  203 L  190 R  161 | norm   0   0   0 | line err +0 LOST | acq on n 286840 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  180 L  168 R  159 | norm   0   0   0 | line err +0 LOST | acq on n 287389 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "-" ----
+[con] drive power 30 %
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  174 L  185 R  178 | norm   0   0   0 | line err +0 LOST | acq on n 287940 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  185 L  161 R  159 | norm   0   0   0 | line err +0 LOST | acq on n 288489 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+---- Sent utf8 encoded message: "-" ----
+[con] drive power 25 %
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  195 L  168 R  184 | norm   0   0   0 | line err +0 LOST | acq on n 289040 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  207 L  186 R  189 | norm   0   0   1 | line err +0 LOST | acq on n 289589 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  207 L  187 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 290140 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  180 L  189 R  174 | norm   0   0   0 | line err +0 LOST | acq on n 290689 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  196 L  165 R  164 | norm   0   0   0 | line err +0 LOST | acq on n 291240 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   1 R   0  bc   0
+---- Sent utf8 encoded message: "l" ----
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] fast line monitor off
+[con] IR READY ok raw bc  191 L  176 R  160 | norm   0   0   0 | line err +0 LOST | acq on n 291789 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  186 L  181 R  159 | norm   0   0   0 | line err +0 LOST | acq on n 292339 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  179 L  185 R  174 | norm   0   0   0 | line err +0 LOST | acq on n 292888 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  193 L  192 R  190 | norm   0   1   1 | line err +0 LOST | acq on n 293439 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  192 L  187 R  186 | norm   0   0   0 | line err +0 LOST | acq on n 293988 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  184 L  188 R  192 | norm   0   0   1 | line err +0 LOST | acq on n 294539 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  203 L  181 R  172 | norm   0   0   0 | line err +0 LOST | acq on n 295088 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  184 L  168 R  181 | norm   0   0   0 | line err +0 LOST | acq on n 295639 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  198 L  193 R  187 | norm   0   1   1 | line err +0 LOST | acq on n 296188 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  202 L  168 R  170 | norm   0   0   0 | line err +0 LOST | acq on n 296739 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  187 L  164 R  159 | norm   0   0   0 | line err +0 LOST | acq on n 297288 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  204 L  163 R  191 | norm   0   0   1 | line err +0 LOST | acq on n 297840 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  183 L  177 R  168 | norm   0   0   0 | line err +0 LOST | acq on n 298388 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  179 L  162 R  176 | norm   0   0   0 | line err +0 LOST | acq on n 298939 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  194 L  190 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 299488 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  196 L  171 R  169 | norm   0   0   0 | line err +0 LOST | acq on n 300039 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  202 L  185 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 300588 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  197 L  193 R  165 | norm   0   1   0 | line err +0 LOST | acq on n 301139 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  184 L  163 R  160 | norm   0   0   0 | line err +0 LOST | acq on n 301688 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  188 L  184 R  191 | norm   0   0   1 | line err +0 LOST | acq on n 302239 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  176 L  168 R  159 | norm   0   0   0 | line err +0 LOST | acq on n 302788 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  175 L  164 R  186 | norm   0   0   0 | line err +0 LOST | acq on n 303339 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "l" ----
+[con] fast line monitor on
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  184 L  193 R  166 | norm   0   1   0 | line err +0 LOST | acq on n 303889 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] IR READY ok raw bc  202 L  188 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 304440 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  198 L  193 R  159 | norm   0   1   0 | line err +0 LOST | acq on n 304989 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  200 L  188 R  169 | norm   0   0   0 | line err +0 LOST | acq on n 305540 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  177 L  166 R  181 | norm   0   0   0 | line err +0 LOST | acq on n 306089 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   1  bc   0
+[con] line err   +0  LOST        norm L   0 R   0  bc   0
+[con] IR READY ok raw bc  202 L  189 R  180 | norm   0   0   0 | line err +0 LOST | acq on n 306640 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "l" ----
+[con] fast line monitor off
+[con] IR READY ok raw bc  179 L  163 R  158 | norm   0   0   0 | line err +0 LOST | acq on n 307188 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  191 L  161 R  165 | norm   0   0   0 | line err +0 LOST | acq on n 307739 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  190 L  190 R  187 | norm   0   0   1 | line err +0 LOST | acq on n 308288 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  174 L  168 R  168 | norm   0   0   0 | line err +0 LOST | acq on n 308839 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  174 L  166 R  158 | norm   0   0   0 | line err +0 LOST | acq on n 309388 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  179 L  181 R  186 | norm   0   0   0 | line err +0 LOST | acq on n 309939 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  179 L  164 R  157 | norm   0   0   0 | line err +0 LOST | acq on n 310488 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "-" ----
+[con] drive power 20 %
+[con] IR READY ok raw bc  189 L  186 R  163 | norm   0   0   0 | line err +0 LOST | acq on n 311039 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  189 L  190 R  189 | norm   0   0   1 | line err +0 LOST | acq on n 311588 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "-" ----
+[con] drive power 15 %
+[con] IR READY ok raw bc  182 L  164 R  161 | norm   0   0   0 | line err +0 LOST | acq on n 312138 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  184 L  164 R  161 | norm   0   0   0 | line err +0 LOST | acq on n 312689 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "]" ----
+[con] drive time 2500 ms
+[con] IR READY ok raw bc  184 L  179 R  176 | norm   0   0   0 | line err +0 LOST | acq on n 313238 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "]" ----
+[con] drive time 3000 ms
+[con] IR READY ok raw bc  195 L  164 R  163 | norm   0   0   0 | line err +0 LOST | acq on n 313788 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  193 L  160 R  179 | norm   0   0   0 | line err +0 LOST | acq on n 314339 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "]" ----
+[con] drive time 3500 ms
+[con] IR READY ok raw bc  171 L  164 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 314889 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "]" ----
+[con] drive time 4000 ms
+[con] IR READY ok raw bc  192 L  192 R  189 | norm   0   1   1 | line err +0 LOST | acq on n 315438 late 380 us scan 471 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  198 L  191 R  159 | norm   0   1   0 | line err +0 LOST | acq on n 315989 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  197 L  164 R  162 | norm   0   0   0 | line err +0 LOST | acq on n 316538 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  196 L  165 R  172 | norm   0   0   0 | line err +0 LOST | acq on n 317089 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  201 L  186 R  186 | norm   0   0   0 | line err +0 LOST | acq on n 317638 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  175 L  169 R  157 | norm   0   0   0 | line err +0 LOST | acq on n 318189 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  201 L  186 R  176 | norm   0   0   0 | line err +0 LOST | acq on n 318738 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  190 L  165 R  186 | norm   0   0   0 | line err +0 LOST | acq on n 319289 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  182 L  179 R  175 | norm   0   0   0 | line err +0 LOST | acq on n 319838 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  185 L  165 R  162 | norm   0   0   0 | line err +0 LOST | acq on n 320389 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  199 L  187 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 320938 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  202 L  186 R  176 | norm   0   0   0 | line err +0 LOST | acq on n 321489 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  179 L  163 R  161 | norm   0   0   0 | line err +0 LOST | acq on n 322038 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  195 L  169 R  165 | norm   0   0   0 | line err +0 LOST | acq on n 322589 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  201 L  190 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 323138 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  194 L  161 R  190 | norm   0   0   1 | line err +0 LOST | acq on n 323689 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  205 L  186 R  186 | norm   0   0   0 | line err +0 LOST | acq on n 324238 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  196 L  163 R  162 | norm   0   0   0 | line err +0 LOST | acq on n 324789 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  200 L  188 R  188 | norm   0   0   1 | line err +0 LOST | acq on n 325338 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  197 L  190 R  182 | norm   0   0   0 | line err +0 LOST | acq on n 325889 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  202 L  189 R  189 | norm   0   0   1 | line err +0 LOST | acq on n 326438 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  213 L  186 R  167 | norm   0   0   0 | line err +0 LOST | acq on n 326989 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  184 L  162 R  160 | norm   0   0   0 | line err +0 LOST | acq on n 327538 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  196 L  193 R  187 | norm   0   1   1 | line err +0 LOST | acq on n 328089 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  244 L 2186 R  195 | norm   1  64   1 | line err +61 ON | acq on n 328638 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  211 L  221 R  226 | norm   0   1   2 | line err +0 ON | acq on n 329189 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  209 L  235 R  213 | norm   0   2   1 | line err +0 ON | acq on n 329738 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  201 L  237 R  196 | norm   0   2   1 | line err +0 ON | acq on n 330289 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  208 L  238 R  174 | norm   0   2   0 | line err +0 ON | acq on n 330838 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  209 L  265 R  170 | norm   0   3   0 | line err +0 ON | acq on n 331389 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  212 L  243 R  189 | norm   0   2   1 | line err +0 ON | acq on n 331940 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  190 L  238 R  171 | norm   0   2   0 | line err +0 LOST | acq on n 332489 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  213 L  250 R  192 | norm   0   2   1 | line err +0 LOST | acq on n 333038 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  206 L  253 R  197 | norm   0   2   1 | line err +0 LOST | acq on n 333589 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  185 L  235 R  171 | norm   0   2   0 | line err +0 LOST | acq on n 334138 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  204 L  262 R  201 | norm   0   3   1 | line err +0 LOST | acq on n 334689 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  203 L  264 R  200 | norm   0   3   1 | line err +0 LOST | acq on n 335238 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  194 L  235 R  202 | norm   0   2   1 | line err +0 LOST | acq on n 335789 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  204 L  242 R  185 | norm   0   2   0 | line err +0 LOST | acq on n 336338 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  208 L  251 R  178 | norm   0   2   0 | line err +0 LOST | acq on n 336889 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  212 L  244 R  186 | norm   0   2   0 | line err +0 LOST | acq on n 337438 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  209 L  267 R  201 | norm   0   3   1 | line err +0 LOST | acq on n 337989 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  201 L  259 R  197 | norm   0   3   1 | line err +0 LOST | acq on n 338538 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  187 L  237 R  200 | norm   0   2   1 | line err +0 LOST | acq on n 339089 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  205 L  245 R  187 | norm   0   2   1 | line err +0 LOST | acq on n 339638 late 380 us scan 474 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  181 L  244 R  175 | norm   0   2   0 | line err +0 LOST | acq on n 340189 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  212 L  251 R  182 | norm   0   2   0 | line err +0 LOST | acq on n 340738 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  187 L  254 R  190 | norm   0   3   1 | line err +0 LOST | acq on n 341289 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  209 L  239 R  177 | norm   0   2   0 | line err +0 LOST | acq on n 341838 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  189 L  262 R  172 | norm   0   3   0 | line err +0 LOST | acq on n 342389 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  209 L  260 R  196 | norm   0   3   1 | line err +0 LOST | acq on n 342938 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  206 L  265 R  169 | norm   0   3   0 | line err +0 LOST | acq on n 343489 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  205 L  261 R  200 | norm   0   3   1 | line err +0 LOST | acq on n 344038 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  189 L  234 R  198 | norm   0   2   1 | line err +0 LOST | acq on n 344589 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  205 L  266 R  201 | norm   0   3   1 | line err +0 LOST | acq on n 345138 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  212 L  254 R  186 | norm   0   3   0 | line err +0 LOST | acq on n 345689 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  196 L  257 R  189 | norm   0   3   1 | line err +0 LOST | acq on n 346238 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  205 L  255 R  194 | norm   0   3   1 | line err +0 LOST | acq on n 346789 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  184 L  228 R  166 | norm   0   2   0 | line err +0 LOST | acq on n 347338 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  171 L  237 R  178 | norm   0   2   0 | line err +0 LOST | acq on n 347889 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  187 L  224 R  173 | norm   0   2   0 | line err +0 LOST | acq on n 348438 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  190 L  248 R  173 | norm   0   2   0 | line err +0 LOST | acq on n 348989 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  206 L 2405 R  193 | norm   0  71   1 | line err +70 ON | acq on n 349538 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  181 L 2452 R  192 | norm   0  72   1 | line err +72 ON | acq on n 350089 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  176 L 2481 R  163 | norm   0  73   0 | line err +73 ON | acq on n 350638 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  212 L 2469 R  195 | norm   0  73   1 | line err +72 ON | acq on n 351189 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  196 L 2225 R  178 | norm   0  65   0 | line err +65 ON | acq on n 351738 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  205 L 1974 R  179 | norm   0  57   0 | line err +57 ON | acq on n 352289 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  198 L 2121 R  187 | norm   0  62   1 | line err +61 ON | acq on n 352838 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  188 L 2377 R  162 | norm   0  70   0 | line err +70 ON | acq on n 353389 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  201 L 1680 R  192 | norm   0  48   1 | line err +48 ON | acq on n 353938 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  205 L  214 R  217 | norm   0   1   1 | line err +0 ON | acq on n 354489 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  187 L  249 R  171 | norm   0   2   0 | line err +0 ON | acq on n 355038 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  199 L 2435 R  164 | norm   0  72   0 | line err +73 ON | acq on n 355589 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  200 L  320 R  195 | norm   0   5   1 | line err +0 ON | acq on n 356138 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  209 L 2154 R  190 | norm   0  63   1 | line err +61 ON | acq on n 356689 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  197 L  729 R  178 | norm   0  18   0 | line err +19 ON | acq on n 357238 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  176 L 1535 R  170 | norm   0  43   0 | line err +42 ON | acq on n 357789 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  198 L 1356 R  189 | norm   0  38   1 | line err +37 ON | acq on n 358338 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  173 L 1147 R  186 | norm   0  31   0 | line err +31 ON | acq on n 358889 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  181 L 1160 R  184 | norm   0  31   0 | line err +31 ON | acq on n 359438 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  200 L 1146 R  187 | norm   0  31   1 | line err +29 ON | acq on n 359989 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  193 L 1162 R  190 | norm   0  31   1 | line err +30 ON | acq on n 360538 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  179 L 1128 R  177 | norm   0  30   0 | line err +29 ON | acq on n 361089 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  192 L 1159 R  190 | norm   0  31   1 | line err +30 ON | acq on n 361638 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  182 L 1136 R  158 | norm   0  31   0 | line err +29 ON | acq on n 362189 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  174 L 1126 R  167 | norm   0  30   0 | line err +30 ON | acq on n 362738 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  195 L 1136 R  188 | norm   0  31   1 | line err +31 ON | acq on n 363289 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  196 L 1147 R  177 | norm   0  31   0 | line err +31 ON | acq on n 363838 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+[con] IR READY ok raw bc  173 L 1131 R  179 | norm   0  30   0 | line err +31 ON | acq on n 364389 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 1 | faults none| duty L +0 R +0 | enc L 5 R 0 bad 0
+---- Sent utf8 encoded message: "g" ----
+[con] drive FORWARD 15 % for 4000 ms
+[con] drive forward: sent (0)
+[con] IR READY ok raw bc  210 L 2377 R  169 | norm   0  70   0 | line err +69 ON | acq on n 365009 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 2 | faults none| duty L -150 R +150 | enc L -408 R 385 bad 0
+[con] IR READY ok raw bc  201 L 1011 R  176 | norm   0  27   0 | line err +29 ON | acq on n 365559 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 2 | faults none| duty L -150 R +150 | enc L -984 R 902 bad 0
+[con] IR READY ok raw bc  176 L  189 R  190 | norm   0   0   1 | line err +0 ON | acq on n 366108 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 2 | faults none| duty L -150 R +150 | enc L -1533 R 1372 bad 0
+[con] IR READY ok raw bc  212 L  196 R  209 | norm   0   1   1 | line err +0 ON | acq on n 366659 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 2 | faults none| duty L -150 R +150 | enc L -2094 R 1816 bad 0
+[con] IR READY ok raw bc  196 L  190 R  251 | norm   0   0   2 | line err +0 ON | acq on n 367208 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 2 | faults none| duty L -150 R +150 | enc L -2637 R 2228 bad 0
+[con] IR READY ok raw bc  176 L  189 R  232 | norm   0   0   2 | line err +0 ON | acq on n 367759 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 2 | faults none| duty L -150 R +150 | enc L -3194 R 2697 bad 0
+[con] IR READY ok raw bc  203 L  217 R  242 | norm   0   1   2 | line err +0 ON | acq on n 368308 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 2 | faults none| duty L -150 R +150 | enc L -3741 R 3132 bad 0
+[con] IR READY ok raw bc  177 L 2925 R  230 | norm   0  87   2 | line err +86 EDGE_ONLY | acq on n 368859 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  185 L 2934 R  227 | norm   0  88   2 | line err +87 EDGE_ONLY | acq on n 369408 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  188 L 2953 R  209 | norm   0  88   1 | line err +86 EDGE_ONLY | acq on n 369959 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  182 L 2948 R  238 | norm   0  88   2 | line err +86 EDGE_ONLY | acq on n 370509 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  177 L 2950 R  240 | norm   0  88   2 | line err +86 EDGE_ONLY | acq on n 371059 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  176 L 2930 R  214 | norm   0  87   1 | line err +86 EDGE_ONLY | acq on n 371608 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  187 L 2953 R  235 | norm   0  88   2 | line err +86 EDGE_ONLY | acq on n 372159 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  212 L 3058 R  225 | norm   0  92   2 | line err +90 EDGE_ONLY | acq on n 372708 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc 3568 L 2871 R 3129 | norm 100  86  89 | line err +0 BOTH_BLACK | acq on n 373259 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc 3731 L 3528 R 2475 | norm 100 100  69 | line err +31 EDGE_ONLY | acq on n 373808 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc 3663 L 3406 R 3085 | norm 100 100  88 | line err +0 BOTH_BLACK | acq on n 374359 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc 3380 L 2313 R 2142 | norm  96  68  59 | line err +9 ON | acq on n 374908 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc 3270 L 2372 R 1380 | norm  93  70  36 | line err +34 ON | acq on n 375459 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  225 L 1416 R  187 | norm   1  39   1 | line err +37 ON | acq on n 376009 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  176 L  966 R  188 | norm   0  25   1 | line err +25 ON | acq on n 376559 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  201 L 1401 R  179 | norm   0  39   0 | line err +39 ON | acq on n 377108 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  186 L 2243 R  173 | norm   0  66   0 | line err +65 ON | acq on n 377659 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  179 L 2088 R  160 | norm   0  61   0 | line err +60 ON | acq on n 378208 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  187 L 2274 R  194 | norm   0  67   1 | line err +66 ON | acq on n 378759 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  192 L 2262 R  191 | norm   0  66   1 | line err +66 ON | acq on n 379308 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  202 L 2249 R  177 | norm   0  66   0 | line err +66 ON | acq on n 379859 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  177 L 2248 R  162 | norm   0  66   0 | line err +67 ON | acq on n 380408 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  189 L 2276 R  179 | norm   0  67   0 | line err +66 ON | acq on n 380959 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  177 L 2288 R  157 | norm   0  67   0 | line err +66 ON | acq on n 381509 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  192 L 2262 R  156 | norm   0  66   0 | line err +67 ON | acq on n 382059 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  176 L 2262 R  168 | norm   0  66   0 | line err +67 ON | acq on n 382608 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  198 L 2278 R  192 | norm   0  67   1 | line err +66 ON | acq on n 383159 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3293 bad 0
+[con] IR READY ok raw bc  177 L 2315 R  190 | norm   0  68   1 | line err +69 ON | acq on n 383709 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  172 L 2396 R  157 | norm   0  71   0 | line err +71 ON | acq on n 384259 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  182 L 2413 R  163 | norm   0  71   0 | line err +72 ON | acq on n 384808 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  200 L 2441 R  183 | norm   0  72   0 | line err +71 ON | acq on n 385359 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  197 L 2428 R  187 | norm   0  72   1 | line err +71 ON | acq on n 385908 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  180 L 2450 R  163 | norm   0  72   0 | line err +72 ON | acq on n 386459 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  203 L  328 R  197 | norm   0   5   1 | line err +0 ON | acq on n 387009 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  200 L  234 R  188 | norm   0   2   1 | line err +0 ON | acq on n 387559 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  185 L  269 R  192 | norm   0   3   1 | line err +0 ON | acq on n 388108 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  200 L  248 R  169 | norm   0   2   0 | line err +0 ON | acq on n 388659 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  176 L  243 R  164 | norm   0   2   0 | line err +0 ON | acq on n 389208 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  193 L  268 R  162 | norm   0   3   0 | line err +0 ON | acq on n 389759 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  193 L  267 R  184 | norm   0   3   0 | line err +0 ON | acq on n 390308 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  175 L  272 R  162 | norm   0   3   0 | line err +0 ON | acq on n 390859 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  177 L  221 R  170 | norm   0   1   0 | line err +0 LOST | acq on n 391408 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  171 L  224 R  185 | norm   0   2   0 | line err +0 LOST | acq on n 391959 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+[con] IR READY ok raw bc  194 L  227 R  168 | norm   0   2   0 | line err +0 LOST | acq on n 392509 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 2 | faults none| duty L +0 R +0 | enc L -3947 R 3294 bad 0
+---- Sent utf8 encoded message: "g" ----
+[con] drive FORWARD 15 % for 4000 ms
+[con] drive forward: sent (0)
+[con] IR READY ok raw bc  185 L  226 R  193 | norm   0   2   1 | line err +0 LOST | acq on n 393128 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 3 | faults none| duty L -150 R +150 | enc L -3971 R 3312 bad 0
+[con] IR READY ok raw bc  241 L 2002 R  176 | norm   1  58   0 | line err +56 ON | acq on n 393679 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 3 | faults none| duty L -150 R +150 | enc L -4484 R 3806 bad 0
+[con] IR READY ok raw bc  182 L 1849 R  159 | norm   0  53   0 | line err +53 ON | acq on n 394228 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 3 | faults none| duty L -150 R +150 | enc L -5039 R 4302 bad 0
+[con] IR READY ok raw bc  195 L  184 R  168 | norm   0   0   0 | line err +0 ON | acq on n 394779 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 3 | faults none| duty L -150 R +150 | enc L -5609 R 4798 bad 0
+[con] IR READY ok raw bc  171 L  181 R  172 | norm   0   0   0 | line err +0 ON | acq on n 395328 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 3 | faults none| duty L -150 R +150 | enc L -6168 R 5247 bad 0
+[con] IR READY ok raw bc 3371 L  164 R  162 | norm  96   0   0 | line err +0 ON | acq on n 395879 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 3 | faults none| duty L -150 R +150 | enc L -6740 R 5717 bad 0
+[con] IR READY ok raw bc  202 L  199 R  170 | norm   0   1   0 | line err +0 LOST | acq on n 396428 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 3 | faults none| duty L -150 R +150 | enc L -7296 R 6162 bad 0
+[con] IR READY ok raw bc  202 L  165 R  166 | norm   0   0   0 | line err +0 ON | acq on n 396979 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 3 | faults none| duty L -150 R +150 | enc L -7859 R 6606 bad 0
+[con] IR READY ok raw bc  174 L  182 R  182 | norm   0   0   0 | line err +0 ON | acq on n 397528 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  195 L  174 R  194 | norm   0   0   1 | line err +0 ON | acq on n 398079 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  210 L  196 R  201 | norm   0   1   1 | line err +0 ON | acq on n 398628 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc 3304 L 2554 R 2147 | norm  94  76  60 | line err +15 EDGE_ONLY | acq on n 399179 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc 1170 L 2198 R  564 | norm  29  64  12 | line err +52 ON | acq on n 399728 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  209 L  197 R 1118 | norm   0   1  29 | line err -26 ON | acq on n 400279 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  189 L  275 R  188 | norm   0   3   1 | line err +0 ON | acq on n 400828 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  185 L  732 R  163 | norm   0  18   0 | line err +18 ON | acq on n 401380 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  193 L  758 R  186 | norm   0  19   0 | line err +18 ON | acq on n 401928 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  187 L  767 R  177 | norm   0  19   0 | line err +19 ON | acq on n 402479 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  172 L  732 R  159 | norm   0  18   0 | line err +18 ON | acq on n 403028 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  186 L  738 R  158 | norm   0  18   0 | line err +18 ON | acq on n 403579 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  190 L  753 R  189 | norm   0  18   1 | line err +18 ON | acq on n 404128 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+[con] IR READY ok raw bc  187 L  733 R  161 | norm   0  18   0 | line err +18 ON | acq on n 404679 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 3 | faults none| duty L +0 R +0 | enc L -7973 R 6691 bad 0
+---- Sent utf8 encoded message: "g" ----
+[con] drive FORWARD 15 % for 4000 ms
+[con] drive forward: sent (0)
+[con] IR READY ok raw bc  270 L 2423 R  181 | norm   2  71   0 | line err +70 ON | acq on n 405299 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 4 | faults none| duty L -150 R +150 | enc L -8440 R 7130 bad 0
+[con] IR READY ok raw bc  173 L 2197 R  171 | norm   0  64   0 | line err +64 ON | acq on n 405848 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 4 | faults none| duty L -150 R +150 | enc L -8996 R 7647 bad 0
+[con] IR READY ok raw bc  226 L  169 R  191 | norm   1   0   1 | line err +0 ON | acq on n 406399 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 4 | faults none| duty L -150 R +150 | enc L -9578 R 8163 bad 0
+[con] IR READY ok raw bc  190 L  195 R  195 | norm   0   1   1 | line err +0 ON | acq on n 406948 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 4 | faults none| duty L -150 R +150 | enc L -10122 R 8589 bad 0
+[con] IR READY ok raw bc 3369 L  179 R  179 | norm  96   0   0 | line err +0 ON | acq on n 407499 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 4 | faults none| duty L -150 R +150 | enc L -10688 R 9010 bad 0
+[con] IR READY ok raw bc  198 L  170 R  192 | norm   0   0   1 | line err +0 ON | acq on n 408048 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 4 | faults none| duty L -150 R +150 | enc L -11248 R 9406 bad 0
+[con] IR READY ok raw bc  172 L  237 R 2544 | norm   0   2  71 | line err -69 ON | acq on n 408599 late 380 us scan 490 us flt 0
+[con] MOTION PULSING last ACCEPTED id 4 | faults none| duty L -150 R +150 | enc L -11792 R 9821 bad 0
+[con] IR READY ok raw bc  187 L  171 R  468 | norm   0   0   9 | line err +0 ON | acq on n 409148 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc  182 L  165 R  997 | norm   0   0  25 | line err -25 ON | acq on n 409699 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc  165 L  181 R 1282 | norm   0   0  33 | line err -33 ON | acq on n 410248 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc  189 L  166 R 1355 | norm   0   0  36 | line err -35 ON | acq on n 410799 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc  172 L  169 R 1304 | norm   0   0  34 | line err -34 ON | acq on n 411348 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc  169 L  164 R 1134 | norm   0   0  29 | line err -29 ON | acq on n 411899 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc  176 L  180 R 1094 | norm   0   0  28 | line err -28 ON | acq on n 412448 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc  170 L  180 R  958 | norm   0   0  24 | line err -22 ON | acq on n 412999 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc 2932 L 3253 R 1739 | norm  83  98  47 | line err +40 EDGE_ONLY | acq on n 413548 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc 3651 L 2929 R 2821 | norm 100  87  80 | line err +0 BOTH_BLACK | acq on n 414099 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc  925 L  251 R 2463 | norm  22   2  69 | line err -67 ON | acq on n 414648 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0
+[con] IR READY ok raw bc  192 L  186 R  175 | norm   0   0   0 | line err +0 ON | acq on n 415199 late 380 us scan 490 us flt 0
+[con] MOTION IDLE last COMPLETED id 4 | faults none| duty L +0 R +0 | enc L -12008 R 9972 bad 0

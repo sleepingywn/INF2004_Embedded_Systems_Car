@@ -1,0 +1,212 @@
+con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+---- Sent utf8 encoded message: "l" ----
+[con] fast line monitor on
+[con] line err  +61  EDGE_ONLY   norm L  91 R  30  bc   0
+[con] line err  +61  EDGE_ONLY   norm L  90 R  30  bc   1
+[con] line err  +61  EDGE_ONLY   norm L  91 R  30  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  90 R  30  bc   1
+[con] IR READY ok raw bc  219 L 3022 R 1161 | norm   1  90  30 | line err +60 EDGE_ONLY | acq on n 120660 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +61  EDGE_ONLY   norm L  91 R  30  bc   0
+[con] line err  +61  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] line err  +61  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  91 R  30  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  91 R  30  bc   0
+[con] IR READY ok raw bc  196 L 3013 R 1182 | norm   0  90  30 | line err +60 EDGE_ONLY | acq on n 121209 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +61  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] line err  +61  EDGE_ONLY   norm L  91 R  30  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  91 R  30  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] IR READY ok raw bc  209 L 3040 R 1163 | norm   0  91  30 | line err +60 EDGE_ONLY | acq on n 121761 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +60  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] line err  +61  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  90 R  30  bc   0
+[con] IR READY ok raw bc  210 L 3034 R 1155 | norm   0  91  30 | line err +60 EDGE_ONLY | acq on n 122309 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +59  EDGE_ONLY   norm L  91 R  32  bc   0
+[con] line err  +60  EDGE_ONLY   norm L  91 R  31  bc   0
+[con] line err  +59  EDGE_ONLY   norm L  91 R  32  bc   0
+[con] line err  +56  EDGE_ONLY   norm L  92 R  35  bc   0
+[con] line err  +57  EDGE_ONLY   norm L  91 R  35  bc   0
+[con] IR READY ok raw bc  186 L 3046 R 1346 | norm   0  91  35 | line err +57 EDGE_ONLY | acq on n 122860 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +48  EDGE_ONLY   norm L  94 R  45  bc   0
+[con] line err  +46  EDGE_ONLY   norm L  96 R  51  bc   1
+[con] line err   +0  BOTH_BLACK  norm L 100 R  80  bc   3
+[con] line err  +77  EDGE_ONLY   norm L  76 R   1  bc  27
+[con] line err  +62  ON          norm L  62 R   1  bc  51  [barcode capture]
+[con] IR READY ok raw bc 1797 L 2092 R  192 | norm  48  61   1 | line err +62 ON | acq on n 123409 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +52  ON          norm L  55 R   1  bc   1  [barcode capture]
+[con] line err  +66  ON          norm L  67 R   1  bc   1
+[con] line err  +61  ON          norm L  62 R   2  bc   2
+[con] line err  +66  ON          norm L  67 R   1  bc   2
+[con] line err  +65  ON          norm L  67 R   1  bc   1
+[con] IR READY ok raw bc  216 L 2280 R  195 | norm   1  67   1 | line err +65 ON | acq on n 123960 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +69  ON          norm L  70 R   1  bc   1
+[con] line err  +64  ON          norm L  66 R   2  bc   3
+[con] line err  +64  ON          norm L  66 R   1  bc  23
+[con] line err  +67  ON          norm L  69 R   1  bc  64  [barcode capture]
+[con] line err  +73  ON          norm L  74 R   0  bc  93  [barcode capture]
+[con] IR READY ok raw bc 3279 L 2501 R  181 | norm  93  74   0 | line err +73 ON | acq on n 124509 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +74  ON          norm L  74 R   0  bc  63  [barcode capture]
+[con] line err  +77  EDGE_ONLY   norm L  78 R   1  bc   2  [barcode capture]
+[con] line err  +84  EDGE_ONLY   norm L  86 R   1  bc   1
+[con] line err  +84  EDGE_ONLY   norm L  97 R  18  bc   0
+[con] line err  +30  EDGE_ONLY   norm L 100 R  72  bc   0
+[con] IR READY ok raw bc  205 L 3341 R 2559 | norm   0 100  72 | line err +30 EDGE_ONLY | acq on n 125060 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err   +0  BOTH_BLACK  norm L 100 R  84  bc   0
+[con] line err  +22  EDGE_ONLY   norm L  95 R  72  bc   1
+[con] line err  +60  EDGE_ONLY   norm L  86 R  24  bc   0
+[con] line err  +73  EDGE_ONLY   norm L  73 R   1  bc   0
+[con] line err  +64  ON          norm L  65 R   1  bc   0
+[con] IR READY ok raw bc  198 L 2222 R  197 | norm   0  65   1 | line err +64 ON | acq on n 125609 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +56  ON          norm L  56 R   0  bc   0
+[con] line err  +54  ON          norm L  55 R   1  bc   0
+[con] line err  +48  ON          norm L  50 R   0  bc   0
+[con] line err  +49  ON          norm L  49 R   0  bc   0
+[con] line err  +45  ON          norm L  46 R   1  bc   0
+[con] IR READY ok raw bc  210 L 1609 R  196 | norm   0  46   1 | line err +45 ON | acq on n 126160 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +48  ON          norm L  49 R   0  bc   0
+[con] line err  +46  ON          norm L  46 R   0  bc   0
+[con] line err  +46  ON          norm L  46 R   1  bc   0
+[con] line err  +43  ON          norm L  43 R   0  bc   0
+[con] line err  +43  ON          norm L  43 R   0  bc   1
+[con] IR READY ok raw bc  202 L 1535 R  180 | norm   0  43   0 | line err +43 ON | acq on n 126709 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +43  ON          norm L  44 R   1  bc   1
+[con] line err  +43  ON          norm L  44 R   1  bc   0
+[con] line err  +44  ON          norm L  46 R   1  bc   1
+[con] line err  +43  ON          norm L  43 R   0  bc   1
+[con] line err  +43  ON          norm L  44 R   0  bc   0
+[con] IR READY ok raw bc  209 L 1556 R  200 | norm   0  44   1 | line err +43 ON | acq on n 127260 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +45  ON          norm L  45 R   0  bc   0
+[con] line err  +46  ON          norm L  46 R   0  bc   0
+[con] line err  +49  ON          norm L  49 R   0  bc   0
+[con] line err  +57  ON          norm L  58 R   0  bc   1
+[con] line err  +60  ON          norm L  60 R   1  bc   1
+[con] IR READY ok raw bc  248 L 2089 R  224 | norm   1  61   2 | line err +60 ON | acq on n 127809 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +57  ON          norm L  58 R   2  bc   2
+[con] line err  +59  ON          norm L  60 R   1  bc   1
+[con] line err  +64  ON          norm L  66 R   1  bc   1
+[con] line err  +70  ON          norm L  70 R   0  bc   1
+[con] line err  +68  ON          norm L  68 R   1  bc   0
+[con] IR READY ok raw bc  202 L 2322 R  209 | norm   0  68   1 | line err +68 ON | acq on n 128360 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +63  ON          norm L  63 R   0  bc   0
+[con] line err  +59  ON          norm L  59 R   0  bc   0
+[con] line err  +53  ON          norm L  53 R   1  bc   1
+[con] line err  +50  ON          norm L  51 R   1  bc   0
+[con] line err  +48  ON          norm L  49 R   1  bc   1
+[con] IR READY ok raw bc  232 L 1704 R  201 | norm   1  49   1 | line err +48 ON | acq on n 128909 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +51  ON          norm L  52 R   1  bc   1
+[con] line err  +53  ON          norm L  54 R   1  bc   1
+[con] line err  +55  ON          norm L  56 R   1  bc   0
+[con] line err  +58  ON          norm L  58 R   0  bc   0
+[con] line err  +55  ON          norm L  57 R   1  bc   1
+[con] IR READY ok raw bc  218 L 1956 R  194 | norm   1  57   1 | line err +55 ON | acq on n 129460 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +48  ON          norm L  48 R   1  bc   1
+[con] line err  +44  ON          norm L  44 R   0  bc   1
+[con] line err  +41  ON          norm L  41 R   0  bc   0
+[con] line err  +42  ON          norm L  40 R   1  bc   1
+[con] line err  +39  ON          norm L  39 R   0  bc   0
+[con] IR READY ok raw bc  213 L 1392 R  170 | norm   0  39   0 | line err +39 ON | acq on n 130009 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +25  ON          norm L  26 R   0  bc   0
+[con] line err  +23  ON          norm L  24 R   0  bc   0
+[con] line err  +23  ON          norm L  24 R   0  bc   0
+[con] line err  +26  ON          norm L  26 R   0  bc   0
+[con] line err  +31  ON          norm L  31 R   1  bc   1
+[con] IR READY ok raw bc  236 L 1164 R  204 | norm   1  31   1 | line err +31 ON | acq on n 130560 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err   +0  ON          norm L  12 R   1  bc   0
+[con] line err  +44  ON          norm L  54 R   9  bc   0
+[con] line err  +20  EDGE_ONLY   norm L  93 R  73  bc   0
+[con] line err   +0  BOTH_BLACK  norm L  99 R  83  bc   0
+[con] line err   +0  BOTH_BLACK  norm L 100 R  86  bc   1
+[con] IR READY ok raw bc  219 L 3348 R 3028 | norm   1 100  86 | line err +0 BOTH_BLACK | acq on n 131109 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err   +0  BOTH_BLACK  norm L 100 R  80  bc   1
+[con] line err   +0  BOTH_BLACK  norm L  99 R  76  bc   1
+[con] line err  +38  EDGE_ONLY   norm L  95 R  53  bc   1
+[con] line err  +65  ON          norm L  65 R   2  bc   0
+[con] line err  +62  ON          norm L  64 R   1  bc   2
+[con] IR READY ok raw bc  270 L 2197 R  201 | norm   2  64   1 | line err +62 ON | acq on n 131660 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +63  ON          norm L  65 R   1  bc  41
+[con] line err  +64  ON          norm L  67 R   1  bc  22
+[con] line err  +62  ON          norm L  60 R   0  bc   7
+[con] line err  +23  ON          norm L  21 R   1  bc  20
+[con] line err   +0  ON          norm L   2 R   1  bc  47
+[con] IR READY ok raw bc 1768 L  253 R  186 | norm  47   2   0 | line err +0 ON | acq on n 132209 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err   +0  ON          norm L   1 R   2  bc  69  [barcode capture]
+[con] line err  -40  ON          norm L   1 R  45  bc  79  [barcode capture]
+[con] line err  -91  EDGE_ONLY   norm L   1 R  92  bc  79  [barcode capture]
+[con] line err  -37  ON          norm L   0 R  27  bc  76  [barcode capture]
+[con] line err   +0  ON          norm L   0 R   1  bc  80  [barcode capture]
+[con] IR READY ok raw bc 2837 L  197 R  194 | norm  80   1   1 | line err +0 ON | acq on n 132760 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err   +0  ON          norm L   0 R   0  bc  87  [barcode capture]
+[con] line err   +0  ON          norm L   1 R   1  bc  95  [barcode capture]
+[con] line err   +0  ON          norm L   1 R   1  bc  95  [barcode capture]
+[con] line err   +0  ON          norm L   0 R   1  bc  95  [barcode capture]
+[con] line err   +0  ON          norm L   0 R   1  bc  96  [barcode capture]
+[con] IR READY ok raw bc 3364 L  181 R  209 | norm  96   0   1 | line err +0 ON | acq on n 133309 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  -91  EDGE_ONLY   norm L   1 R  92  bc  91  [barcode capture]
+[con] line err   +0  ON          norm L   0 R   4  bc  73  [barcode capture]
+[con] line err  +25  ON          norm L  38 R   0  bc  60  [barcode capture]
+[con] line err  +61  ON          norm L  58 R   0  bc  59  [barcode capture]
+[con] line err   +0  ON          norm L  13 R   1  bc  44  [barcode capture]
+[con] IR READY ok raw bc 1670 L  587 R  170 | norm  44  13   0 | line err +0 ON | acq on n 133861 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +72  ON          norm L  74 R   0  bc   9  [barcode capture]
+[con] line err  +61  ON          norm L  59 R   1  bc   1
+[con] line err  +62  EDGE_ONLY   norm L  80 R  23  bc   0
+[con] line err   +0  BOTH_BLACK  norm L 100 R  86  bc   1
+[con] line err  +29  EDGE_ONLY   norm L  92 R  61  bc   0
+[con] IR READY ok raw bc  190 L 3046 R 2181 | norm   0  91  61 | line err +29 EDGE_ONLY | acq on n 134409 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +62  EDGE_ONLY   norm L  87 R  22  bc   0
+[con] line err  +83  EDGE_ONLY   norm L  85 R   2  bc   0
+[con] line err  +77  EDGE_ONLY   norm L  77 R   2  bc   0
+[con] line err  +76  EDGE_ONLY   norm L  77 R   1  bc   1
+[con] line err  +71  ON          norm L  72 R   1  bc   1
+[con] IR READY ok raw bc  224 L 2442 R  192 | norm   1  72   1 | line err +71 ON | acq on n 134960 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +66  ON          norm L  66 R   0  bc   0
+[con] line err  +52  ON          norm L  50 R   0  bc   0
+[con] line err  +61  ON          norm L  63 R   1  bc   1
+[con] line err  +65  ON          norm L  68 R   1  bc   0
+[con] line err  +77  EDGE_ONLY   norm L  77 R   2  bc   1
+[con] IR READY ok raw bc  219 L 2598 R  230 | norm   1  77   2 | line err +77 EDGE_ONLY | acq on n 135509 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +74  EDGE_ONLY   norm L  76 R   1  bc   0
+[con] line err  +74  EDGE_ONLY   norm L  75 R   1  bc   0
+[con] line err  +75  EDGE_ONLY   norm L  76 R   1  bc   1
+[con] line err  +75  EDGE_ONLY   norm L  77 R   1  bc   1
+[con] line err  +76  EDGE_ONLY   norm L  76 R   1  bc   0
+[con] IR READY ok raw bc  203 L 2577 R  194 | norm   0  76   1 | line err +76 EDGE_ONLY | acq on n 136060 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0
+[con] line err  +76  EDGE_ONLY   norm L  76 R   1  bc   0
+[con] line err  +75  EDGE_ONLY   norm L  77 R   1  bc   0
+[con] line err  +76  EDGE_ONLY   norm L  77 R   2  bc   0
+[con] line err  +75  EDGE_ONLY   norm L  77 R   2  bc   0
+[con] line err  +75  EDGE_ONLY   norm L  77 R   2  bc   0
+[con] IR READY ok raw bc  210 L 2601 R  203 | norm   0  77   1 | line err +75 EDGE_ONLY | acq on n 136609 late 380 us scan 471 us flt 0
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 0 R 0 bad 0

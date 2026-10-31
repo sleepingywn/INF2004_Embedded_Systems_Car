@@ -1,0 +1,70 @@
+---- Sent utf8 encoded message: "l" ----
+[con] fast line monitor off
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+---- Sent utf8 encoded message: "l" ----
+[con] fast line monitor on
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] line err   +0  LOST      
+[con] IR FAULT FAULT raw bc  232 L  250 R  206 | line err +0 LOST | acq STOPPED n 322239 late 385 us scan 483 us flt 8
+[con] MOTION ERROR last NONE id 0 | faults timeout external | duty L +0 R +0 | enc L 1 R 0 bad 0
+[con] line err   +0  LOST      

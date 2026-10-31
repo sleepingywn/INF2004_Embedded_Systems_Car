@@ -42,6 +42,10 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-28 | S4-U14 | (this commit) | Claude, for Andy | PASS | laptop | same results as before the maths change |
 | 2026-10-28 | S4-U15 | (this commit) | Claude, for Andy | PASS | laptop | 8 bytes (was 38); worst error 0.25°, 1°/s, 0.5 mm |
 | 2026-10-31 | S4-U17 | (this commit) | Claude, for Andy | PASS | laptop | 10→9.3, 11.5→10.7, 13→12.1 mm (lever 120 mm placeholder); no false hump at 0.15 g speed-up/brake; full-width (mode ANY) 18.9 vs 19.9 mm |
+| 2026-10-31 | S4-U12 | c909cf0 (bench firmware) | Andy | PASS (detection) | `logs/2026-10-31_A_bench_car.txt` | Real right-side hump (10–13 mm), hand push with `m`: 4 humps counted, peaks 11.4–13.9 mm; one slow pass (~5 s on the hump) was cancelled by the 5 s timeout → fixed (10 s, dip tolerance) |
+| 2026-10-31 | S4-U12 | (this commit) | Claude, for Andy | PASS (replay) | `logs/2026-10-31_A8_hump_pass.csv` + `logs/2026-10-31_A_bench_car.txt` | Real passes replayed through the fixed logic: CSV pass 12.7 mm, cancelled pass now detected 14.6 mm (true 10–13 mm, lever still 120 mm placeholder) |
+| 2026-10-31 | S4-U09 | c909cf0 (bench firmware) | Andy | NOT RUN | `logs/2026-10-31_A_bench_car.txt` | Front only lifted to ~11°, below the 25° threshold; re-test lifting further |
+| 2026-10-31 | S4-U10 | c909cf0 (bench firmware) | Andy | FAIL | `logs/2026-10-31_A_bench_car.txt` | Finger tap reached only 0.45 g, below the 0.8 g threshold; re-test with a realistic knock (car pushed into a book/wall) |
 
 ## Bench evidence (before integration)
 

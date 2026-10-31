@@ -56,6 +56,15 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-31 | S4-U05 | (this commit), task on core 1 | Andy | PASS | `logs/2026-10-31_B_kernel_core1.txt` | exec max 1349 µs (read 758, logic 631), slow 0, jitter max 321 µs, overruns 0. Cause: the I2C "done" interrupt is handled on core 1; a task on core 0 only woke at the next 10 ms tick. Fix: `S4_CORE = TP_PRC2` |
 | 2026-10-31 | S4-U03 | (this commit), task on core 1 | Andy | PASS (status line) | `logs/2026-10-31_B_kernel_core1.txt` | overruns 0 over the run; the auto `[TEST] S4-U03` check still to run with the TEST image |
 | 2026-10-31 | S4-U12 | a3a6e95 (kernel, PRETEND_MOVING, core 1) | Andy | PASS | `logs/2026-10-31_C_kernel_hump.txt` | Real right-side hump (10–13 mm) under µT-Kernel: 3 passes, 3 humps counted, 11.3 / 10.3 / 10.5 mm; no false hump on flat; exec max 1425 µs, overruns 0, i2c err 0 |
+| 2026-10-31 | S4-U01 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | flg_terrain and mtx_terrain created; subsystem4 SUMMARY 9 passed, 0 failed |
+| 2026-10-31 | S4-U02 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | terrain_task runs every 20 ms; subsystem4 SUMMARY 9 passed, 0 failed |
+| 2026-10-31 | S4-U03 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | overruns 0; subsystem4 SUMMARY 9 passed, 0 failed |
+| 2026-10-31 | S4-U04 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | GY-511 found on I2C0; subsystem4 SUMMARY 9 passed, 0 failed |
+| 2026-10-31 | S4-U05 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | exec max 1768 µs (< 5 ms), jitter max 330 µs; subsystem4 SUMMARY 9 passed, 0 failed |
+| 2026-10-31 | S4-U06 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | still car: |a| ~1 g, pitch/roll within 2°; subsystem4 SUMMARY 9 passed, 0 failed |
+| 2026-10-31 | S4-U07 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | IF-06 snapshot updates; subsystem4 SUMMARY 9 passed, 0 failed |
+| 2026-10-31 | S4-U08 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | no IMU fault bit in IF-07; subsystem4 SUMMARY 9 passed, 0 failed |
+| 2026-10-31 | S4-U16 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | 8-byte packed snapshot on target, saturates and wraps; subsystem4 SUMMARY 9 passed, 0 failed |
 
 ## Bench evidence (before integration)
 

@@ -3,13 +3,15 @@
 A starting point for your project: micro T-Kernel 3.0 running on **both cores**
 of the Pico W's RP2040, with a USB serial console and the WiFi driver built in.
 
-This integration branch adds Buddy 2's motion implementation on top of Buddy 3's
-IR logic. See [the motion integration notes](app_program/subsystem2/README_MOTION.md)
-for APIs, confirmed motor pins and calibration gates. The added
-[S3 runtime](app_program/subsystem3/README_RUNTIME.md) connects live IR sampling
-and calibration to line following and barcode capture.
-It is an unbuilt/untested candidate; no flashing or test execution is authorised
-until the user approves the next stage. Startup does not request movement.
+This integration branch combines Buddy 2's motion code, Buddy 3's IR logic and
+runtime, and Buddy 4's IMU / terrain subsystem. See
+[the motion integration notes](app_program/subsystem2/README_MOTION.md) and the
+[S3 runtime notes](app_program/subsystem3/README_RUNTIME.md) for their APIs.
+It builds and has run on the car (31 Oct 2026): the combined TEST build passes
+22/22, and the motors, encoders, IR calibration and hump detection were tested
+with the integration console (`app_program/int_console/`, press `h`). Results are
+in `testing/integration/TEST_LOG.md`. Startup does not request movement; Buddy 2's
+speed controller is not tuned yet (`MOTION_CALIBRATED 0`).
 
 You need a **Raspberry Pi Pico W**, a USB cable, and a computer running
 macOS, Linux, or Windows with **WSL (Ubuntu)**. On Windows, run every

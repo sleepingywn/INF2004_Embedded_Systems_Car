@@ -21,13 +21,13 @@ Define a test here before running it. Test IDs never change.
 | S4-U09 | tilt event | B4 tilt requirement | manual | normal image; lift the car's front past 25° and hold | console `terrain: TILT`; `S4_EVT_TILT` set |
 | S4-U10 | collision event | B4 collision requirement | manual | normal image; tap the car sharply | console `terrain: COLLISION` |
 | S4-U11 | stalled bus: dead sensor cannot freeze the car | fault handling (C03) | manual | normal image; pull SDA while running, then reconnect | `IMU FAULT` within ~100 ms, other tasks keep printing, `overruns 0`; `IMU fault cleared` after reconnecting |
-| S4-U12 | hump detected and height reported | FR5 | manual | set `S4_PRETEND_SPEED_MM_S` to 100 (until encoder data exists); roll the car over a block of measured height | `HUMP ENTRY` then `HUMP DETECTED` with a peak; compare with the block |
+| S4-U12 | hump detected and height reported | FR5 | manual | bench `m` key or the PRETEND_MOVING build (until encoder data exists); push the car's right wheel over the hump | `HUMP ENTRY` then `HUMP DETECTED` with a peak; compare with the block |
 | S4-U13 | own maths matches the C library | imu_math.h | auto (laptop) | `imu_sim/math_check.c` | `PASS` |
 | S4-U14 | logic regression (synthetic hump, knock, slope) | imu_logic.c | auto (laptop) | `imu_sim --fake` | hump 18.8 mm vs 19.9 mm true; COLLISION; TILT on the slope |
 | S4-U15 | minimum-bit snapshot: size, round trip, saturation, wrap | change requirement, C06 | auto (laptop) | `imu_sim/pack_check.c` | `PASS`; 8 bytes; error ≤ half a step |
 | S4-U16 | packed snapshot on target: 8 bytes, saturates, 15-bit age | change requirement, C06 | auto | `subsystem4_test.c` | `[TEST] S4-U16 PASS` |
 | S4-U17 | one-sided right-side hump (10–13 mm) detected from roll; height = lever × sin(peak tilt); no false hump from speeding up/braking | FR5, one-sided layout | auto (laptop) | `imu_sim --fake1 10`, `11.5`, `13` | `HUMP DETECTED (one-sided)` within ±10 mm; no hump at the 0.15 g speed-up/brake |
-| S4-U18 | lever calibration on the car | FR5 | manual | wheel on a block of known height h, car still; read roll θ; lever = h / sin(θ) | lever recorded; then S4-U12 on the real hump within ±10 mm |
+| S4-U18 | lever calibration on the car | FR5 | manual | right wheel on the hump (height h), car still; read total tilt θ; lever = h / sin(θ) | lever recorded; then S4-U12 on the real hump within ±10 mm |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).
@@ -46,6 +46,10 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-31 | S4-U12 | (this commit) | Claude, for Andy | PASS (replay) | `logs/2026-10-31_A8_hump_pass.csv` + `logs/2026-10-31_A_bench_car.txt` | Real passes replayed through the fixed logic: CSV pass 12.7 mm, cancelled pass now detected 14.6 mm (true 10–13 mm, lever still 120 mm placeholder) |
 | 2026-10-31 | S4-U09 | c909cf0 (bench firmware) | Andy | NOT RUN | `logs/2026-10-31_A_bench_car.txt` | Front only lifted to ~11°, below the 25° threshold; re-test lifting further |
 | 2026-10-31 | S4-U10 | c909cf0 (bench firmware) | Andy | FAIL | `logs/2026-10-31_A_bench_car.txt` | Finger tap reached only 0.45 g, below the 0.8 g threshold; re-test with a realistic knock (car pushed into a book/wall) |
+| 2026-10-31 | S4-U09 | 5cfbb0a (bench firmware) | Andy | PASS | `logs/2026-10-31_A_bench_tilt_collision_calibration.txt` | Front lifted to +29° → `TILT` at 21.52 s |
+| 2026-10-31 | S4-U10 | 5cfbb0a (bench firmware) | Andy | PASS | `logs/2026-10-31_A_bench_tilt_collision_calibration.txt` | Firm knock → `COLLISION` at 1.93 g |
+| 2026-10-31 | S4-U18 | 5cfbb0a (bench firmware) | Andy | PASS | `logs/2026-10-31_A_bench_tilt_collision_calibration.txt` | Right wheel on the hump (~11.5 mm), still ~8 s: roll −5.4°, pitch −4.1°, total tilt 6.75° → lever = 11.5 / sin(6.75°) ≈ 98 mm (set in this commit) |
+| 2026-10-31 | S4-U12 | (this commit) | Claude, for Andy | PASS (replay) | `logs/2026-10-31_A8_hump_pass.csv` + `logs/2026-10-31_A_bench_car.txt` | With lever 98 mm: real passes read 10.4 mm and 11.9 mm (hump 10–13 mm) |
 
 ## Bench evidence (before integration)
 

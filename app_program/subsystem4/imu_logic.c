@@ -19,7 +19,7 @@ void imu_logic_default_config(imu_config_t *c)
     c->hump_exit_deg          = 1.5f;
     c->hump_hold_s            = 0.10f;
     c->hump_timeout_s         = 10.0f;   /* a slow hand push kept the wheel on the hump ~5 s */
-    c->hump_lever_mm          = 120.0f;  /* PLACEHOLDER until calibrated on the car */
+    c->hump_lever_mm          = 98.0f;   /* calibrated 2026-10-31: wheel on the 11.5 mm hump -> total tilt 6.75 deg (S4-U18) */
     c->tilt_deg               = 25.0f;
     c->collision_g            = 0.8f;
     c->collision_refractory_s = 0.5f;

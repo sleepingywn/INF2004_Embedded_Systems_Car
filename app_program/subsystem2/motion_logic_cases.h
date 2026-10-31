@@ -2,7 +2,9 @@
 #define MOTION_LOGIC_CASES_H
 /* Shared host/on-target pure-logic cases. No peripheral or motor calls. */
 #include "motion_logic.h"
-#include <string.h>
+#define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
+#define memcpy __builtin_memcpy
+#define memcmp __builtin_memcmp
 
 static bool motion_case_quadrature(void)
 {

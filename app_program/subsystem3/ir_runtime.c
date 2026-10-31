@@ -1,6 +1,7 @@
 #include "ir_runtime.h"
 #include "../subsystem2/motion_ir_bridge.h"
-#include <string.h>
+#define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
+#define memcpy __builtin_memcpy
 
 #define IR_COMMAND_EVENT 2u
 #define IR_TASK_PRIORITY 16

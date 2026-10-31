@@ -1,5 +1,6 @@
 #include "motion_ir_bridge.h"
-#include <string.h>
+#define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
+#define memcpy __builtin_memcpy
 
 void motion_ir_bridge_init(motion_ir_bridge_t *bridge)
 {

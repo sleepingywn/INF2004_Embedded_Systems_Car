@@ -3,7 +3,8 @@
 #include "drv_motor.h"
 #include "drv_encoder.h"
 #include <limits.h>
-#include <string.h>
+#define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
+#define memcpy __builtin_memcpy
 #if TK_SUPPORT_SMP
 #include <tk/smp.h>
 #endif

@@ -1,0 +1,48 @@
+# S3 IR bench test - testing/subsystem3/ir_bench_test (ir_test.c), Pico WH on Robo Pico, USB serial
+# Car on the white board, reset with 'r', then slid by hand across the black line and a barcode.
+# Columns: channel, averaged raw 12-bit value, voltage, [min..max since reset], label
+BC(GP26) raw= 547 0.44V [ 149..3362] WHITE      | A (GP27) raw=1669 1.34V [ 149..3344] WHITE      | B (GP28) raw= 156 0.13V [ 147.. 161] need black |
+BC(GP26) raw= 786 0.63V [ 149..3362] WHITE      | A (GP27) raw=1643 1.32V [ 149..3344] WHITE      | B (GP28) raw= 155 0.12V [ 147.. 161] need black |
+BC(GP26) raw=1244 1.00V [ 149..3362] WHITE      | A (GP27) raw=1448 1.17V [ 149..3344] WHITE      | B (GP28) raw= 155 0.12V [ 147.. 161] need black |
+BC(GP26) raw=1757 1.42V [ 149..3362] BLACK      | A (GP27) raw=1524 1.23V [ 149..3344] WHITE      | B (GP28) raw= 156 0.13V [ 147.. 161] need black |
+BC(GP26) raw=1802 1.45V [ 149..3362] BLACK      | A (GP27) raw=1039 0.84V [ 149..3344] WHITE      | B (GP28) raw= 155 0.12V [ 147.. 161] need black |
+BC(GP26) raw=2285 1.84V [ 149..3362] BLACK      | A (GP27) raw=1679 1.35V [ 149..3344] WHITE      | B (GP28) raw= 152 0.12V [ 147.. 161] need black |
+BC(GP26) raw=2253 1.82V [ 149..3362] BLACK      | A (GP27) raw=1724 1.39V [ 149..3344] WHITE      | B (GP28) raw= 156 0.13V [ 147.. 161] need black |
+BC(GP26) raw=1698 1.37V [ 149..3362] WHITE      | A (GP27) raw=1165 0.94V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw=1463 1.18V [ 149..3362] WHITE      | A (GP27) raw=1129 0.91V [ 149..3344] WHITE      | B (GP28) raw= 155 0.12V [ 147.. 161] need black |
+BC(GP26) raw=1694 1.37V [ 149..3362] WHITE      | A (GP27) raw=1947 1.57V [ 149..3344] BLACK      | B (GP28) raw= 157 0.13V [ 147.. 161] need black |
+BC(GP26) raw= 495 0.40V [ 149..3362] WHITE      | A (GP27) raw=2179 1.76V [ 149..3344] BLACK      | B (GP28) raw= 156 0.13V [ 147.. 161] need black |
+BC(GP26) raw= 253 0.20V [ 149..3362] WHITE      | A (GP27) raw=1464 1.18V [ 149..3344] WHITE      | B (GP28) raw= 155 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 235 0.19V [ 149..3362] WHITE      | A (GP27) raw=1132 0.91V [ 149..3344] WHITE      | B (GP28) raw= 151 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 271 0.22V [ 149..3362] WHITE      | A (GP27) raw=1453 1.17V [ 149..3344] WHITE      | B (GP28) raw= 156 0.13V [ 147.. 161] need black |
+BC(GP26) raw= 424 0.34V [ 149..3362] WHITE      | A (GP27) raw=2021 1.63V [ 149..3344] BLACK      | B (GP28) raw= 156 0.13V [ 147.. 161] need black |
+BC(GP26) raw=1670 1.35V [ 149..3362] WHITE      | A (GP27) raw=2728 2.20V [ 149..3344] BLACK      | B (GP28) raw= 158 0.13V [ 147.. 161] need black |
+BC(GP26) raw=2106 1.70V [ 149..3362] BLACK      | A (GP27) raw=2606 2.10V [ 149..3344] BLACK      | B (GP28) raw= 159 0.13V [ 147.. 161] need black |
+BC(GP26) raw=2473 1.99V [ 149..3362] BLACK      | A (GP27) raw=2518 2.03V [ 149..3344] BLACK      | B (GP28) raw= 158 0.13V [ 147.. 161] need black |
+BC(GP26) raw=2654 2.14V [ 149..3362] BLACK      | A (GP27) raw=2327 1.88V [ 149..3344] BLACK      | B (GP28) raw= 157 0.13V [ 147.. 161] need black |
+BC(GP26) raw=2017 1.63V [ 149..3362] BLACK      | A (GP27) raw=1354 1.09V [ 149..3344] WHITE      | B (GP28) raw= 151 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 250 0.20V [ 149..3362] WHITE      | A (GP27) raw= 304 0.24V [ 149..3344] WHITE      | B (GP28) raw= 152 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 265 0.21V [ 149..3362] WHITE      | A (GP27) raw=1147 0.92V [ 149..3344] WHITE      | B (GP28) raw= 154 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 236 0.19V [ 149..3362] WHITE      | A (GP27) raw=2815 2.27V [ 149..3344] BLACK      | B (GP28) raw= 156 0.13V [ 147.. 161] need black |
+BC(GP26) raw= 172 0.14V [ 149..3362] WHITE      | A (GP27) raw= 193 0.16V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 193 0.16V [ 149..3362] WHITE      | A (GP27) raw= 169 0.14V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 204 0.16V [ 149..3362] WHITE      | A (GP27) raw= 171 0.14V [ 149..3344] WHITE      | B (GP28) raw= 152 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 210 0.17V [ 149..3362] WHITE      | A (GP27) raw= 166 0.13V [ 149..3344] WHITE      | B (GP28) raw= 148 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 953 0.77V [ 149..3362] WHITE      | A (GP27) raw= 173 0.14V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 914 0.74V [ 149..3362] WHITE      | A (GP27) raw= 165 0.13V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw=1034 0.83V [ 149..3362] WHITE      | A (GP27) raw= 157 0.13V [ 149..3344] WHITE      | B (GP28) raw= 147 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 986 0.79V [ 149..3362] WHITE      | A (GP27) raw= 161 0.13V [ 149..3344] WHITE      | B (GP28) raw= 152 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 729 0.59V [ 149..3362] WHITE      | A (GP27) raw= 166 0.13V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 732 0.59V [ 149..3362] WHITE      | A (GP27) raw= 167 0.13V [ 149..3344] WHITE      | B (GP28) raw= 152 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 739 0.60V [ 149..3362] WHITE      | A (GP27) raw= 157 0.13V [ 149..3344] WHITE      | B (GP28) raw= 148 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 738 0.59V [ 149..3362] WHITE      | A (GP27) raw= 168 0.14V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 740 0.60V [ 149..3362] WHITE      | A (GP27) raw= 163 0.13V [ 149..3344] WHITE      | B (GP28) raw= 152 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 752 0.61V [ 149..3362] WHITE      | A (GP27) raw= 155 0.12V [ 149..3344] WHITE      | B (GP28) raw= 152 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 761 0.61V [ 149..3362] WHITE      | A (GP27) raw= 166 0.13V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 746 0.60V [ 149..3362] WHITE      | A (GP27) raw= 160 0.13V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 766 0.62V [ 149..3362] WHITE      | A (GP27) raw= 157 0.13V [ 149..3344] WHITE      | B (GP28) raw= 152 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 765 0.62V [ 149..3362] WHITE      | A (GP27) raw= 157 0.13V [ 149..3344] WHITE      | B (GP28) raw= 151 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 763 0.61V [ 149..3362] WHITE      | A (GP27) raw= 165 0.13V [ 149..3344] WHITE      | B (GP28) raw= 152 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 766 0.62V [ 149..3362] WHITE      | A (GP27) raw= 157 0.13V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 770 0.62V [ 149..3362] WHITE      | A (GP27) raw= 160 0.13V [ 149..3344] WHITE      | B (GP28) raw= 149 0.12V [ 147.. 161] need black |
+BC(GP26) raw= 776 0.63V [ 149..3362] WHITE      | A (GP27) raw= 164 0.13V [ 149..3344] WHITE      | B (GP28) raw= 153 0.12V [ 147.. 161] need black |

@@ -11,7 +11,7 @@
 
 #include "../app.h"
 
-#define S3_PRI_CONSUMER		16	/* priority band 16-17 (TEAM.md) */
+#define S3_PRI_CONSUMER		17	/* IR task uses 16; compatibility consumer uses 17 */
 #define S3_BATCH_SIZE		5	/* report to subsystem 4 every N samples */
 
 /* IF-01: send SAMPLE_MSG (subsystem2.h) here with tk_snd_mbx */

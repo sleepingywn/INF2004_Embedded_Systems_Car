@@ -8,6 +8,7 @@
 #include "../test_report.h"
 
 #if APP_TEST
+#include "motion_logic_cases.h"
 
 EXPORT void subsystem2_test(void)
 {
@@ -33,6 +34,12 @@ EXPORT void subsystem2_test(void)
 		   rmpf.frbcnt <= S2_POOL_COUNT,
 		   "free slots and free blocks within pool size");
 
+    TEST_CHECK("S2-U03", motion_case_quadrature(), "quadrature direction and invalid transitions");
+    TEST_CHECK("S2-U04", motion_case_wrap(), "signed deltas across counter wrap");
+    TEST_CHECK("S2-U05", motion_case_pid(), "PID saturation, anti-windup and reset");
+    TEST_CHECK("S2-U06", motion_case_barcodes(), "A-D both scan directions; reject malformed capture");
+    TEST_CHECK("S2-U17", motion_case_packing(), "unsigned packed signed values at boundaries");
+    TEST_CHECK("S2-U18", motion_case_steering(), "line-error sign and constant-mean saturation");
 	TEST_SUMMARY("subsystem2");
 }
 

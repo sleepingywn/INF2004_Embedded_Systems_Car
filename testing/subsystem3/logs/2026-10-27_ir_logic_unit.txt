@@ -1,0 +1,17 @@
+# S3 logic unit tests - testing/subsystem3/ir_line_bench, run on the Pico WH (on target), USB serial
+# Code under test: app_program/subsystem3/sensor_line.c, barcode_sense.c (uncommitted working tree, 2026-10-27)
+# Live calibration below failed because the car was not moved during the 3 s window (expected).
+[TEST] S3-U05 PASS  normalise 0..100, both polarities, clamped
+[TEST] S3-U06 PASS  calibration: stuck channel flagged and forced to 0, others accepted
+[TEST] S3-U07 PASS  line error sign/scale, edge, junction, lost timeout, common-mode
+[TEST] S3-U08 PASS  29-element barcode: widths exact, sent on 1st sample after last bar
+[TEST] S3-U09 PASS  3-element blip rejected as noise
+[TEST] S3-U10 PASS  9 elements: sent after BC_QUIET_MS white, count=9
+[TEST] S3-U11 PASS  long pattern cut at 29 elements; hysteresis does not split elements
+[TEST] unit tests done: 0 failure(s)
+
+CALIBRATING for 3 s: slide the car so every sensor crosses white AND black
+(line sensors over the line, barcode sensor over a bar).
+  ch0 (GP26): white= 209 black= 209 LOW CONTRAST -> IR FAULT
+  ch1 (GP27): white= 148 black= 148 LOW CONTRAST -> IR FAULT
+  ch2 (GP28): white= 137 black= 137 LOW CONTRAST -> IR FAULT

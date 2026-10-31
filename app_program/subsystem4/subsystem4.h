@@ -115,6 +115,7 @@ typedef struct {
 
 IMPORT S4_DIAG	s4_diag;
 IMPORT volatile BOOL s4_status_print;	/* 1 s status line on/off */
+IMPORT volatile BOOL s4_heading_zero_req;	/* TRUE = zero the wheel heading */
 IMPORT ID	mtx_terrain;
 IMPORT ID	cyc_terrain;
 IMPORT ID	tid_terrain;

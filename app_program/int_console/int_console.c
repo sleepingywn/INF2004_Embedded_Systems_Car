@@ -19,6 +19,8 @@
  *	  A  left wheel   -20 % 0.5 s   D  right wheel  -20 % 0.5 s
  *	  g  drive forward (power and time below)   b  drive backward
  *	  +  -  drive power +/- 5 %                 [  ]  drive time -/+ 0.5 s
+ *	  q  spin left on the spot   e  spin right  (same power and time)
+ *	  z  zero the terrain heading (hdg) for a turn-rate test
  */
 
 #include "int_console.h"
@@ -92,6 +94,7 @@ LOCAL void print_help(void)
 		"[con]  w both +20%%  s both -20%%  a left +20%%  d right +20%%  A left -20%%  D right -20%%\n"
 		"[con]  (each pulse lasts 0.5 s; press r first if motion shows a fault)\n"
 		"[con]  g drive forward   b drive backward   + - power   [ ] time\n"
+		"[con]  q spin left   e spin right   z zero heading (hdg on the terrain line)\n"
 		"[con]  (drive keys use the measured motor directions; x stops)\n\n");
 }
 
@@ -267,6 +270,18 @@ LOCAL void handle_key(INT c)
 		       (c == 'g') ? "drive forward" : "drive backward");
 		break;
 	}
+	case 'q': case 'e': {
+		INT duty = drive_pct * 10;
+		INT dir  = (c == 'q') ? 1 : -1;	/* q: left wheel back, right forward */
+		tm_printf((UB*)"[con] spin %s %d %% for %d ms\n",
+			  (c == 'q') ? "LEFT" : "RIGHT", drive_pct, drive_ms);
+		submit(MOTION_BENCH, -dir * MOTION_LEFT_MOTOR_SIGN * duty,
+		       dir * MOTION_RIGHT_MOTOR_SIGN * duty, (UW)drive_ms,
+		       (c == 'q') ? "spin left" : "spin right");
+		break;
+	}
+	case 'z':		s4_heading_zero_req = TRUE;
+				tm_printf((UB*)"[con] heading zeroed\n"); break;
 	case '+': case '=':	if (drive_pct < MOTION_BENCH_DUTY_MAX / 10) drive_pct += 5;
 				tm_printf((UB*)"[con] drive power %d %%\n", drive_pct); break;
 	case '-': case '_':	if (drive_pct > 10) drive_pct -= 5;

@@ -82,11 +82,15 @@ EXPORT ER s4_get_terrain(S4_TERRAIN *out)
  * --------------------------------------------------------------------- */
 #define S4_MIN_MOVING_MM_S	20	/* below this the car counts as stopped */
 
+
 LOCAL BOOL	wheel_have;		/* previous counts valid              */
 LOCAL UW	wheel_prev_l, wheel_prev_r;
 LOCAL float	wheel_speed_mm_s;	/* last forward speed (for printing)  */
 LOCAL float	wheel_turn_dps;		/* last turn rate, + = left (CCW)     */
 LOCAL BOOL	wheel_ok;		/* wheel data available               */
+LOCAL float	wheel_heading_deg;	/* turn since boot / zero, + = left   */
+LOCAL float	heading_at_print;	/* heading at the previous status line */
+EXPORT volatile BOOL s4_heading_zero_req;	/* set to zero the heading    */
 
 /* Forward distance since the previous call, in mm (negative = reversing).
    Returns 0 and clears wheel_ok when subsystem 2 has no encoder data. */
@@ -119,6 +123,11 @@ LOCAL float wheel_travel_mm(float dt)
 
 	left_mm  = (float)(dl * MOTION_LEFT_ENCODER_SIGN)  * mm_per_count_l;
 	right_mm = (float)(dr * MOTION_RIGHT_ENCODER_SIGN) * mm_per_count_r;
+	if (s4_heading_zero_req) {
+		wheel_heading_deg = heading_at_print = 0.0f;
+		s4_heading_zero_req = FALSE;
+	}
+	wheel_heading_deg += (right_mm - left_mm) / (float)MOTION_TRACK_WIDTH_MM * 57.29578f;
 	if (dt > 0.0f) {
 		wheel_speed_mm_s = 0.5f * (left_mm + right_mm) / dt;
 		wheel_turn_dps   = (right_mm - left_mm) / (float)MOTION_TRACK_WIDTH_MM
@@ -180,7 +189,12 @@ LOCAL void print_status(void)
 	print_tenths(" roll", S4_ROLL_DDEG(snapshot));
 	print_tenths(" tilt", to_tenths(logic.tilt_total_deg));
 	if (wheel_ok) {
-		tm_printf((UB*)"  v %d mm/s", (INT)wheel_speed_mm_s);
+		/* turn = average over the last status interval (1 s) */
+		float turn = (wheel_heading_deg - heading_at_print)
+			     * (1000.0f / (float)(PRINT_EVERY * S4_PERIOD_MS));
+		heading_at_print = wheel_heading_deg;
+		tm_printf((UB*)"  v %d mm/s  turn %+d dps  hdg %+d deg",
+			  (INT)wheel_speed_mm_s, (INT)turn, (INT)wheel_heading_deg);
 	} else {
 		tm_printf((UB*)"  v --");
 	}

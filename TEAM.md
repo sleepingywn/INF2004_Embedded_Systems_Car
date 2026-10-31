@@ -153,6 +153,7 @@ change it only by team agreement. Write down every task you create.
 | 3 | 16–17 | ir_task – 16 – core 0; compatibility consumer_task – 17 – core 0 |
 | 4 | 18–19 | terrain_task – 18 – core 1 (woken every 20 ms by `cyc_terrain`; must run on the core that handles the I2C interrupt, see `S4_CORE`) |
 | 5 | 20–21 | |
+| dev tool | 22 | int_console – 22 – core 0 (integration test console, `app_program/int_console/`; `APP_CONSOLE 0` removes it) |
 
 Core: `TP_PRC1` = core 0, `TP_PRC2` = core 1, or "any".
 

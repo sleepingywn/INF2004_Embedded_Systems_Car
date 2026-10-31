@@ -114,6 +114,7 @@ typedef struct {
 } S4_DIAG;
 
 IMPORT S4_DIAG	s4_diag;
+IMPORT volatile BOOL s4_status_print;	/* 1 s status line on/off */
 IMPORT ID	mtx_terrain;
 IMPORT ID	cyc_terrain;
 IMPORT ID	tid_terrain;

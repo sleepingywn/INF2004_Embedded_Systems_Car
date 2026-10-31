@@ -55,6 +55,7 @@
 
 #include "app.h"
 #include "subsystem2/motion.h"
+#include "int_console/int_console.h"
 
 /* Startup failure must not proceed into partially initialized consumers.
  * Keep the kernel alive so the output owner can service its stop signal. */
@@ -141,6 +142,7 @@ EXPORT INT usermain(void)
 	startup_check(subsystem4_start(), "subsystem4_start");
 	startup_check(subsystem5_start(), "subsystem5_start");
 
+	startup_check(int_console_start(), "int_console_start");
 	tm_printf((UB*)"all subsystems started\n\n");
 
 #if APP_TEST

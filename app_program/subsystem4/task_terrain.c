@@ -20,6 +20,8 @@
 #define FAULT_AFTER	5	/* failed reads in a row -> IMU fault (100 ms) */
 #define REINIT_EVERY	50	/* while faulted, retry the sensor every 1 s   */
 #define PRINT_EVERY	50	/* status line every 50 x 20 ms = 1 s          */
+
+EXPORT volatile BOOL s4_status_print = TRUE;	/* status line on/off */
 #define MTX_WAIT_MS	2	/* never wait longer than this for the lock     */
 
 EXPORT S4_DIAG	s4_diag;
@@ -286,7 +288,7 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		publish(fault);
 		drain_legacy_if03();
 
-		if (s4_diag.cycles % PRINT_EVERY == 0 && logic.calibrated) {
+		if (s4_status_print && s4_diag.cycles % PRINT_EVERY == 0 && logic.calibrated) {
 			UW p0 = now_us(), pt;
 			print_status();
 			pt = now_us() - p0;

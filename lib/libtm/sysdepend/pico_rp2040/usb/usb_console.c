@@ -30,6 +30,7 @@ IMPORT unsigned	tm_tusb_write_available(void);
 IMPORT void	tm_tusb_write_char(char value);
 IMPORT void	tm_tusb_write_flush(void);
 IMPORT void	tm_tusb_discard_input(void);
+IMPORT int	tm_tusb_read_char(void);
 
 #define USB_TASK_PRIORITY	3
 #if TK_SUPPORT_SMP
@@ -77,6 +78,25 @@ LOCAL void tx_lock_leave(UINT intsts)
 
 /* Bytes discarded because the ring was full.  Exposed so a test can assert
    that a run produced no loss rather than assuming it. */
+/* Received bytes: written only by usb_service_task, read only by
+   tm_usb_console_getc() (one reader).  Bytes are dropped when it is full. */
+#define USB_RX_SIZE	64U
+#define USB_RX_MASK	(USB_RX_SIZE - 1U)
+LOCAL UB		rx_buffer[USB_RX_SIZE];
+LOCAL volatile UW	rx_head, rx_tail;
+
+/* Non-blocking: next received byte, or -1 when there is none. */
+EXPORT INT tm_usb_console_getc(void)
+{
+	UW	tail = rx_tail;
+	INT	c;
+
+	if(tail == rx_head) return -1;
+	c = rx_buffer[tail];
+	rx_tail = (tail + 1U) & USB_RX_MASK;
+	return c;
+}
+
 EXPORT volatile UW	tm_usb_dropped;
 
 /*
@@ -195,7 +215,16 @@ LOCAL void usb_service_task(INT stacd, void *exinf)
 			}
 			tm_tusb_write_flush();
 		}
-		tm_tusb_discard_input();
+		for(;;) {			/* keep input for tm_usb_console_getc */
+			INT c = tm_tusb_read_char();
+			UW  next;
+			if(c < 0) break;
+			next = (rx_head + 1U) & USB_RX_MASK;
+			if(next != rx_tail) {
+				rx_buffer[rx_head] = (UB)c;
+				rx_head = next;
+			}
+		}
 
 		/* Sleep until the controller interrupts, with a periodic
 		   fallback so the ring still drains when the link is idle. */

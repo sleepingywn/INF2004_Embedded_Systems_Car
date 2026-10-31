@@ -134,6 +134,7 @@ static int run_fake(bool use_comp)
     const float dt = 0.02f, v = 100.0f;           /* 50 Hz, car at 100 mm/s */
     const float A = 12.0f, T = 3.0f;              /* hump: +-12 deg over 3 s */
     imu_config_t cfg; imu_logic_default_config(&cfg);
+    cfg.hump_mode = IMU_HUMP_ANY;       /* full-width hump: needs total-tilt mode */
     imu_logic_t s;    imu_logic_init(&s, &cfg);
     srand(1);
 
@@ -173,15 +174,15 @@ static int run_fake(bool use_comp)
 
 
 /* ---------------- Synthetic one-sided hump ----------------
- * The car drives at 100 mm/s; the LEFT wheel rolls over a hump of the given
+ * The car drives at 100 mm/s; the RIGHT wheel rolls over a hump of the given
  * height (smooth bump 200 mm long) while the right wheel stays on the floor,
  * so the car rolls by asin(h / lever).  The sensor is mounted like ours:
  * upside down and tilted -15 deg, reading 0.94 g.  Also checks that a
  * parked car on a slope still gives TILT, not a hump. */
-static imu_accel_t mount(float pitch_deg, float roll_deg)
+static imu_accel_t mount(float pitch_deg, float roll_deg, float lin_g)
 {
     float p = pitch_deg * 0.0174533f, r = roll_deg * 0.0174533f;
-    float c[3] = { sinf(p), cosf(p) * sinf(r), cosf(p) * cosf(r) };
+    float c[3] = { sinf(p) + lin_g, cosf(p) * sinf(r), cosf(p) * cosf(r) };
     float th = -15.0f * 0.0174533f;
     float y[3] = { cosf(th) * c[0] + sinf(th) * c[2], c[1], -sinf(th) * c[0] + cosf(th) * c[2] };
     imu_accel_t a = { 0.94f * y[0] + noise(), -0.94f * y[1] + noise(), -0.94f * y[2] + noise() };
@@ -197,7 +198,8 @@ static int run_fake_onesided(float height_mm)
     srand(2);
 
     printf("Synthetic one-sided hump: %.0f mm high, %.0f mm long, lever %.0f mm, 100 mm/s\n"
-           "  0-2 s still | 2-3 s drive | then the left wheel crosses the hump |"
+           "  0-2 s still | 2-3 s drive | then the right wheel crosses the hump |"
+           " 7-8 s speed up / brake 0.15 g (no encoder compensation) |"
            " 9-11 s parked on a 30 deg slope\n\n", height_mm, len, lever);
 
     for (float t = 0.0f; t < 12.0f; t += dt) {
@@ -208,9 +210,12 @@ static int run_fake_onesided(float height_mm)
             float u = sinf(3.14159f * xh / len);
             h = height_mm * u * u;                      /* smooth bump */
         }
-        roll = asinf(h / lever) * 57.29578f;
+        roll = -asinf(h / lever) * 57.29578f;           /* right side up = negative roll */
+        float lin = 0.0f;
+        if (t >= 7.0f && t < 7.5f) lin =  0.15f;        /* speed up */
+        if (t >= 7.5f && t < 8.0f) lin = -0.15f;        /* brake    */
         if (t >= 9.0f && t < 11.0f) pitch = 30.0f;      /* parked on a slope */
-        uint32_t ev = imu_logic_update(&s, mount(pitch, roll), dt, dist, 0.0f);
+        uint32_t ev = imu_logic_update(&s, mount(pitch, roll, lin), dt, dist, 0.0f);
         report(&s, ev, t);
         log_row(&s, t);
     }

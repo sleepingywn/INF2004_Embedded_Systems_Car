@@ -1,0 +1,10 @@
+terrain: pitch +0.0 roll +0.0 tilt +0.1  v 0 mm/s |a| 998 mg  FLAT  humps 0  highest 0 mm  | exec max 2417 us (read 1879, logic 614)  slow 0  print max 768 us  jitter max 621 us  overruns 0  i2c err 0
+---- Sent utf8 encoded message: "g" ----
+[con] drive FORWARD 35 % for 1500 ms
+[con] drive forward: sent (0)
+terrain: pitch +0.0 roll +0.0 tilt +0.0  v 7 mm/s |a| 999 mg  FLAT  humps 0  highest 0 mm  | exec max 2417 us (read 1879, logic 614)  slow 0  print max 768 us  jitter max 621 us  overruns 0  i2c err 0
+terrain: HUMP ENTRY  pitch +1.5
+terrain: pitch -1.5 roll -4.5 tilt +4.9  v 236 mm/s |a| 1044 mg  CLIMBING  humps 0  highest 0 mm  | exec max 2417 us (read 1879, logic 614)  slow 0  print max 768 us  jitter max 621 us  overruns 0  i2c err 0
+terrain: HUMP DETECTED (one-sided)  peak mm +9.4  peak tilt +5.5  highest mm +9.4  count 1
+terrain: pitch +1.0 roll +0.0 tilt +1.2  v 0 mm/s |a| 1006 mg  FLAT  humps 1  highest 9 mm  | exec max 2417 us (read 1879, logic 614)  slow 0  print max 810 us  jitter max 621 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.6  v 0 mm/s |a| 1002 mg  FLAT  humps 1  highest 9 mm  | exec max 2417 us (read 1879, logic 614)  slow 0  print max 810 us  jitter max 621 us  overruns 0  i2c err 0

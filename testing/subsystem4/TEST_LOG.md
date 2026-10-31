@@ -65,6 +65,7 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-31 | S4-U07 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | IF-06 snapshot updates; subsystem4 SUMMARY 9 passed, 0 failed |
 | 2026-10-31 | S4-U08 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | no IMU fault bit in IF-07; subsystem4 SUMMARY 9 passed, 0 failed |
 | 2026-10-31 | S4-U16 | a3a6e95 (kernel TEST image, core 1) | Andy | PASS | `logs/2026-10-31_D_kernel_selftest.txt` | 8-byte packed snapshot on target, saturates and wraps; subsystem4 SUMMARY 9 passed, 0 failed |
+| 2026-10-31 | S4-U12 | `5f2ad8b` (integration branch, motors driving) | Andy | PASS | `../integration/logs/2026-10-31_I6_drive_over_hump.txt`, `../integration/logs/2026-10-31_I6_drive_hump_35pct.txt` | First hump test under motor power with real wheel distance (no pretend speed): 13.1 / 10.8 mm at ~75 mm/s, 9.4 mm at ~236 mm/s (hump 10-13 mm). Fast run reads ~1 mm low: 20 ms sampling at 236 mm/s = 4.7 mm per sample |
 
 ## Bench evidence (before integration)
 

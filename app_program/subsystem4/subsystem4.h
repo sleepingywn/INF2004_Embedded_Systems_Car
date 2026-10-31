@@ -24,6 +24,14 @@
 
 #define S4_PRI_TERRAIN		18	/* priority band 18-19 (TEAM.md section 4) */
 #define S4_PERIOD_MS		20	/* terrain task period                     */
+/* Core for terrain_task.  Pinned to core 1, the core that handles the
+   I2C interrupt, so the driver's "transfer done" wake-up is immediate.
+   Measured 2026-10-31 on the car: on core 0 every read took ~10-11 ms
+   (it waited for the next 10 ms kernel tick, overruns); on core 1 the
+   worst read was 0.76 ms, 0 slow cycles, 0 overruns. */
+#ifndef S4_CORE
+#define S4_CORE			TP_PRC2		/* core 1 */
+#endif
 
 /* ---------------------------------------------------------------------
  *  IF-06: terrain snapshot (owned by S4)
@@ -93,7 +101,12 @@ IMPORT ID	flg_events;
 typedef struct {
 	UW	cycles;			/* terrain_task cycles run               */
 	UW	overruns;		/* cycles still running at the next tick */
-	UW	exec_max_us;		/* longest read + process time           */
+	UW	exec_max_us;		/* longest read + process time (wall clock,
+					   includes being pre-empted)            */
+	UW	read_max_us;		/* longest gy511_read() alone            */
+	UW	logic_max_us;		/* longest imu_logic_update() alone      */
+	UW	print_max_us;		/* longest status print (USB console)    */
+	UW	slow_cycles;		/* read + process over 5 ms              */
 	UW	jitter_max_us;		/* longest delay from tick to task start */
 	UW	mtx_timeouts;		/* snapshot updates skipped (mutex busy) */
 	BOOL	sensor_found;

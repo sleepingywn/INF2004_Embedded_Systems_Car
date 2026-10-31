@@ -124,8 +124,11 @@ LOCAL void print_status(void)
 	tm_printf((UB*)" |a| %d mg  %s  humps %u  highest %u mm",
 		  s4_diag.accel_mag_mg, imu_hump_state_name(logic.hump_state),
 		  (UINT)snapshot.hump_count, (UINT)snapshot.high_peak_mm);
-	tm_printf((UB*)"  | exec max %u us  jitter max %u us  overruns %u  i2c err %u%s\n",
-		  s4_diag.exec_max_us, s4_diag.jitter_max_us, s4_diag.overruns,
+	tm_printf((UB*)"  | exec max %u us (read %u, logic %u)  slow %u  print max %u us"
+		  "  jitter max %u us  overruns %u  i2c err %u%s\n",
+		  s4_diag.exec_max_us, s4_diag.read_max_us, s4_diag.logic_max_us,
+		  s4_diag.slow_cycles, s4_diag.print_max_us,
+		  s4_diag.jitter_max_us, s4_diag.overruns,
 		  gy511_error_count(), snapshot.imu_fault ? "  IMU FAULT" : "");
 }
 
@@ -216,6 +219,7 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		/* ---- read + process (this is what "exec" measures) ---- */
 		if (!fault && gy511_read(&raw)) {
 			UINT  ev;
+			UW    read_us = now_us() - start_us, logic_start;
 			float dt = (float)(start_us - prev_us) * 1e-6f;
 			float dist = (float)S4_PRETEND_SPEED_MM_S * dt;
 
@@ -223,13 +227,22 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			fail_run = 0;
 			/* TODO(C04): dist and the car's own acceleration come from
 			   subsystem 2's wheel data once that interface is agreed. */
+			logic_start = now_us();
 			ev = imu_logic_update(&logic, map_axes(&raw), dt, dist, 0.0f);
 			s4_diag.accel_mag_mg = (INT)(logic.accel_mag_g * 1000.0f);
 
 			{
-				UW exec = now_us() - start_us;
-				if (logic.calibrated && exec > s4_diag.exec_max_us) {
-					s4_diag.exec_max_us = exec;
+				UW end = now_us();
+				UW exec = end - start_us, logic_us = end - logic_start;
+				if (logic.calibrated) {
+					if (exec > s4_diag.exec_max_us)      s4_diag.exec_max_us = exec;
+					if (read_us > s4_diag.read_max_us)   s4_diag.read_max_us = read_us;
+					if (logic_us > s4_diag.logic_max_us) s4_diag.logic_max_us = logic_us;
+					if (exec > 5000) {
+						s4_diag.slow_cycles++;
+						tm_printf((UB*)"terrain: SLOW cycle %u us (read %u us, logic %u us)\n",
+							  exec, read_us, logic_us);
+					}
 				}
 			}
 
@@ -274,7 +287,10 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		drain_legacy_if03();
 
 		if (s4_diag.cycles % PRINT_EVERY == 0 && logic.calibrated) {
+			UW p0 = now_us(), pt;
 			print_status();
+			pt = now_us() - p0;
+			if (pt > s4_diag.print_max_us) s4_diag.print_max_us = pt;
 		}
 		busy = 0;
 	}

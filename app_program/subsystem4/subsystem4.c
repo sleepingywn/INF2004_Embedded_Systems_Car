@@ -54,8 +54,8 @@ EXPORT ER subsystem4_init(void)
 
 EXPORT ER subsystem4_start(void)
 {
-	/* No core affinity: it is light (well under 1 ms per 20 ms) */
-	tid_terrain = app_start_task(terrain_task, S4_PRI_TERRAIN, 0, "terrain_task");
+	/* Pinned to S4_CORE: the core that handles the I2C interrupt */
+	tid_terrain = app_start_task(terrain_task, S4_PRI_TERRAIN, S4_CORE, "terrain_task");
 	if (tid_terrain < E_OK) return tid_terrain;
 	return tk_sta_cyc(cyc_terrain);
 }

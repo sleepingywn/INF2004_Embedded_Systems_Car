@@ -1,0 +1,19 @@
+terrain: calibrated  mounting pitch -15.2  roll +178.8
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 999 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 0 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1001 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 643 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1002 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1000 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1002 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 999 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 999 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1000 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1001 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1000 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 999 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 999 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1002 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 998 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1002 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 999 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1002 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 997 mg  FLAT  humps 0  highest 0 mm  | exec max 1349 us (read 758, logic 631)  slow 0  print max 656 us  jitter max 321 us  overruns 0  i2c err 0

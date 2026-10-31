@@ -50,6 +50,11 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-31 | S4-U10 | 5cfbb0a (bench firmware) | Andy | PASS | `logs/2026-10-31_A_bench_tilt_collision_calibration.txt` | Firm knock → `COLLISION` at 1.93 g |
 | 2026-10-31 | S4-U18 | 5cfbb0a (bench firmware) | Andy | PASS | `logs/2026-10-31_A_bench_tilt_collision_calibration.txt` | Right wheel on the hump (~11.5 mm), still ~8 s: roll −5.4°, pitch −4.1°, total tilt 6.75° → lever = 11.5 / sin(6.75°) ≈ 98 mm (set in this commit) |
 | 2026-10-31 | S4-U12 | (this commit) | Claude, for Andy | PASS (replay) | `logs/2026-10-31_A8_hump_pass.csv` + `logs/2026-10-31_A_bench_car.txt` | With lever 98 mm: real passes read 10.4 mm and 11.9 mm (hump 10–13 mm) |
+| 2026-10-31 | S4-U05 | 1e3d802 (kernel, no core pin) | Andy | FAIL | `logs/2026-10-31_B_kernel_first_run.txt` | First run under µT-Kernel: exec max 20351 µs, overruns 4–5, `i2c err 0` |
+| 2026-10-31 | S4-U11 | 1e3d802 + diag (kernel) | Andy | PASS | `logs/2026-10-31_B_kernel_diag_sda_pull.txt` | SDA pulled → `IMU FAULT (5 failed reads in a row)`, reconnected → `IMU fault cleared` (came back at 0x1e: SA0 floating, tie it to 3.3 V) |
+| 2026-10-31 | S4-U05 | 1e3d802 + diag, task on core 0 | Andy | FAIL | `logs/2026-10-31_B_kernel_core0.txt` | Timing breakdown: read 10–11.7 ms every cycle (logic ~0.6 ms, print ~0.6 ms), overruns 6 → the I2C read is the slow part, not the logic |
+| 2026-10-31 | S4-U05 | (this commit), task on core 1 | Andy | PASS | `logs/2026-10-31_B_kernel_core1.txt` | exec max 1349 µs (read 758, logic 631), slow 0, jitter max 321 µs, overruns 0. Cause: the I2C "done" interrupt is handled on core 1; a task on core 0 only woke at the next 10 ms tick. Fix: `S4_CORE = TP_PRC2` |
+| 2026-10-31 | S4-U03 | (this commit), task on core 1 | Andy | PASS (status line) | `logs/2026-10-31_B_kernel_core1.txt` | overruns 0 over the run; the auto `[TEST] S4-U03` check still to run with the TEST image |
 
 ## Bench evidence (before integration)
 
@@ -66,4 +71,4 @@ commit to quote. Kept as evidence that the sensor, wiring and logic work.
 
 Not yet run on hardware: the rotation-based mounting calibration (it removes
 the false pitch of 4–5° seen when rolling), collision, hump and stalled-bus
-tests, and anything under micro T-Kernel.
+tests, and anything under micro T-Kernel (now run: see the results above).

@@ -174,6 +174,11 @@ ER motion_get_status(motion_status_t *status);
  * B2 epoch, not merely reception time. Never call these from an ADC ISR. */
 ER motion_publish_line(const line_msg_t *line, uint32_t sampled_ms, uint32_t epoch);
 ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t epoch);
+/* INTEGRATION TEST: latest line sample / barcode capture received from S3,
+ * whatever the motion state.  motion_debug_line returns E_NOEXS before the
+ * first sample. */
+ER motion_debug_line(line_msg_t *line, uint32_t *sampled_ms);
+ER motion_debug_barcode(bc_msg_t *barcode, uint32_t *sampled_ms, uint32_t *count);
 ER motion_init(void);
 ER motion_start(void);
 void motion_task(INT stacd, void *exinf);

@@ -16,6 +16,19 @@
 
 static ID mailbox_mutex;
 
+/* INTEGRATION TEST: copies of the latest line sample and barcode capture
+ * received from S3, kept whatever the motion state (the control loop only
+ * uses them while following).  Read with motion_debug_line/_barcode. */
+static struct
+{
+    line_msg_t line;
+    uint32_t line_ms;
+    bool have_line;
+    bc_msg_t barcode;
+    uint32_t barcode_ms;
+    uint32_t barcode_count;
+} debug_rx;
+
 /* INTEGRATION TEST BUILD: a single TMO_POL attempt failed whenever another
  * core held the lock for a few microseconds, which raised false HANDOFF/IR
  * faults on the car (2026-10-31). Retry briefly, then wait at most 2 ms. */
@@ -385,6 +398,9 @@ ER motion_publish_line(const line_msg_t *line, uint32_t sampled_ms, uint32_t epo
         return E_OBJ;
     }
     shared.line = *line;
+    debug_rx.line = *line;
+    debug_rx.line_ms = sampled_ms;
+    debug_rx.have_line = true;
     shared.line_ms = sampled_ms;
     shared.line_epoch = epoch;
     shared.have_line = true;
@@ -407,6 +423,9 @@ ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t
     {
         return error;
     }
+    debug_rx.barcode = *barcode;          /* keep a copy even if rejected */
+    debug_rx.barcode_ms = sampled_ms;
+    ++debug_rx.barcode_count;
     if (shared.have_barcode || (epoch != shared.status.epoch))
     {
         tk_unl_mtx(mailbox_mutex);
@@ -1067,4 +1086,41 @@ void motion_task(INT stacd, void *exinf)
             fault_stop(MOTION_FAULT_HANDOFF);
         }
     }
+}
+
+/* INTEGRATION TEST accessors (see debug_rx). */
+ER motion_debug_line(line_msg_t *line, uint32_t *sampled_ms)
+{
+    if ((line == NULL) || (sampled_ms == NULL) || (mailbox_mutex <= 0))
+    {
+        return E_PAR;
+    }
+    ER error = lock_mailbox();
+    if (error < E_OK)
+    {
+        return error;
+    }
+    bool have = debug_rx.have_line;
+    *line = debug_rx.line;
+    *sampled_ms = debug_rx.line_ms;
+    tk_unl_mtx(mailbox_mutex);
+    return have ? E_OK : E_NOEXS;
+}
+
+ER motion_debug_barcode(bc_msg_t *barcode, uint32_t *sampled_ms, uint32_t *count)
+{
+    if ((barcode == NULL) || (sampled_ms == NULL) || (count == NULL) || (mailbox_mutex <= 0))
+    {
+        return E_PAR;
+    }
+    ER error = lock_mailbox();
+    if (error < E_OK)
+    {
+        return error;
+    }
+    *barcode = debug_rx.barcode;
+    *sampled_ms = debug_rx.barcode_ms;
+    *count = debug_rx.barcode_count;
+    tk_unl_mtx(mailbox_mutex);
+    return E_OK;
 }

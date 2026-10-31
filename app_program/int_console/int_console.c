@@ -20,7 +20,11 @@
  *	  g  drive forward (power and time below)   b  drive backward
  *	  +  -  drive power +/- 5 %                 [  ]  drive time -/+ 0.5 s
  *	  q  spin left on the spot   e  spin right  (same power and time)
+ *	  <  >  drive trim -/+ 5 %: extra power for the RIGHT motor on g / b
+ *	        (open-loop balance; the left motor is ~20 % stronger)
  *	  z  zero the terrain heading (hdg) for a turn-rate test
+ *	  l  fast line monitor on/off (line error and state every 100 ms)
+ *	  Every barcode the IR sensor captures is printed with its decoded letter.
  */
 
 #include "int_console.h"
@@ -28,6 +32,7 @@
 #if APP_CONSOLE
 
 #include "../subsystem2/motion.h"
+#include "../subsystem2/motion_logic.h"	/* motion_barcode_decode */
 #include "../subsystem3/ir_runtime.h"
 #include "../subsystem4/subsystem4.h"
 
@@ -37,8 +42,17 @@ IMPORT INT tm_usb_console_getc(void);	/* lib/libtm usb_console.c */
 #define BENCH_MS	500	/* Buddy 2's bench maximum                  */
 
 LOCAL BOOL	print_on = TRUE;
+LOCAL BOOL	line_fast = FALSE;	/* l: line monitor every 100 ms     */
+LOCAL UW	barcodes_seen;		/* barcode captures already printed */
+
+LOCAL const char *const line_state_name[8] = {
+	"CALIBRATING", "ON", "EDGE_ONLY", "LOST_HOLD", "LOST", "BOTH_BLACK", "FAULT", "?"
+};
 LOCAL INT	drive_pct = 35;		/* g / b power, percent             */
 LOCAL INT	drive_ms  = 2000;	/* g / b time                       */
+LOCAL INT	drive_trim = 20;	/* g / b: right motor gets this % more.
+					   Measured 2026-10-31 at 15 %: left
+					   wheel went 1.18-1.23x further.   */
 LOCAL UW	next_id = 1;	/* request ids only ever increase */
 
 LOCAL const char *const motion_state_name[8] = {
@@ -95,6 +109,8 @@ LOCAL void print_help(void)
 		"[con]  (each pulse lasts 0.5 s; press r first if motion shows a fault)\n"
 		"[con]  g drive forward   b drive backward   + - power   [ ] time\n"
 		"[con]  q spin left   e spin right   z zero heading (hdg on the terrain line)\n"
+		"[con]  l fast line monitor (line error/state every 100 ms); barcodes print by themselves\n"
+		"[con]  < > drive trim: right motor -/+ 5 %% (car pulls right -> press >)\n"
 		"[con]  (drive keys use the measured motor directions; x stops)\n\n");
 }
 
@@ -132,6 +148,14 @@ LOCAL void print_status(void)
 				  (ir.failed_channels & 1) ? " GP26" : "",
 				  (ir.failed_channels & 2) ? " GP27" : "",
 				  (ir.failed_channels & 4) ? " GP28" : "");
+		}
+		{
+			line_msg_t	ln;
+			uint32_t	ln_ms;
+			if (motion_debug_line(&ln, &ln_ms) == E_OK) {
+				tm_printf((UB*)" | line err %+d %s",
+					  (INT)ln.err, line_state_name[ln.state & 7]);
+			}
 		}
 		tm_printf((UB*)" | acq %s n %u late %u us scan %u us flt %u",
 			  ir.acquisition.running ? "on" : "STOPPED",
@@ -235,6 +259,50 @@ LOCAL void ir_command(ir_runtime_command_t cmd)
 	}
 }
 
+/* l: one short line per 100 ms while sliding the car across the line */
+LOCAL void print_line_fast(void)
+{
+	line_msg_t		ln;
+	uint32_t		ln_ms;
+	ir_runtime_status_t	ir;
+
+	if (motion_debug_line(&ln, &ln_ms) != E_OK) {
+		tm_printf((UB*)"[con] line: no samples yet (IR not READY? press c ... f)\n");
+		return;
+	}
+	tm_printf((UB*)"[con] line err %+4d  %-10s", (INT)ln.err, line_state_name[ln.state & 7]);
+	if (get_ir(&ir) == E_OK && ir.state == IR_RUNTIME_READY) {
+		tm_printf((UB*)"  norm L %3u R %3u  bc %3u",
+			  (UINT)ir.normalized[1].value, (UINT)ir.normalized[2].value,
+			  (UINT)ir.normalized[0].value);
+	}
+	tm_printf((UB*)"%s\n", ln.bc_active ? "  [barcode capture]" : "");
+}
+
+/* Print every new barcode capture from S3 and what Buddy 2's decoder makes of it */
+LOCAL void check_barcode(void)
+{
+	bc_msg_t	bc;
+	uint32_t	bc_ms, count;
+	char		ch;
+	UINT		i;
+
+	if (motion_debug_barcode(&bc, &bc_ms, &count) != E_OK || count == barcodes_seen) return;
+	barcodes_seen = count;
+	ch = motion_barcode_decode(&bc);
+	tm_printf((UB*)"[con] BARCODE #%u: %u elements%s -> %s",
+		  (UINT)count, (UINT)bc.hdr.count, bc.hdr.overflow ? " (overflow)" : "",
+		  ch ? "decoded '" : "NOT decoded");
+	if (ch) tm_printf((UB*)"%c' (%s)", ch,
+			  ch == 'A' ? "left" : ch == 'B' ? "right" : ch == 'C' ? "straight" :
+			  ch == 'D' ? "U-turn" : "?");
+	tm_printf((UB*)"\n[con]   widths ms:");
+	for (i = 0; i < bc.hdr.count && i < BC_MAX_ELEMS; i++) {
+		tm_printf((UB*)" %u", (UINT)bc.widths[i]);
+	}
+	tm_printf((UB*)"\n");
+}
+
 LOCAL void handle_key(INT c)
 {
 	switch (c) {
@@ -263,10 +331,12 @@ LOCAL void handle_key(INT c)
 	case 'g': case 'b': {
 		INT dir  = (c == 'g') ? 1 : -1;
 		INT duty = drive_pct * 10;
-		tm_printf((UB*)"[con] drive %s %d %% for %d ms\n",
-			  (c == 'g') ? "FORWARD" : "BACKWARD", drive_pct, drive_ms);
+		INT rduty = duty * (100 + drive_trim) / 100;
+		if (rduty > MOTION_BENCH_DUTY_MAX) rduty = MOTION_BENCH_DUTY_MAX;
+		tm_printf((UB*)"[con] drive %s %d %% (right %+d %%) for %d ms\n",
+			  (c == 'g') ? "FORWARD" : "BACKWARD", drive_pct, drive_trim, drive_ms);
 		submit(MOTION_BENCH, dir * MOTION_LEFT_MOTOR_SIGN * duty,
-		       dir * MOTION_RIGHT_MOTOR_SIGN * duty, (UW)drive_ms,
+		       dir * MOTION_RIGHT_MOTOR_SIGN * rduty, (UW)drive_ms,
 		       (c == 'g') ? "drive forward" : "drive backward");
 		break;
 	}
@@ -280,8 +350,15 @@ LOCAL void handle_key(INT c)
 		       (c == 'q') ? "spin left" : "spin right");
 		break;
 	}
+	case 'l':		line_fast = !line_fast;
+				tm_printf((UB*)"[con] fast line monitor %s\n", line_fast ? "on" : "off");
+				break;
 	case 'z':		s4_heading_zero_req = TRUE;
 				tm_printf((UB*)"[con] heading zeroed\n"); break;
+	case '<': case ',':	if (drive_trim > -50) drive_trim -= 5;
+				tm_printf((UB*)"[con] drive trim: right motor %+d %%\n", drive_trim); break;
+	case '>': case '.':	if (drive_trim < 50) drive_trim += 5;
+				tm_printf((UB*)"[con] drive trim: right motor %+d %%\n", drive_trim); break;
 	case '+': case '=':	if (drive_pct < MOTION_BENCH_DUTY_MAX / 10) drive_pct += 5;
 				tm_printf((UB*)"[con] drive power %d %%\n", drive_pct); break;
 	case '-': case '_':	if (drive_pct > 10) drive_pct -= 5;
@@ -309,6 +386,8 @@ LOCAL void console_task(INT stacd, void *exinf)
 
 	for (;;) {
 		while ((c = tm_usb_console_getc()) >= 0) handle_key(c);
+		check_barcode();
+		if (line_fast) print_line_fast();
 
 		elapsed += CONSOLE_PERIOD_MS;
 		if (elapsed >= CONSOLE_PRINT_MS) {

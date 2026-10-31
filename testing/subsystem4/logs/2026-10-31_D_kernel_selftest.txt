@@ -1,0 +1,24 @@
+---- Opened the serial port COM5 ----
+terrain: calibrated  mounting pitch -15.1  roll +178.7
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1001 mg  FLAT  humps 0  highest 0 mm  | exec max 1357 us (read 738, logic 631)  slow 0  print max 0 us  jitter max 324 us  overruns 0  i2c err 0
+[TEST] INT-01 PASS  samples flow from subsystem 2 to subsystem 3
+[TEST] S3-U01 PASS  min <= max, both within 0..100
+[TEST] subsystem3 SUMMARY 2 passed, 0 failed
+[TEST] S4-U01 PASS  flg_terrain and mtx_terrain exist
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1000 mg  FLAT  humps 0  highest 0 mm  | exec max 1768 us (read 1158, logic 631)  slow 0  print max 714 us  jitter max 330 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1000 mg  FLAT  humps 0  highest 0 mm  | exec max 1768 us (read 1158, logic 631)  slow 0  print max 724 us  jitter max 330 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 999 mg  FLAT  humps 0  highest 0 mm  | exec max 1768 us (read 1158, logic 631)  slow 0  print max 724 us  jitter max 330 us  overruns 0  i2c err 0
+[TEST] S4-U02 PASS  terrain_task runs every 20 ms
+[TEST] S4-U03 PASS  no overruns
+[TEST] S4-U04 PASS  GY-511 found on I2C0
+[TEST] S4-U05 PASS  execution time under 5 ms
+[TEST] S4-U06 PASS  still car: |a| ~1 g, pitch and roll within 2 deg
+[TEST] S4-U07 PASS  snapshot updates (IF-06)
+[TEST] S4-U08 PASS  no IMU fault bit (IF-07)
+[TEST] S4-U16 PASS  8-byte packed snapshot, saturates and wraps correctly
+[TEST] S4 timing: exec max 1768 us, jitter max 330 us, overruns 0
+[TEST] subsystem4 SUMMARY 9 passed, 0 failed
+[TEST] S5-U01 PASS  example: running in a task context
+[TEST] subsystem5 SUMMARY 1 passed, 0 failed
+[TEST] === test run end ===
+terrain: pitch +0.0 roll +0.0 tilt +0.0 |a| 1001 mg  FLAT

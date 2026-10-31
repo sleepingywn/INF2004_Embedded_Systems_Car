@@ -23,16 +23,16 @@
  * Signs must be +1 or -1; positive logical motion means vehicle forward.
  * No physical test or tuning result is implied by this file. */
 #define MOTION_CALIBRATED 0
-#define MOTION_ENCODERS_VERIFIED 0
-#define MOTION_LEFT_MOTOR_SIGN 0
-#define MOTION_RIGHT_MOTOR_SIGN 0
-#define MOTION_LEFT_ENCODER_SIGN 0
-#define MOTION_RIGHT_ENCODER_SIGN 0
-#define MOTION_LEFT_COUNTS_REV 0u
-#define MOTION_RIGHT_COUNTS_REV 0u
-#define MOTION_LEFT_CIRCUMFERENCE_UM 0u
-#define MOTION_RIGHT_CIRCUMFERENCE_UM 0u
-#define MOTION_TRACK_WIDTH_MM 0u
+#define MOTION_ENCODERS_VERIFIED 1 /* verified 2026-10-31: both wheels count both ways, 0 invalid edges */
+#define MOTION_LEFT_MOTOR_SIGN -1   /* measured 2026-10-31: +duty spins left wheel backward */
+#define MOTION_RIGHT_MOTOR_SIGN 1   /* measured 2026-10-31: +duty spins right wheel forward */
+#define MOTION_LEFT_ENCODER_SIGN -1 /* measured: left count goes DOWN when driving forward */
+#define MOTION_RIGHT_ENCODER_SIGN 1 /* measured: right count goes UP when driving forward */
+#define MOTION_LEFT_COUNTS_REV 2774u  /* ROUGH: one hand turn gave 2679 L / 2869 R; refine with a 1 m push */
+#define MOTION_RIGHT_COUNTS_REV 2774u
+#define MOTION_LEFT_CIRCUMFERENCE_UM 204200u /* 65 mm wheel (measured 64-66 mm) */
+#define MOTION_RIGHT_CIRCUMFERENCE_UM 204200u
+#define MOTION_TRACK_WIDTH_MM 125u /* measured, wheel centre to centre */
 #define MOTION_MAX_SPEED_MM_S 0u
 #define MOTION_CRUISE_MM_S 0u
 #define MOTION_TURN_MM_S 0u
@@ -50,7 +50,7 @@
 
 /* Bench pulses are explicit API requests, never automatic startup tests.
  * Match the standalone test; limited to 20% and 500 ms. */
-#define MOTION_BENCH_DUTY_MAX 200
-#define MOTION_BENCH_TIME_MAX_MS 500u
+#define MOTION_BENCH_DUTY_MAX 600     /* INTEGRATION TEST BUILD: 60 % so the console can drive over the hump (was 200) */
+#define MOTION_BENCH_TIME_MAX_MS 4000u /* INTEGRATION TEST BUILD: 4 s drive (was 500) */
 
 #endif

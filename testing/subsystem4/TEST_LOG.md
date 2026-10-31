@@ -55,6 +55,7 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-31 | S4-U05 | 1e3d802 + diag, task on core 0 | Andy | FAIL | `logs/2026-10-31_B_kernel_core0.txt` | Timing breakdown: read 10–11.7 ms every cycle (logic ~0.6 ms, print ~0.6 ms), overruns 6 → the I2C read is the slow part, not the logic |
 | 2026-10-31 | S4-U05 | (this commit), task on core 1 | Andy | PASS | `logs/2026-10-31_B_kernel_core1.txt` | exec max 1349 µs (read 758, logic 631), slow 0, jitter max 321 µs, overruns 0. Cause: the I2C "done" interrupt is handled on core 1; a task on core 0 only woke at the next 10 ms tick. Fix: `S4_CORE = TP_PRC2` |
 | 2026-10-31 | S4-U03 | (this commit), task on core 1 | Andy | PASS (status line) | `logs/2026-10-31_B_kernel_core1.txt` | overruns 0 over the run; the auto `[TEST] S4-U03` check still to run with the TEST image |
+| 2026-10-31 | S4-U12 | a3a6e95 (kernel, PRETEND_MOVING, core 1) | Andy | PASS | `logs/2026-10-31_C_kernel_hump.txt` | Real right-side hump (10–13 mm) under µT-Kernel: 3 passes, 3 humps counted, 11.3 / 10.3 / 10.5 mm; no false hump on flat; exec max 1425 µs, overruns 0, i2c err 0 |
 
 ## Bench evidence (before integration)
 

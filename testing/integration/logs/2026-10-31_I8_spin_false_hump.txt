@@ -1,0 +1,9 @@
+I8 build (turn scale 1.14, before the turn gate). z, then q: spin LEFT 35 % for 1000 ms on flat mat.
+Observed: car turned a little less than 180 deg.
+[con] spin LEFT 35 % for 1000 ms
+[con] spin left: sent (0)
+terrain: pitch +0.5 roll -1.0 tilt +0.9  v 3 mm/s  turn +3 dps  hdg +3 deg |a| 846 mg  FLAT  humps 0  highest 0 mm  | exec max 2627 us (read 2084, logic 607)  slow 0  print max 1043 us  jitter max 616 us  overruns 0  i2c err 0
+terrain: HUMP ENTRY  pitch +6.0
+terrain: pitch +4.5 roll +3.0 tilt +5.1  v 22 mm/s  turn +161 dps  hdg +165 deg |a| 884 mg  CLIMBING  humps 0  highest 0 mm  | exec max 2627 us (read 2084, logic 607)  slow 0  print max 1043 us  jitter max 616 us  overruns 0  i2c err 0
+terrain: HUMP DETECTED (one-sided)  peak mm +12.3  peak tilt +7.2  highest mm +12.3  count 1
+terrain: pitch +1.0 roll +1.0 tilt +1.4  v 0 mm/s  turn +0 dps  hdg +164 deg |a| 997 mg  FLAT  humps 1  highest 12 mm  | exec max 2627 us (read 2084, logic 607)  slow 0  print max 1043 us  jitter max 616 us  overruns 0  i2c err 0

@@ -29,6 +29,7 @@ Define a test here before running it. Test IDs never change.
 | S4-U17 | one-sided right-side hump (10–13 mm) detected from roll; height = lever × sin(peak tilt); no false hump from speeding up/braking | FR5, one-sided layout | auto (laptop) | `imu_sim --fake1 10`, `11.5`, `13` | `HUMP DETECTED (one-sided)` within ±10 mm; no hump at the 0.15 g speed-up/brake |
 | S4-U18 | lever calibration on the car | FR5 | manual | right wheel on the hump (height h), car still; read total tilt θ; lever = h / sin(θ) | lever recorded; then S4-U12 on the real hump within ±10 mm |
 | S4-U19 | turn rate from the wheel encoders | FR8 | manual | console: z, then q (spin left on the spot); compare the hdg reading with the real angle turned | sign + for left; hdg within ±10 % of the real angle |
+| S4-U20 | no false hump while turning on the spot | FR4 | manual | console: q (spin left, 35 %, 1 s) on flat mat | no HUMP ENTRY / HUMP DETECTED |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).
@@ -69,6 +70,10 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-31 | S4-U12 | `5f2ad8b` (integration branch, motors driving) | Andy | PASS | `../integration/logs/2026-10-31_I6_drive_over_hump.txt`, `../integration/logs/2026-10-31_I6_drive_hump_35pct.txt` | First hump test under motor power with real wheel distance (no pretend speed): 13.1 / 10.8 mm at ~75 mm/s, 9.4 mm at ~236 mm/s (hump 10-13 mm). Fast run reads ~1 mm low: 20 ms sampling at 236 mm/s = 4.7 mm per sample |
 | 2026-10-31 | S4-U19 | `b41564b` (I7, no scale) | Andy | FAIL (scale) | `../integration/logs/2026-10-31_I7_turn_hand.txt`, `../integration/logs/2026-10-31_I7_turn_spin.txt` | Sign correct (+ left), 0 drift when still. Hand turn >180 deg read 148 deg (wheels slide when the geared car is twisted by hand, not a valid reference). Motor spin 35 % 1 s: real a little over 180 deg, read 165 deg (~12 % low). Spin 2 s snagged on the USB cable: COLLISION 2.45 g (correct) |
 | 2026-10-31 | S4-U19 | (this commit) | Claude, for Andy | calibrated | same logs | S4_TURN_SCALE 1.14 from the 1 s spin (165 deg read, ~188 deg real). Re-test with a 90/180 deg spin to confirm; a 1 m push test would show if MOTION_*_COUNTS_REV is the real cause |
+| 2026-10-31 | S4-U20 | `4296e8f` (I8, before the fix) | Andy | FAIL | `../integration/logs/2026-10-31_I8_spin_false_hump.txt` | Spin 35 % 1 s on flat mat: HUMP ENTRY + HUMP DETECTED 12.3 mm (one-sided), fake pitch +4.5 / roll +3.0, |a| 846-884 mg |
+| 2026-10-31 | S4-U20 | `f8094fb` (I10) | Andy | PASS | `../integration/logs/2026-10-31_I10_hump_and_spin.txt` | Same spin: no hump events; hdg +172 deg |
+| 2026-10-31 | S4-U19 | `f8094fb` (I10) | Andy | PASS | `../integration/logs/2026-10-31_I10_hump_and_spin.txt` | With S4_TURN_SCALE 1.14: spins of 35 % 1 s read 164 deg (real a little under 180) and 172 deg (real ~180): within 10 % |
+| 2026-10-31 | S4-U12 | `f8094fb` (I10) | Andy | PASS | `../integration/logs/2026-10-31_I10_hump_and_spin.txt` | Motor drive 15 % over the real hump with the turn gate, 0.10 g filter and forward-acceleration subtraction: 11.4 mm (hump 10-13 mm) |
 
 ## Bench evidence (before integration)
 

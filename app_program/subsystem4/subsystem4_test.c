@@ -8,6 +8,7 @@
  */
 
 #include "subsystem4.h"
+#include "imu_logic.h"
 #include "../test_report.h"
 
 #if APP_TEST
@@ -80,6 +81,60 @@ EXPORT void subsystem4_test(void)
 			   p.hump_count == 1 && !S4_TURN_OK(p) &&
 			   S4_AGE_MS(p, 40050) == 50,
 			   "8-byte packed snapshot, saturates and wraps correctly");
+	}
+
+	/* S4-U21: motion classification rules and priorities (B4-FR11),
+	   on a synthetic logic state (no hardware) */
+	{
+		imu_logic_t st = {0};
+		BOOL ok;
+		st.calibrated = true;
+		ok =  imu_classify_motion(&st,    0.0f,   0.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_STOPPED
+		   && imu_classify_motion(&st,  150.0f,   2.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_STRAIGHT
+		   && imu_classify_motion(&st, -150.0f,   0.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_STRAIGHT
+		   && imu_classify_motion(&st,  150.0f,  30.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_TURNING
+		   && imu_classify_motion(&st,    5.0f, 160.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_SPINNING
+		   && imu_classify_motion(&st,    5.0f,-160.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_SPINNING
+		   && imu_classify_motion(&st,  150.0f,   0.0f, false, IMU_MOTION_STOPPED) == IMU_MOTION_UNKNOWN
+		   /* hysteresis: 12 deg/s is STRAIGHT from STRAIGHT, stays TURNING from TURNING */
+		   && imu_classify_motion(&st,  150.0f,  12.0f, true, IMU_MOTION_STRAIGHT) == IMU_MOTION_STRAIGHT
+		   && imu_classify_motion(&st,  150.0f,  12.0f, true, IMU_MOTION_TURNING)  == IMU_MOTION_TURNING
+		   && imu_classify_motion(&st,  150.0f,   8.0f, true, IMU_MOTION_TURNING)  == IMU_MOTION_STRAIGHT;
+		st.hump_state = HUMP_CLIMBING;
+		ok = ok && imu_classify_motion(&st, 150.0f, 0.0f, false, IMU_MOTION_STOPPED) == IMU_MOTION_ON_HUMP;
+		st.tilt_active = true;
+		ok = ok && imu_classify_motion(&st, 150.0f, 0.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_TILTED;
+		st.coll_cooldown = 0.3f;
+		ok = ok && imu_classify_motion(&st, 150.0f, 0.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_IMPACT;
+		st.calibrated = false;
+		ok = ok && imu_classify_motion(&st, 150.0f, 0.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_UNKNOWN;
+		TEST_CHECK("S4-U21", ok, "motion classes and their priority (B4-FR11)");
+	}
+
+	/* S4-U22: START / RESET of a run clears the highest hump (B4-FR10) */
+	{
+		S4_TERRAIN t;
+		ER er = s4_reset_run();
+		tk_dly_tsk(60);				/* let one publish happen */
+		TEST_CHECK("S4-U22", er == E_OK && s4_get_terrain(&t) == E_OK &&
+			   t.high_peak_mm == 0 && t.cur_peak_mm == 0 && t.hump_count == 0,
+			   "s4_reset_run confirmed; snapshot peaks and count are 0");
+	}
+
+	/* S4-U23: event records carry the source and a sane timestamp (B4-FR9).
+	   The car is still during the test, so no terrain events are expected. */
+	{
+		S4_EVENTS e;
+		SYSTIM now;
+		BOOL ok;
+		INT i;
+		ok = s4_get_events(&e) == E_OK && e.source == S4_SOURCE_IMU;
+		tk_get_tim(&now);
+		for (i = 0; i < S4_EV_NUM && ok; i++) {
+			if (e.ev[i].count > 0 && (UW)(now.lo - e.ev[i].time_ms) > 0x7fffffffu) ok = FALSE;
+		}
+		ok = ok && e.ev[S4_EV_HUMP_DONE].count == 0 && e.ev[S4_EV_COLLISION].count == 0;
+		TEST_CHECK("S4-U23", ok, "event records: source IMU, timestamps not in the future");
 	}
 
 	tm_printf((UB*)"[TEST] S4 timing: exec max %u us, jitter max %u us, overruns %u\n",

@@ -54,6 +54,37 @@ const char *imu_hump_state_name(hump_state_t st)
     return "?";
 }
 
+imu_motion_t imu_classify_motion(const imu_logic_t *s, float speed_mm_s,
+                                 float turn_dps, bool wheels_valid,
+                                 imu_motion_t prev)
+{
+    float v = imu_fabsf(speed_mm_s), w = imu_fabsf(turn_dps);
+    float turn_on = (prev == IMU_MOTION_TURNING) ? IMU_MOTION_TURN_EXIT_DPS
+                                                 : IMU_MOTION_TURN_DPS;
+
+    if (!s->calibrated)                  return IMU_MOTION_UNKNOWN;
+    /* IMU-based classes first: they do not need the wheels */
+    if (s->coll_cooldown > 0.0f)         return IMU_MOTION_IMPACT;
+    if (s->tilt_active)                  return IMU_MOTION_TILTED;
+    if (s->hump_state != HUMP_FLAT)      return IMU_MOTION_ON_HUMP;
+    if (!wheels_valid)                   return IMU_MOTION_UNKNOWN;
+    if (w >= IMU_MOTION_SPIN_DPS && v < IMU_MOTION_SPIN_MM_S)
+                                         return IMU_MOTION_SPINNING;
+    if (v < IMU_MOTION_STOP_MM_S && w < turn_on)
+                                         return IMU_MOTION_STOPPED;
+    if (w >= turn_on)                    return IMU_MOTION_TURNING;
+    return IMU_MOTION_STRAIGHT;
+}
+
+const char *imu_motion_name(imu_motion_t m)
+{
+    static const char *const name[8] = {
+        "UNKNOWN", "STOPPED", "STRAIGHT", "TURNING",
+        "SPINNING", "ON_HUMP", "TILTED", "IMPACT"
+    };
+    return ((unsigned)m < 8u) ? name[m] : "?";
+}
+
 /* Pitch from gravity: how much of gravity points along the forward axis. */
 static float pitch_from(imu_accel_t a)
 {

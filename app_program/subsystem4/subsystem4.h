@@ -76,6 +76,66 @@ IMPORT ER s4_get_terrain(S4_TERRAIN *out);
 IMPORT ID	flg_terrain;
 
 /* ---------------------------------------------------------------------
+ *  IF-07 event details (B4-FR9): type, source and timestamp per event.
+ *  S4 writes the record BEFORE it sets the flag bit, so a consumer woken
+ *  by the flag always finds the matching record.  One record per event
+ *  type keeps the LATEST occurrence; count tells you how many there were.
+ *	UINT ptn;  S4_EVENTS e;
+ *	if (tk_wai_flg(flg_terrain, S4_EVT_COLLISION, TWF_ORW | TWF_BITCLR,
+ *		       &ptn, TMO_POL) == E_OK && s4_get_events(&e) == E_OK) {
+ *		... e.ev[S4_EV_COLLISION].time_ms, .value (mg) ...
+ *	}
+ * --------------------------------------------------------------------- */
+#define S4_SOURCE_IMU		4	/* event source id: subsystem 4 (IMU) */
+
+#define S4_EV_HUMP_ENTRY	0	/* record index = bit number of S4_EVT_* */
+#define S4_EV_HUMP_DONE		1
+#define S4_EV_TILT		2
+#define S4_EV_COLLISION		3
+#define S4_EV_IMU_FAULT		4
+#define S4_EV_NUM		5
+
+typedef struct {
+	UW	time_ms;	/* kernel time (tk_get_tim().lo) of the latest one */
+	UW	count;		/* how many since boot (0 = never happened)        */
+	W	value;		/* HUMP_ENTRY: hump angle x10 deg
+				   HUMP_DONE:  peak height mm
+				   TILT:       tilt x10 deg
+				   COLLISION:  |a| in mg
+				   IMU_FAULT:  1 = fault set, 0 = cleared          */
+} S4_EVENT_REC;
+
+typedef struct {
+	UB		source;			/* always S4_SOURCE_IMU          */
+	S4_EVENT_REC	ev[S4_EV_NUM];		/* indexed by S4_EV_*            */
+} S4_EVENTS;
+
+/* Copy the event records.  Waits at most 2 ms for the lock.  Task context. */
+IMPORT ER s4_get_events(S4_EVENTS *out);
+
+/* ---------------------------------------------------------------------
+ *  START / RESET of a run (B4-FR10): clears the highest hump peak, the
+ *  current hump peak and the hump count.  Applied by terrain_task within
+ *  one cycle; waits up to 100 ms for that.  Returns E_OK, or E_TMOUT if
+ *  terrain_task did not confirm.  Task context, not from terrain_task.
+ * --------------------------------------------------------------------- */
+IMPORT ER s4_reset_run(void);
+
+/* ---------------------------------------------------------------------
+ *  Motion classification (B4-FR11), in the snapshot's motion_class field:
+ *  S4_MOTION(t) is one of these (imu_logic.h has the exact rules).
+ * --------------------------------------------------------------------- */
+#define S4_MOTION_UNKNOWN	0
+#define S4_MOTION_STOPPED	1
+#define S4_MOTION_STRAIGHT	2
+#define S4_MOTION_TURNING	3
+#define S4_MOTION_SPINNING	4
+#define S4_MOTION_ON_HUMP	5
+#define S4_MOTION_TILTED	6
+#define S4_MOTION_IMPACT	7
+#define S4_MOTION(t)		((int)(t).motion_class)
+
+/* ---------------------------------------------------------------------
  *  Hump detection needs to know the car is moving.  terrain_task reads
  *  Buddy 2's wheel encoder counts (IF-09, motion_get_status) for that.
  *  Bench override: set this to e.g. 100 to pretend the car always moves

@@ -123,4 +123,36 @@ void     imu_logic_reset_run(imu_logic_t *s);
 
 const char *imu_hump_state_name(hump_state_t st);
 
+/* ---------------------------------------------------------------------
+ *  Motion classification (B4-FR11).  Fits the 3-bit motion_class field
+ *  of the S4 snapshot.  When several apply, the first in this list wins:
+ *  IMPACT, TILTED, ON_HUMP, then the wheel-based classes.
+ * --------------------------------------------------------------------- */
+typedef enum {
+    IMU_MOTION_UNKNOWN = 0,   /* not calibrated, or no wheel data           */
+    IMU_MOTION_STOPPED,       /* |speed| < 20 mm/s and |turn| < 15 deg/s     */
+    IMU_MOTION_STRAIGHT,      /* moving (forward or back), barely turning    */
+    IMU_MOTION_TURNING,       /* moving and turning >= 15 deg/s (an arc)     */
+    IMU_MOTION_SPINNING,      /* turning >= 60 deg/s with |speed| < 40 mm/s  */
+    IMU_MOTION_ON_HUMP,       /* hump state is CLIMBING or DESCENDING        */
+    IMU_MOTION_TILTED,        /* abnormal tilt (the TILT event is active)    */
+    IMU_MOTION_IMPACT         /* within collision_refractory_s of a COLLISION */
+} imu_motion_t;
+
+#define IMU_MOTION_STOP_MM_S    20.0f
+#define IMU_MOTION_TURN_DPS     15.0f
+/* hysteresis: once TURNING, stay TURNING until |turn| drops below this,
+ * so a curve at ~15 deg/s does not flip TURNING <-> STRAIGHT (seen on the car) */
+#define IMU_MOTION_TURN_EXIT_DPS 10.0f
+#define IMU_MOTION_SPIN_DPS     60.0f
+#define IMU_MOTION_SPIN_MM_S    40.0f
+
+/* speed_mm_s / turn_dps: the car's forward speed and turn rate (+ = left)
+ * from subsystem 2's encoders, ideally smoothed over ~0.2 s.
+ * wheels_valid: false when there is no wheel data. */
+imu_motion_t imu_classify_motion(const imu_logic_t *s, float speed_mm_s,
+                                 float turn_dps, bool wheels_valid,
+                                 imu_motion_t prev);
+const char  *imu_motion_name(imu_motion_t m);
+
 #endif

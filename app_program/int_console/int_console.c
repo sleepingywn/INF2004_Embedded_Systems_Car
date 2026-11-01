@@ -24,6 +24,8 @@
  *	        (open-loop balance; the left motor is ~20 % stronger)
  *	  z  zero the terrain heading (hdg) for a turn-rate test
  *	  l  fast line monitor on/off (line error and state every 100 ms)
+ *	  n  new run: clear the highest hump and hump count (B4-FR10)
+ *	  v  print the terrain event records: time, count, value (B4-FR9)
  *	  Every barcode the IR sensor captures is printed with its decoded letter.
  */
 
@@ -111,6 +113,7 @@ LOCAL void print_help(void)
 		"[con]  q spin left   e spin right   z zero heading (hdg on the terrain line)\n"
 		"[con]  l fast line monitor (line error/state every 100 ms); barcodes print by themselves\n"
 		"[con]  < > drive trim: right motor -/+ 5 %% (car pulls right -> press >)\n"
+		"[con]  n new run (clear highest hump)   v terrain event records\n"
 		"[con]  (drive keys use the measured motor directions; x stops)\n\n");
 }
 
@@ -279,6 +282,37 @@ LOCAL void print_line_fast(void)
 	tm_printf((UB*)"%s\n", ln.bc_active ? "  [barcode capture]" : "");
 }
 
+/* v: B4-FR9 event records */
+LOCAL void print_events_table(void)
+{
+	static const char *const name[S4_EV_NUM] = {
+		"HUMP_ENTRY", "HUMP_DONE", "TILT", "COLLISION", "IMU_FAULT"
+	};
+	static const char *const unit[S4_EV_NUM] = {
+		"x0.1 deg", "mm", "x0.1 deg", "mg", "1=set 0=cleared"
+	};
+	S4_EVENTS	e;
+	SYSTIM		now;
+	INT		i;
+
+	if (s4_get_events(&e) != E_OK) {
+		tm_printf((UB*)"[con] events: busy, try again\n");
+		return;
+	}
+	tk_get_tim(&now);
+	tm_printf((UB*)"[con] terrain events (source %u = IMU), now %u ms:\n",
+		  (UINT)e.source, (UINT)now.lo);
+	for (i = 0; i < S4_EV_NUM; i++) {
+		if (e.ev[i].count == 0) {
+			tm_printf((UB*)"[con]   %-10s never\n", name[i]);
+		} else {
+			tm_printf((UB*)"[con]   %-10s x%u  last at %u ms (%u ms ago)  value %d %s\n",
+				  name[i], (UINT)e.ev[i].count, (UINT)e.ev[i].time_ms,
+				  (UINT)(now.lo - e.ev[i].time_ms), (INT)e.ev[i].value, unit[i]);
+		}
+	}
+}
+
 /* Print every new barcode capture from S3 and what Buddy 2's decoder makes of it */
 LOCAL void check_barcode(void)
 {
@@ -350,6 +384,9 @@ LOCAL void handle_key(INT c)
 		       (c == 'q') ? "spin left" : "spin right");
 		break;
 	}
+	case 'n':		tm_printf((UB*)"[con] new run (s4_reset_run): %d\n", (INT)s4_reset_run());
+				break;
+	case 'v':		print_events_table(); break;
 	case 'l':		line_fast = !line_fast;
 				tm_printf((UB*)"[con] fast line monitor %s\n", line_fast ? "on" : "off");
 				break;

@@ -68,6 +68,60 @@ EXPORT ER s4_get_terrain(S4_TERRAIN *out)
 	return E_OK;
 }
 
+/* ---- B4-FR9: event records (type, source, timestamp), under mtx_terrain */
+LOCAL S4_EVENTS		events = { S4_SOURCE_IMU, { { 0, 0, 0 } } };
+
+EXPORT ER s4_get_events(S4_EVENTS *out)
+{
+	ER er = tk_loc_mtx(mtx_terrain, MTX_WAIT_MS);
+	if (er < E_OK) return er;
+	*out = events;
+	tk_unl_mtx(mtx_terrain);
+	return E_OK;
+}
+
+/* Called by terrain_task BEFORE it sets the matching flag bit.  If the
+   lock is busy the flag is still set (the event is never lost); only the
+   timestamp is missed, counted in s4_diag.mtx_timeouts. */
+LOCAL void record_event(INT idx, W value)
+{
+	SYSTIM now;
+
+	tk_get_tim(&now);
+	if (tk_loc_mtx(mtx_terrain, MTX_WAIT_MS) < E_OK) {
+		s4_diag.mtx_timeouts++;
+		return;
+	}
+	events.ev[idx].time_ms = now.lo;
+	events.ev[idx].count++;
+	events.ev[idx].value = value;
+	tk_unl_mtx(mtx_terrain);
+}
+
+/* ---- B4-FR10: START / RESET of a run */
+LOCAL volatile UB	reset_req;	/* set by s4_reset_run, cleared by the task */
+
+EXPORT ER s4_reset_run(void)
+{
+	INT i;
+
+	if (tk_get_tid() == tid_terrain) return E_CTX;
+	reset_req = 1;
+	for (i = 0; i < 10 && reset_req; i++) tk_dly_tsk(10);
+	return reset_req ? E_TMOUT : E_OK;
+}
+
+/* ---- B4-FR11: motion classification from smoothed wheel speed / turn */
+#define MOTION_SMOOTH_S	0.2f		/* low-pass on speed and turn rate */
+LOCAL float		speed_smooth, turn_smooth;
+LOCAL imu_motion_t	motion_now = IMU_MOTION_UNKNOWN;
+LOCAL imu_motion_t	motion_shown = IMU_MOTION_UNKNOWN;	/* last printed       */
+LOCAL UB		motion_same;			/* cycles unchanged   */
+#define MOTION_PRINT_HOLD	3	/* print a change once it held 3 x 20 ms */
+_Static_assert(IMU_MOTION_STOPPED == S4_MOTION_STOPPED && IMU_MOTION_IMPACT == S4_MOTION_IMPACT &&
+	       IMU_MOTION_ON_HUMP == S4_MOTION_ON_HUMP,
+	       "S4_MOTION_* must match imu_motion_t");
+
 /* ---------------------------------------------------------------- */
 
 /* Chip X/Y/Z -> car forward / side / up.  Bench test: chip X = forward
@@ -250,6 +304,7 @@ LOCAL void print_status(void)
 	} else {
 		tm_printf((UB*)"  v --");
 	}
+	tm_printf((UB*)"  %s", imu_motion_name(motion_now));
 	tm_printf((UB*)" |a| %d mg  %s  humps %u  highest %u mm",
 		  s4_diag.accel_mag_mg, imu_hump_state_name(logic.hump_state),
 		  (UINT)snapshot.hump_count, (UINT)snapshot.high_peak_mm);
@@ -279,7 +334,7 @@ LOCAL void publish(BOOL fault)
 	v.cur_peak_mm  = logic.current_hump_peak_mm;
 	v.high_peak_mm = logic.highest_hump_peak_mm;
 	v.hump_state   = (uint8_t)logic.hump_state;
-	v.motion_class = 0;			/* TODO(B4-FR11): motion classification */
+	v.motion_class = (uint8_t)motion_now;	/* B4-FR11 */
 	v.hump_count   = logic.hump_count;
 	v.calibrated   = logic.calibrated;
 	v.imu_fault    = fault ? true : false;
@@ -326,6 +381,7 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 	} else {
 		tm_printf((UB*)"terrain: GY-511 not found, retrying every 1 s\n");
 		fault = TRUE;
+		record_event(S4_EV_IMU_FAULT, 1);
 		tk_set_flg(flg_terrain, S4_EVT_IMU_FAULT);
 	}
 
@@ -343,6 +399,12 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		s4_diag.cycles++;
 		if (logic.calibrated && start_us - release_us > s4_diag.jitter_max_us) {
 			s4_diag.jitter_max_us = start_us - release_us;
+		}
+
+		if (reset_req) {			/* B4-FR10: new run */
+			imu_logic_reset_run(&logic);
+			reset_req = 0;
+			tm_printf((UB*)"terrain: new run -- highest hump and count cleared\n");
 		}
 
 		/* ---- read + process (this is what "exec" measures) ---- */
@@ -382,6 +444,25 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			ev = imu_logic_update(&logic, map_axes(&raw), dt, dist, acc_g);
 			s4_diag.accel_mag_mg = (INT)(logic.accel_mag_g * 1000.0f);
 
+			/* B4-FR11: classify on ~0.2 s smoothed wheel speed and turn */
+			if (wheel_ok && dt > 0.0f) {
+				float a = dt / (MOTION_SMOOTH_S + dt);
+				speed_smooth += a * (wheel_speed_mm_s - speed_smooth);
+				turn_smooth  += a * (wheel_turn_dps   - turn_smooth);
+			}
+			{
+				imu_motion_t m = imu_classify_motion(&logic, speed_smooth, turn_smooth,
+								     wheel_ok ? true : false, motion_now);
+				motion_same = (m == motion_now && motion_same < 255) ? motion_same + 1 : 0;
+				motion_now = m;
+				if (motion_same == MOTION_PRINT_HOLD && m != motion_shown) {
+					tm_printf((UB*)"terrain: motion %s -> %s  (v %d mm/s, turn %+d dps)\n",
+						  imu_motion_name(motion_shown), imu_motion_name(m),
+						  (INT)speed_smooth, (INT)turn_smooth);
+					motion_shown = m;
+				}
+			}
+
 			{
 				UW end = now_us();
 				UW exec = end - start_us, logic_us = end - logic_start;
@@ -404,6 +485,18 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 				if (ev & IMU_EVT_HUMP_DONE)  bits |= S4_EVT_HUMP_DONE;
 				if (ev & IMU_EVT_TILT)       bits |= S4_EVT_TILT;
 				if (ev & IMU_EVT_COLLISION)  bits |= S4_EVT_COLLISION;
+				/* B4-FR9: write the records first, then the flag */
+				if (ev & IMU_EVT_HUMP_ENTRY)
+					record_event(S4_EV_HUMP_ENTRY, (W)(logic.hump_peak_angle * 10.0f));
+				if (ev & IMU_EVT_HUMP_DONE)
+					record_event(S4_EV_HUMP_DONE, (W)(logic.current_hump_peak_mm + 0.5f));
+				if (ev & IMU_EVT_TILT) {
+					float tp = logic.pitch_deg < 0 ? -logic.pitch_deg : logic.pitch_deg;
+					float tr = logic.roll_deg  < 0 ? -logic.roll_deg  : logic.roll_deg;
+					record_event(S4_EV_TILT, (W)((tp > tr ? tp : tr) * 10.0f));
+				}
+				if (ev & IMU_EVT_COLLISION)
+					record_event(S4_EV_COLLISION, (W)s4_diag.accel_mag_mg);
 				tk_set_flg(flg_terrain, bits);
 				print_events(ev);
 			}
@@ -416,6 +509,7 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			}
 		} else if (!fault && ++fail_run >= FAULT_AFTER) {
 			fault = TRUE;
+			record_event(S4_EV_IMU_FAULT, 1);
 			tk_set_flg(flg_terrain, S4_EVT_IMU_FAULT);
 			tm_printf((UB*)"terrain: IMU FAULT (%u failed reads in a row)\n", fail_run);
 		} else if (fault && s4_diag.cycles % REINIT_EVERY == 0) {
@@ -428,6 +522,7 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 				fail_run = 0;
 				s4_diag.sensor_found = TRUE;
 				prev_us = now_us();
+				record_event(S4_EV_IMU_FAULT, 0);
 				tk_clr_flg(flg_terrain, ~(UINT)S4_EVT_IMU_FAULT);
 				tm_printf((UB*)"terrain: IMU fault cleared (%s at 0x%02x)\n",
 					  gy511_chip_name(), gy511_address());

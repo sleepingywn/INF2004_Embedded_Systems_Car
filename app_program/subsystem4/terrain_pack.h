@@ -14,7 +14,7 @@
  *	  cur_peak_mm    0 .. 127 mm                1 mm          128     7   (saturates)
  *	  high_peak_mm   0 .. 127 mm                1 mm          128     7   (saturates)
  *	  hump_state     flat / climbing / descending             3       2
- *	  motion_class   up to 8 classes (0 = unknown)            8       3   (reserved, B4-FR11)
+ *	  motion_class   8 classes (S4_MOTION_*, 0 = unknown)     8       3   (B4-FR11)
  *	  hump_count     0 .. 15, wraps             1             16      4
  *	  calibrated     no / yes                                 2       1
  *	  imu_fault      no / yes                                 2       1

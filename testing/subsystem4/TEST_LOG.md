@@ -30,6 +30,10 @@ Define a test here before running it. Test IDs never change.
 | S4-U18 | lever calibration on the car | FR5 | manual | right wheel on the hump (height h), car still; read total tilt θ; lever = h / sin(θ) | lever recorded; then S4-U12 on the real hump within ±10 mm |
 | S4-U19 | turn rate from the wheel encoders | FR8 | manual | console: z, then q (spin left on the spot); compare the hdg reading with the real angle turned | sign + for left; hdg within ±10 % of the real angle |
 | S4-U20 | no false hump while turning on the spot | FR4 | manual | console: q (spin left, 35 %, 1 s) on flat mat | no HUMP ENTRY / HUMP DETECTED |
+| S4-U21 | motion classification and its priority | FR11 | auto | `imu_classify_motion()` with fixed speed / turn / IMU states | STOPPED, STRAIGHT (both directions), TURNING, SPINNING (both directions), UNKNOWN without wheels; IMPACT > TILTED > ON_HUMP > wheel classes; 12 deg/s stays TURNING only if already TURNING, 8 deg/s leaves |
+| S4-U22 | reset run | FR10 | auto | `s4_reset_run()` from the test task, then read the snapshot | returns E_OK; highest hump and hump count 0 |
+| S4-U23 | event records | FR9 | auto | `s4_get_events()` on a still car | source = IMU (4); no time in the future; no hump-done / collision on a still car |
+| S4-U24 | motion classes on the car | FR11, FR9, FR10 | manual | console: idle, g 15 %, g with trim +50 % (curve), g over the hump, lift one side > 25 deg, then v and n | `terrain: motion A -> B` shows STOPPED, STRAIGHT, TURNING (once per curve), ON_HUMP, TILTED; v lists the events with time/count/value; n clears the run |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;
 **manual** = a person observes the result (LED, scope, meter, phone app…).
@@ -74,6 +78,12 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-10-31 | S4-U20 | `f8094fb` (I10) | Andy | PASS | `../integration/logs/2026-10-31_I10_hump_and_spin.txt` | Same spin: no hump events; hdg +172 deg |
 | 2026-10-31 | S4-U19 | `f8094fb` (I10) | Andy | PASS | `../integration/logs/2026-10-31_I10_hump_and_spin.txt` | With S4_TURN_SCALE 1.14: spins of 35 % 1 s read 164 deg (real a little under 180) and 172 deg (real ~180): within 10 % |
 | 2026-10-31 | S4-U12 | `f8094fb` (I10) | Andy | PASS | `../integration/logs/2026-10-31_I10_hump_and_spin.txt` | Motor drive 15 % over the real hump with the turn gate, 0.10 g filter and forward-acceleration subtraction: 11.4 mm (hump 10-13 mm) |
+| 2026-11-01 | S4-U21 | `bd8421a` before the hysteresis cases (I14 TEST image) | Andy | PASS | `../integration/logs/2026-11-01_I14_selftest.txt` | subsystem4 SUMMARY 12 passed, 0 failed. Re-run with the I16 TEST image for the hysteresis cases |
+| 2026-11-01 | S4-U22 | same | Andy | PASS | `../integration/logs/2026-11-01_I14_selftest.txt` | `terrain: new run -- highest hump and count cleared`; peaks and count 0 |
+| 2026-11-01 | S4-U23 | same | Andy | PASS | `../integration/logs/2026-11-01_I14_selftest.txt` | source IMU, timestamps not in the future |
+| 2026-11-01 | S4-U05 | same | Andy | PASS | `../integration/logs/2026-11-01_I14_selftest.txt` | exec max 3203 µs (read 2623) < 5 ms, overruns 0. Higher than 1349 µs before integration, probably because motion_task (S2, priority 14) now shares core 1 |
+| 2026-11-01 | S4-U24 | I15 (`bd8421a` without hysteresis) | Andy | PASS except TURNING | `../integration/logs/2026-11-01_I15_motion_classes.txt` | STOPPED, STRAIGHT (15 %), ON_HUMP on 2 passes (10.1 / 12.7 mm), TILTED (roll -27.1). TURNING flickered: curve at 14-16 deg/s against a 15 deg/s threshold (second flip also as the car reached the mat edge). v: HUMP_ENTRY x2, HUMP_DONE x2 13 mm, TILT x1 27.0 deg, COLLISION / IMU_FAULT never. n: run cleared. SPINNING not run (USB cable); IMPACT not run |
+| 2026-11-01 | S4-U24 | I16 (`bd8421a`) | Andy | PASS (TURNING) | `../integration/logs/2026-11-01_I16_turning_hysteresis.txt` | Trim +50 %, 2 s: STRAIGHT -> TURNING once at 15 deg/s, held at 14 deg/s, left at 6 deg/s; no flicker |
 
 ## Bench evidence (before integration)
 

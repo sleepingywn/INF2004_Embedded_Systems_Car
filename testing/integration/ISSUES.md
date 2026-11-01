@@ -72,8 +72,8 @@ Commit hashes refer to this branch.
 | N1 | **Vehicle Controller**: nothing decides start / follow / barcode turn / hump / stop; the console stood in for it | team |
 | N2 | Buddy 1 MQTT / telemetry is not in this firmware | Buddy 1 |
 | N3 | S4 → S2: stop on collision or tilt (`motion_stop`, `motion_set_fault(MOTION_HEALTH_TERRAIN)`) is not wired | Buddy 4 with the Vehicle Controller |
-| N4 | B4-FR9: each terrain event needs its own timestamp | Buddy 4 |
-| N5 | B4-FR10: public `s4_reset_run()` so START/RESET clears the highest hump | Buddy 4 |
-| N6 | B4-FR11: motion classification (field reserved in the snapshot) | Buddy 4 |
+| N4 | ~~B4-FR9: each terrain event needs its own timestamp~~ **done** `bd8421a` (`s4_get_events()`, S4-U23) | Buddy 4 |
+| N5 | ~~B4-FR10: public `s4_reset_run()`~~ **done** `bd8421a` (S4-U22). The Vehicle Controller still has to call it on START/RESET | Buddy 4 |
+| N6 | ~~B4-FR11: motion classification~~ **done** `bd8421a` (S4-U21, S4-U24). SPINNING and IMPACT not yet seen on the car (USB cable in the way) | Buddy 4 |
 | N7 | GY-511 SA0 pin to 3.3 V so the I2C address cannot change on reconnect | Buddy 4 |
 | N8 | Interface numbers IF-06 … IF-08 used by both S2/S3 and S4 (`TEAM.md` note); team to renumber | team |

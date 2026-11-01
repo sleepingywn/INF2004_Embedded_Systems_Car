@@ -1,0 +1,12 @@
+---- Sent utf8 encoded message: "g" ----
+[con] drive FORWARD 15 % (right +50 %) for 2000 ms
+[con] drive forward: sent (0)
+terrain: pitch +0.5 roll -0.5 tilt +0.7  v 81 mm/s  acc +62 mg  turn +1 dps  hdg +1 deg  STRAIGHT |a| 983 mg  FLAT  humps 0  highest 0 mm  | exec max 3352 us (read 2698, logic 773)  slow 0  print max 1099 us  jitter max 681 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 37 mm/s, turn +7 dps)
+terrain: motion STRAIGHT -> TURNING  (v 98 mm/s, turn +15 dps)
+terrain: pitch +0.0 roll +0.0 tilt +0.3  v 95 mm/s  acc -4 mg  turn +14 dps  hdg +15 deg  TURNING |a| 990 mg  FLAT  humps 0  highest 0 mm  | exec max 3352 us (read 2698, logic 773)  slow 0  print max 1099 us  jitter max 681 us  overruns 0  i2c err 0
+terrain: motion TURNING -> STRAIGHT  (v 98 mm/s, turn +6 dps)
+terrain: pitch -2.5 roll +0.0 tilt +2.6  v 0 mm/s  acc -78 mg  turn +8 dps  hdg +24 deg  STRAIGHT |a| 1102 mg  FLAT  humps 0  highest 0 mm  | exec max 3352 us (read 2698, logic 773)  slow 0  print max 1099 us  jitter max 681 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 13 mm/s, turn +1 dps)
+terrain: pitch +0.5 roll +0.0 tilt +0.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +24 deg  STOPPED |a| 1005 mg  FLAT  humps 0  highest 0 mm  | exec max 3352 us (read 2698, logic 773)  slow 0  print max 1099 us  jitter max 681 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +24 deg  STOPPED |a| 1000 mg  FLAT  humps 0  highest 0 mm  | exec max 3352 us (read 2698, logic 773)  slow 0  print max 1099 us  jitter max 681 us  overruns 0  i2c err 0

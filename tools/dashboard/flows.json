@@ -1,0 +1,189 @@
+[
+  {
+    "id": "robot",
+    "type": "tab",
+    "label": "RoboCar receiver",
+    "disabled": false,
+    "info": "Read-only binary telemetry receiver"
+  },
+  {
+    "id": "broker",
+    "type": "mqtt-broker",
+    "name": "Local Mosquitto",
+    "broker": "127.0.0.1",
+    "port": "1884",
+    "clientid": "se08-car01-dashboard",
+    "autoConnect": true,
+    "usetls": false,
+    "protocolVersion": "4",
+    "keepalive": "60",
+    "cleansession": true
+  },
+  {
+    "id": "input",
+    "type": "mqtt in",
+    "z": "robot",
+    "name": "Robot telemetry and events",
+    "topic": "inf2004/se08/car01/v1/telemetry",
+    "qos": "1",
+    "datatype": "buffer",
+    "broker": "broker",
+    "inputs": 0,
+    "x": 180,
+    "y": 120,
+    "wires": [
+      [
+        "decode"
+      ]
+    ]
+  },
+  {
+    "id": "events",
+    "type": "mqtt in",
+    "z": "robot",
+    "name": "Robot events",
+    "topic": "inf2004/se08/car01/v1/events",
+    "qos": "1",
+    "datatype": "buffer",
+    "broker": "broker",
+    "inputs": 0,
+    "x": 180,
+    "y": 180,
+    "wires": [
+      [
+        "decode"
+      ]
+    ]
+  },
+  {
+    "id": "decode",
+    "type": "function",
+    "z": "robot",
+    "name": "Decode binary frame",
+    "func": "try {\n const data = global.get('robocar').decode(msg.payload);\n data.receivedAt = Date.now();\n data.receivedIso = new Date(data.receivedAt).toISOString();\n data.topic = msg.topic;\n const log = {payload: JSON.stringify(data)};\n // Events are historical records; they must not refresh the live display.\n if (msg.topic.endsWith('/events')) return [null, log];\n const previous = context.get('previous');\n if (previous && previous.bootId === data.bootId) {\n   const step = (data.sequence - previous.sequence) >>> 0;\n   // Within one boot, sequence comparison is unsigned and wrap-safe.\n   if (step === 0 || step >= 0x80000000)\n     return [null, log];\n }\n context.set('previous', data);\n msg.payload = data;\n return [msg, log];\n} catch (e) { node.warn(e.message); return null; }",
+    "outputs": 2,
+    "timeout": 0,
+    "x": 440,
+    "y": 120,
+    "wires": [
+      [
+        "view"
+      ],
+      [
+        "log"
+      ]
+    ]
+  },
+  {
+    "id": "log",
+    "type": "file",
+    "z": "robot",
+    "name": "Timestamped telemetry log",
+    "filename": "logs/telemetry.jsonl",
+    "filenameType": "str",
+    "appendNewline": true,
+    "createDir": true,
+    "overwriteFile": "false",
+    "encoding": "utf8",
+    "x": 700,
+    "y": 180,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "base",
+    "type": "ui-base",
+    "name": "RoboCar",
+    "path": "/dashboard",
+    "includeClientData": false,
+    "acceptsClientConfig": [],
+    "showPathInSidebar": false,
+    "navigationStyle": "default",
+    "titleBarStyle": "default",
+    "showReconnectNotification": true
+  },
+  {
+    "id": "theme",
+    "type": "ui-theme",
+    "name": "RoboCar",
+    "colors": {
+      "surface": "#ffffff",
+      "primary": "#176b67",
+      "bgPage": "#eef3f3",
+      "groupBg": "#ffffff",
+      "groupOutline": "#d6e2e2"
+    },
+    "sizes": {
+      "density": "default",
+      "pagePadding": "12px",
+      "groupGap": "12px",
+      "groupBorderRadius": "8px",
+      "widgetGap": "12px"
+    }
+  },
+  {
+    "id": "page",
+    "type": "ui-page",
+    "name": "Robot status",
+    "ui": "base",
+    "path": "/robot",
+    "icon": "directions_car",
+    "layout": "grid",
+    "theme": "theme",
+    "order": 1,
+    "visible": true,
+    "disabled": false,
+    "breakpoints": [
+      {
+        "name": "Default",
+        "px": 0,
+        "cols": 3
+      },
+      {
+        "name": "Tablet",
+        "px": 576,
+        "cols": 6
+      },
+      {
+        "name": "Desktop",
+        "px": 1024,
+        "cols": 12
+      }
+    ]
+  },
+  {
+    "id": "group",
+    "type": "ui-group",
+    "name": "Live readings",
+    "page": "page",
+    "width": 12,
+    "height": 1,
+    "order": 1,
+    "showTitle": false,
+    "visible": true,
+    "disabled": false,
+    "groupType": "default"
+  },
+  {
+    "id": "view",
+    "type": "ui-template",
+    "z": "robot",
+    "group": "group",
+    "name": "Live robot readings",
+    "order": 1,
+    "width": 12,
+    "height": 0,
+    "format": "<template><section style=\"padding:24px\"><h1>SE08 \u00b7 RoboCar</h1><p role=\"status\">{{ age > 2000 ? 'Waiting for fresh telemetry' : 'Receiving telemetry' }} \u00b7 {{ ageText }}</p><div v-if=\"msg && msg.payload\"><table style=\"width:100%;text-align:left\"><tbody><tr v-for=\"row in readings\" :key=\"row[0]\"><th style=\"padding:8px\">{{ row[0] }}</th><td>{{ row[1] }}</td></tr></tbody></table><details style=\"margin-top:20px\"><summary>Diagnostic details</summary><pre style=\"white-space:pre-wrap\">{{ msg.payload }}</pre></details></div><p v-else>No robot data received yet.</p><small>Read-only telemetry. Older readings remain visible for diagnosis.</small></section></template>\n<script>export default {data(){return {now:Date.now(),timer:null}},computed:{age(){return this.msg?.payload?.receivedAt ? Math.max(0,this.now-this.msg.payload.receivedAt):Infinity},ageText(){return Number.isFinite(this.age)?(this.age/1000).toFixed(1)+' s since receipt':'No data'},readings(){const d=this.msg?.payload||{};const unit=(v,u)=>v==null?'Unavailable':v+' '+u;return [['Left wheel speed',unit(d.leftSpeed,'mm/s')],['Right wheel speed',unit(d.rightSpeed,'mm/s')],['Line position error',unit(d.lineError,'')],['Pitch',unit(d.pitch,'\u00b0')],['Roll',unit(d.roll,'\u00b0')],['Current hump',unit(d.currentPeakMm,'mm')],['Highest hump',unit(d.highestPeakMm,'mm')],['Humps counted',d.humpCount??'Unavailable'],['Motor state',d.state==null?'Unavailable':(['Idle','Driving','Travelling','Turning','Following line','Reacquiring line','Fault','Bench pulse'][d.state]??'Unknown')],['Fault flags',d.faults==null?'Unavailable':d.faults===0?'None reported':d.faults],['Application ready',d.ready?'Yes':'No'],['Events missed',d.droppedEvents]]}},mounted(){this.timer=setInterval(()=>{this.now=Date.now()},250)},unmounted(){clearInterval(this.timer)}}</script>",
+    "storeOutMessages": true,
+    "passthru": false,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "className": "",
+    "x": 700,
+    "y": 100,
+    "wires": [
+      []
+    ]
+  }
+]

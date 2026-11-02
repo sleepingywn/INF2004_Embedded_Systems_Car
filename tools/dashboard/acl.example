@@ -1,0 +1,7 @@
+user se08-car01
+topic write inf2004/se08/car01/v1/telemetry
+topic write inf2004/se08/car01/v1/events
+topic readwrite inf2004/se08/car01/v1/status
+
+user se08-dashboard
+topic read inf2004/se08/car01/v1/#

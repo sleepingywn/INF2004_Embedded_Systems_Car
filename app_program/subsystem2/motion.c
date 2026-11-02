@@ -1,4 +1,12 @@
 #include "motion.h"
+#include "startup_gate.h"
+#include "line_follow.h"
+#if TM_CONSOLE_USB_CDC
+#include <tm/usb_console.h>
+#endif
+#if TM_WIFI_CYW43
+#include "../../lib/libwifi/sysdepend/pico_rp2040/cyw43_utk.h"
+#endif
 #include "motion_logic.h"
 #include "drv_motor.h"
 #include "drv_encoder.h"
@@ -11,10 +19,14 @@
 
 #define WAKE_BIT 1u
 #define STOP_BIT 2u
+#define APP_READY_BIT 4u
 #define SOURCE_BITS 0xf00u
 #define SOURCE_BIT(s) (1u << (8u + (unsigned)(s)))
 
 static ID mailbox_mutex;
+static ID status_mutex;
+static motion_status_t observer_status;
+static motion_diagnostics_t diagnostics, observer_diagnostics;
 
 /* INTEGRATION TEST: copies of the latest line sample and barcode capture
  * received from S3, kept whatever the motion state (the control loop only
@@ -31,7 +43,8 @@ static struct
 
 /* INTEGRATION TEST BUILD: a single TMO_POL attempt failed whenever another
  * core held the lock for a few microseconds, which raised false HANDOFF/IR
- * faults on the car (2026-10-31). Retry briefly, then wait at most 2 ms. */
+ * faults on the car (2026-10-31). Retry briefly, then request a 2 ms
+ * timeout (rounded by the kernel tick, NOT a 2 ms wall-time bound). */
 static ER lock_mailbox(void)
 {
     for (unsigned i = 0; i < 50u; ++i)
@@ -98,6 +111,17 @@ static struct
 static motion_status_t state;
 static motion_request_t active;
 static motion_pid_t pid[2];
+static line_follow_t line_trial;
+static bool line_usb_connected(void)
+{
+#if MOTION_LINE_CIRCUIT
+    return true; /* explicit untethered profile; still bounded by TTL and faults */
+#elif TM_CONSOLE_USB_CDC
+    return tm_usb_state()==3u;
+#else
+    return false;
+#endif
+}
 static encoder_raw_t previous_counts;
 static struct
 {
@@ -167,23 +191,60 @@ static bool calibrated(void)
            (MOTION_STRAIGHT_KP_Q10 <= 65535u);
 }
 
+static void publish_observer_status(void)
+{
+    if (status_mutex > 0 && tk_loc_mtx(status_mutex, TMO_POL) == E_OK) {
+        observer_status = state;
+        observer_diagnostics = diagnostics;
+        tk_unl_mtx(status_mutex);
+    }
+}
+
+ER motion_get_diagnostics(motion_diagnostics_t *out)
+{
+    if (!out) return E_PAR;
+    if (status_mutex <= 0) return E_OBJ;
+    ER e = tk_loc_mtx(status_mutex, TMO_POL);
+    if (e < E_OK) return e;
+    *out = observer_diagnostics;
+    tk_unl_mtx(status_mutex);
+    return E_OK;
+}
+
 ER motion_get_status(motion_status_t *status)
 {
     if (status == NULL)
     {
         return E_PAR;
     }
-    if (mailbox_mutex <= 0)
+    if (status_mutex <= 0)
     {
         return E_OBJ;
     }
-    ER error = lock_mailbox();
+    /* Observers must never delay the control task waiting for a snapshot. */
+    ER error = tk_loc_mtx(status_mutex, TMO_POL);
     if (error < E_OK)
     {
         return error;
     }
-    *status = shared.status;
-    tk_unl_mtx(mailbox_mutex);
+    *status = observer_status;
+    tk_unl_mtx(status_mutex);
+    return E_OK;
+}
+
+ER motion_get_ir_status(motion_status_t *status)
+{
+    if (status == NULL) return E_PAR;
+    if (status_mutex <= 0) return E_OBJ;
+    ER error = E_TMOUT;
+    for (unsigned attempt = 0; attempt < 50u; ++attempt) {
+        error = tk_loc_mtx(status_mutex, TMO_POL);
+        if (error != E_TMOUT) break;
+    }
+    if (error == E_TMOUT) error = tk_loc_mtx(status_mutex, 2);
+    if (error < E_OK) return error;
+    *status = observer_status;
+    tk_unl_mtx(status_mutex);
     return E_OK;
 }
 
@@ -223,7 +284,7 @@ ER motion_set_fault(motion_fault_source_t source, bool asserted)
 static bool valid_request(const motion_request_t *request)
 {
     if ((request->version != MOTION_SCHEMA) || (request->reserved != 0u) || (request->id == 0u) ||
-        (request->ttl_ms < 2u) || (request->ttl_ms > 30000u) || (request->command > MOTION_RESET))
+        (request->ttl_ms < 2u) || (request->ttl_ms > 30000u) || (request->command > MOTION_LINE_TRACE))
     {
         return false;
     }
@@ -240,6 +301,14 @@ static bool valid_request(const motion_request_t *request)
                (request->ttl_ms <= MOTION_BENCH_TIME_MAX_MS) && (left >= -MOTION_BENCH_DUTY_MAX) &&
                (left <= MOTION_BENCH_DUTY_MAX) && (right >= -MOTION_BENCH_DUTY_MAX) &&
                (right <= MOTION_BENCH_DUTY_MAX);
+    }
+    if(request->command==MOTION_LINE_TRACE) {
+        return MOTION_LINE_DEMO && MOTION_ENCODERS_VERIFIED &&
+               MOTION_LEFT_ENCODER_SIGN==-1 && MOTION_RIGHT_ENCODER_SIGN==1 &&
+               MOTION_LEFT_MOTOR_SIGN==-1 && MOTION_RIGHT_MOTOR_SIGN==1 &&
+               request->source==MOTION_LOCAL && motion_request_value(request)==0 &&
+               left==0 && right==0 && request->ttl_ms>=2*MOTION_PERIOD_MS &&
+               request->ttl_ms<=LINE_FOLLOW_MAX_MS;
     }
     /* Network transport is not movement authority. Buddy1 can publish status
      * and assert faults; an agreed local controller admits mission requests. */
@@ -275,7 +344,7 @@ ER motion_request_init(motion_request_t *request, motion_command_t command, moti
                        uint32_t epoch, uint32_t id, uint32_t ttl_ms, int32_t value, int32_t left,
                        int32_t right)
 {
-    if ((request == NULL) || ((unsigned)command > MOTION_RESET) ||
+    if ((request == NULL) || ((unsigned)command > MOTION_LINE_TRACE) ||
         ((unsigned)source > MOTION_TERRAIN) || (id == 0u) || (ttl_ms < 2u) || (ttl_ms > 30000u) ||
         (value < -524287) || (value > 524287) ||
         ((command == MOTION_TURN) && ((value < -180) || (value > 180))) || (left < -2047) ||
@@ -322,7 +391,7 @@ ER motion_submit(const motion_request_t *request)
     const motion_status_t *status = &shared.status;
     bool id_new = (request->epoch != status->request_epoch) || (request->id > status->request_id);
     bool idle = (status->state == MOTION_IDLE) || (status->state == MOTION_ERROR);
-    if (shared.pending || shared.processing || !idle || !id_new ||
+    if (!status->ready || shared.pending || shared.processing || !idle || !id_new ||
         (request->epoch != status->epoch) ||
         !fresh(motion_now_ms(), request->issued_ms, request->ttl_ms - 1u))
     {
@@ -441,6 +510,8 @@ ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t
 
 static void reset_control(void)
 {
+    line_trial=(line_follow_t){0};
+    diagnostics.line_active=0;
     motion_pid_reset(&pid[0]);
     motion_pid_reset(&pid[1]);
     previous_duty[0].bits = previous_duty[1].bits = 0;
@@ -458,7 +529,8 @@ static void end_request(unsigned result)
     {
         output_rest_until =
             motion_now_ms() +
-            ((state.state == MOTION_PULSING) ? MOTION_BENCH_TIME_MAX_MS : MOTION_REVERSE_REST_MS);
+            ((state.state == MOTION_PULSING) ? MOTION_BENCH_TIME_MAX_MS :
+             (active.command==MOTION_LINE_TRACE ? 500u : MOTION_REVERSE_REST_MS));
     }
     reset_control();
     if (owner_flags.active_valid)
@@ -483,6 +555,17 @@ static void fault_stop(unsigned fault)
     }
 }
 
+static void timeout_stop(unsigned reason, uint32_t interval)
+{
+    if (!diagnostics.timeout_reason) {
+        diagnostics.timeout_reason = (uint8_t)reason;
+        diagnostics.first_timeout_ms = motion_now_ms();
+        diagnostics.first_timeout_interval_ms = interval;
+        diagnostics.first_timeout_state = state.state;
+    }
+    fault_stop(MOTION_FAULT_TIMEOUT);
+}
+
 static void begin_turn(int angle, uint32_t now)
 {
     /* Positive angle = left/CCW. Each wheel travels track*pi*angle/360.
@@ -501,7 +584,8 @@ static void begin_turn(int angle, uint32_t now)
     reset_control();
 }
 
-static void admit(const motion_request_t *request, uint32_t now, UINT flags)
+static void admit(const motion_request_t *request, uint32_t now, UINT flags,
+                  const line_msg_t *line,uint32_t line_ms,uint32_t line_epoch,bool have_line)
 {
     if (owner_flags.active_valid)
     {
@@ -553,7 +637,12 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags)
         return;
     }
     if ((state.faults != 0u) || ((flags & (STOP_BIT | SOURCE_BITS)) != 0u) ||
-        !owner_flags.motor_ready || ((request->command != MOTION_BENCH) && !state.valid) ||
+        !owner_flags.motor_ready ||
+        (request->command==MOTION_LINE_TRACE ?
+            (!owner_flags.encoder_ready || !state.raw_valid ||
+             !fresh(now,state.time_ms,LINE_FOLLOW_INPUT_AGE_MS) || !line_usb_connected() ||
+             !line_follow_usable(line,now,line_ms,state.epoch,line_epoch,have_line)) :
+            ((request->command != MOTION_BENCH) && !state.valid)) ||
         ((output_rest_until != 0u) && (output_rest_until != now) &&
          ((uint32_t)(output_rest_until - now) < 0x80000000u)))
     {
@@ -584,6 +673,11 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags)
         case MOTION_TURN:
             begin_turn(motion_request_value(request), now);
             break;
+        case MOTION_LINE_TRACE:
+            state.state=MOTION_TRACING;
+            line_follow_begin(&line_trial,state.left_count,state.right_count,state.invalid_edges,state.time_ms,now);
+            diagnostics.line_active=1;diagnostics.line_step=LINE_STEP_WAIT;
+            break;
         case MOTION_FOLLOW:
             state.state = MOTION_TRACING;
             last_barcode_ms = now;
@@ -599,6 +693,7 @@ static bool update_odometry(uint32_t now)
     encoder_raw_t raw;
     if (!owner_flags.encoder_ready)
     {
+        state.raw_valid = 0;
         state.valid = 0;
         return false;
     }
@@ -610,6 +705,7 @@ static bool update_odometry(uint32_t now)
     state.left_count = raw.left;
     state.right_count = raw.right;
     state.invalid_edges = raw.invalid;
+    state.raw_valid = 1;
     if (!calibrated())
     {
         previous_counts = raw;
@@ -618,7 +714,7 @@ static bool update_odometry(uint32_t now)
     }
     if ((sample_dt == 0u) || (sample_dt > 100u))
     {
-        fault_stop(MOTION_FAULT_TIMEOUT);
+        timeout_stop(3, sample_dt);
         return false;
     }
     if (raw.invalid != last_invalid)
@@ -747,6 +843,33 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
         return;
     }
     output_rest_until = 0;
+    if(active.command==MOTION_LINE_TRACE) {
+        line_step_t result=state.raw_valid ? line_follow_step(&line_trial,
+            state.left_count,state.right_count,state.invalid_edges,state.time_ms,now,
+            line,line_ms,state.epoch,line_epoch,have_line,line_usb_connected()) : LINE_STEP_ENCODER;
+        diagnostics.line_step=(uint8_t)result;
+        if(result==LINE_STEP_DONE) {end_request(MOTION_COMPLETED);return;}
+        if(result==LINE_STEP_DISCONNECTED) {end_request(MOTION_CANCELLED);return;}
+        if(result==LINE_STEP_WAIT)return;
+        if(result!=LINE_STEP_OK) {
+            fault_stop(result==LINE_STEP_IR ? MOTION_FAULT_IR :
+                       result==LINE_STEP_STALL ? MOTION_FAULT_STALL :
+                       result==LINE_STEP_TIME ? MOTION_FAULT_TIMEOUT :
+                       result==LINE_STEP_LIMIT ? MOTION_FAULT_RANGE : MOTION_FAULT_ENCODER);
+            return;
+        }
+        int16_t ld=(int16_t)line_trial.speed.left.duty*MOTION_LEFT_MOTOR_SIGN;
+        int16_t rd=(int16_t)line_trial.speed.right.duty*MOTION_RIGHT_MOTOR_SIGN;
+        motor_hw_write(ld,rd);
+        state.left_duty_bits=(uint16_t)motion_bits_encode(ld,11u);
+        state.right_duty_bits=(uint16_t)motion_bits_encode(rd,11u);
+        diagnostics.line_error=(int8_t)line->err;
+        diagnostics.line_speed_left_cps=(uint16_t)(line_trial.speed.left.filtered_milli_cps/1000);
+        diagnostics.line_speed_right_cps=(uint16_t)(line_trial.speed.right.filtered_milli_cps/1000);
+        diagnostics.line_target_left_cps=(uint16_t)line_trial.speed.left.target_cps;
+        diagnostics.line_target_right_cps=(uint16_t)line_trial.speed.right.target_cps;
+        return;
+    }
     int16_t left = (int16_t)motion_request_left(&active);
     int16_t right = (int16_t)motion_request_right(&active);
     if ((state.state == MOTION_TRAVELLING) || (state.state == MOTION_TURNING))
@@ -825,7 +948,7 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
             }
             else if (now - reacquire_start > MOTION_MANOEUVRE_TIMEOUT_MS)
             {
-                fault_stop(MOTION_FAULT_TIMEOUT);
+                timeout_stop(6, now - reacquire_start);
             }
             return; /* remain stopped until a NEW valid line sample */
         }
@@ -883,6 +1006,8 @@ ER motion_init(void)
     {
         return mailbox_mutex;
     }
+    status_mutex = tk_cre_mtx(&mutex);
+    if (status_mutex < E_OK) return status_mutex;
     events = tk_cre_flg(&flag);
     if (events < E_OK)
     {
@@ -896,6 +1021,7 @@ ER motion_init(void)
     state.epoch = 1;
     state.calibrated = calibrated();
     shared.status = state;
+    publish_observer_status();
     return (cyclic < E_OK) ? cyclic : E_OK;
 }
 
@@ -907,6 +1033,11 @@ ER motion_start(void)
         return task;
     }
     return tk_sta_cyc(cyclic);
+}
+
+ER motion_application_ready(void)
+{
+    return events > 0 ? tk_set_flg(events, APP_READY_BIT | WAKE_BIT) : E_OBJ;
 }
 
 void motion_task(INT stacd, void *exinf)
@@ -928,6 +1059,7 @@ void motion_task(INT stacd, void *exinf)
     }
     last_update = motion_now_ms();
     previous_encoder_ms = last_update;
+    const uint32_t startup_ms = last_update;
     for (;;)
     {
         UINT wake;
@@ -943,6 +1075,40 @@ void motion_task(INT stacd, void *exinf)
             continue;
         }
         uint32_t now = motion_now_ms();
+        diagnostics.fault_sources = (uint8_t)((flags.flgptn & SOURCE_BITS) >> 8);
+        bool radio_initialized = true;
+#if TM_WIFI_CYW43
+        T_CYW43_UTK_STATUS radio;
+        cyw43_utk_get_status(&radio);
+        radio_initialized = radio.init_complete != 0;
+#endif
+        if ((flags.flgptn & APP_READY_BIT) && !diagnostics.app_ready_ms) diagnostics.app_ready_ms = now;
+        if (radio_initialized && !diagnostics.radio_init_ms) diagnostics.radio_init_ms = now;
+        if (!state.ready) {
+            motor_hw_stop();
+            motion_startup_decision_t startup = motion_startup_decide(
+                startup_ms, now, (flags.flgptn & APP_READY_BIT) != 0u, radio_initialized);
+            if (startup.timeout)
+                timeout_stop(1, now - startup_ms);
+            if (!startup.release) {
+                state.updated_ms = now;
+                ++state.sequence;
+                if (tk_loc_mtx(mailbox_mutex, TMO_POL) == E_OK) {
+                    shared.status = state;
+                    publish_observer_status();
+                    tk_unl_mtx(mailbox_mutex);
+                }
+                continue;
+            }
+            /* First control interval starts after application startup. */
+            state.ready = 1;
+            diagnostics.released_ms = now;
+            /* Startup health transitions that have already cleared are not
+             * runtime failures. Asserted source bits are still checked below. */
+            handled_fault_generation = generation_add(&fault_generation, 0);
+            last_update = previous_encoder_ms = now;
+            if (owner_flags.encoder_ready) encoder_hw_snapshot(&previous_counts);
+        }
         UW new_fault_generation = generation_add(&fault_generation, 0);
         UW new_stop_generation = generation_add(&stop_generation, 0);
         if (((flags.flgptn & SOURCE_BITS) != 0u) ||
@@ -965,14 +1131,14 @@ void motion_task(INT stacd, void *exinf)
         }
         if (owner_flags.active_valid && ((uint32_t)(now - active.issued_ms) >= active.ttl_ms))
         {
-            if (state.state == MOTION_PULSING)
+            if (state.state == MOTION_PULSING || active.command==MOTION_LINE_TRACE)
             {
                 end_request(MOTION_COMPLETED);
             }
             else if ((state.state == MOTION_TRAVELLING) || (state.state == MOTION_TURNING) ||
                      (state.state == MOTION_REACQUIRE))
             {
-                fault_stop(MOTION_FAULT_TIMEOUT);
+                timeout_stop(4, now - active.issued_ms);
             }
             else
             {
@@ -982,7 +1148,7 @@ void motion_task(INT stacd, void *exinf)
         }
         if (owner_flags.turning_from_line && (now - manoeuvre_start > MOTION_MANOEUVRE_TIMEOUT_MS))
         {
-            fault_stop(MOTION_FAULT_TIMEOUT);
+            timeout_stop(5, now - manoeuvre_start);
         }
         if (lock_mailbox() < E_OK)
         {
@@ -1009,11 +1175,12 @@ void motion_task(INT stacd, void *exinf)
         tk_unl_mtx(mailbox_mutex);
 
         uint32_t dt = now - last_update;
+        if (dt > diagnostics.max_loop_ms) diagnostics.max_loop_ms = dt;
         if (dt >= MOTION_PERIOD_MS)
         {
             if (dt > 100u)
             {
-                fault_stop(MOTION_FAULT_TIMEOUT);
+                timeout_stop(2, dt);
             }
             else
             {
@@ -1033,7 +1200,7 @@ void motion_task(INT stacd, void *exinf)
         }
         else if (pending)
         {
-            admit(&request, now, flags.flgptn);
+            admit(&request, now, flags.flgptn, &line, line_ms, line_epoch, have_line);
             if (state.result == MOTION_REJECTED)
             {
                 ++owner_rejections;
@@ -1048,7 +1215,8 @@ void motion_task(INT stacd, void *exinf)
                                  (barcode_epoch == state.epoch) &&
                                  ((uint32_t)(barcode_ms - last_barcode_ms) > 0u) &&
                                  ((uint32_t)(barcode_ms - last_barcode_ms) < 0x80000000u);
-            if (owner_flags.active_valid && (state.state == MOTION_TRACING) && fresh_capture &&
+            if (owner_flags.active_valid && active.command!=MOTION_LINE_TRACE &&
+                (state.state == MOTION_TRACING) && fresh_capture &&
                 decoded && have_line && (line_epoch == state.epoch) &&
                 fresh(now, line_ms, MOTION_INPUT_MAX_AGE_MS) && !line.fault &&
                 (line.state != LINE_FAULT) && (line.state != LINE_LOST) &&
@@ -1078,6 +1246,7 @@ void motion_task(INT stacd, void *exinf)
             /* Preserve rejections that raced with this owner iteration. */
             state.rejected_requests = shared.rejected_requests + owner_rejections;
             shared.status = state;
+            publish_observer_status();
             shared.processing = false;
             tk_unl_mtx(mailbox_mutex);
         }
@@ -1095,7 +1264,7 @@ ER motion_debug_line(line_msg_t *line, uint32_t *sampled_ms)
     {
         return E_PAR;
     }
-    ER error = lock_mailbox();
+    ER error = tk_loc_mtx(mailbox_mutex, TMO_POL);
     if (error < E_OK)
     {
         return error;
@@ -1113,7 +1282,7 @@ ER motion_debug_barcode(bc_msg_t *barcode, uint32_t *sampled_ms, uint32_t *count
     {
         return E_PAR;
     }
-    ER error = lock_mailbox();
+    ER error = tk_loc_mtx(mailbox_mutex, TMO_POL);
     if (error < E_OK)
     {
         return error;

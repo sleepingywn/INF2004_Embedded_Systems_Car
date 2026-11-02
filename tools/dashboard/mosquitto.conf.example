@@ -1,0 +1,7 @@
+# Replace addresses and paths with the private setup values before launching.
+listener 1884 127.0.0.1
+listener 1884 LAPTOP_PRIVATE_WIFI_IP
+allow_anonymous false
+password_file C:/robocar-private/passwords
+acl_file C:/robocar-private/acl
+persistence false

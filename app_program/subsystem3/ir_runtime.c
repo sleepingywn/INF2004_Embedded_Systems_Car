@@ -1,5 +1,8 @@
 #include "ir_runtime.h"
 #include "../subsystem2/motion_ir_bridge.h"
+#if MOTION_LINE_AUTOSTART
+#include "../../config/line_boot_calibration.h"
+#endif
 #define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
 #define memcpy __builtin_memcpy
 
@@ -81,6 +84,28 @@ static void runtime_fault(void)
     set_health(false);
 }
 
+static void timing_fault(ir_fault_reason_t reason, uint32_t detail_us)
+{
+    /* Freeze acquisition before recording a task failure. An IRQ may already
+     * have latched the original cause since the last published snapshot. */
+    ir_acquisition_stop();
+    ir_raw_frame_t unused;
+    ir_acq_status_t live;
+    (void)ir_acquisition_pop(&unused, &live);
+    if (owner.acquisition.first_fault_reason == IR_REASON_NONE) {
+        live.faults |= owner.acquisition.faults;
+        owner.acquisition = live;
+    }
+    if (owner.acquisition.first_fault_reason == IR_REASON_NONE) {
+        owner.acquisition.first_fault_us = in_w(TIMER_TIMERAWL);
+        owner.acquisition.first_fault_reason = reason;
+        owner.acquisition.first_fault_detail = detail_us;
+        owner.acquisition.first_fault_samples = owner.acquisition.samples;
+    }
+    owner.acquisition.faults |= IR_ACQ_TIMING;
+    runtime_fault();
+}
+
 static void apply_command(unsigned command)
 {
     if (command == IR_RUNTIME_BEGIN)
@@ -126,8 +151,7 @@ static void process_frame(const ir_raw_frame_t *frame)
     uint32_t now = motion_now_ms();
     if ((uint32_t)(now - frame->sampled_ms) > IR_MAX_QUEUE_AGE_MS)
     {
-        owner.acquisition.faults |= IR_ACQ_TIMING;
-        runtime_fault();
+        timing_fault(IR_REASON_QUEUE_AGE, (uint32_t)(now - frame->sampled_ms) * 1000u);
         return;
     }
     owner.raw = *frame;
@@ -145,9 +169,13 @@ static void process_frame(const ir_raw_frame_t *frame)
         return;
     }
     motion_status_t motion;
-    if (motion_get_status(&motion) < E_OK)
+    ER status_error = motion_get_ir_status(&motion);
+    if (status_error < E_OK)
     {
         ++owner.handoff_errors;
+        owner.last_handoff_error = status_error;
+        owner.last_handoff_ms = frame->sampled_ms;
+        owner.last_handoff_stage = 1u;
         runtime_fault();
         return;
     }
@@ -175,6 +203,9 @@ static void process_frame(const ir_raw_frame_t *frame)
     if (error < E_OK)
     {
         ++owner.handoff_errors;
+        owner.last_handoff_error = error;
+        owner.last_handoff_ms = frame->sampled_ms;
+        owner.last_handoff_stage = 2u;
         /* The bridge can assert the source itself; keep our mirror consistent. */
         runtime_flags.health_asserted = false;
         runtime_fault();
@@ -202,7 +233,19 @@ static void ir_task(INT stacd, void *exinf)
     (void)stacd;
     (void)exinf;
     set_health(false);
-    if (ir_acquisition_start(runtime_event) < E_OK)
+    /* Do not fill the 63 ms acquisition ring during radio initialization.
+     * Motion's bounded startup gate releases independently of AP connection. */
+    uint32_t startup_ms = motion_now_ms();
+    motion_status_t startup_motion;
+    while (motion_get_status(&startup_motion) != E_OK || !startup_motion.ready) {
+        if ((uint32_t)(motion_now_ms() - startup_ms) > 6000u) {
+            timing_fault(IR_REASON_STARTUP, (uint32_t)(motion_now_ms() - startup_ms) * 1000u);
+            publish_status();
+            break;
+        }
+        tk_dly_tsk(20);
+    }
+    if (owner.state != IR_RUNTIME_FAULT && ir_acquisition_start(runtime_event) < E_OK)
     {
         owner.acquisition.faults = IR_ACQ_HARDWARE;
         runtime_fault();
@@ -225,6 +268,13 @@ static void ir_task(INT stacd, void *exinf)
         {
             bool available = ir_acquisition_pop(&frame, &status);
             status.faults |= owner.acquisition.faults;
+            /* Task-level failures must survive subsequent acquisition snapshots. */
+            if (owner.acquisition.first_fault_reason != IR_REASON_NONE) {
+                status.first_fault_reason = owner.acquisition.first_fault_reason;
+                status.first_fault_us = owner.acquisition.first_fault_us;
+                status.first_fault_detail = owner.acquisition.first_fault_detail;
+                status.first_fault_samples = owner.acquisition.first_fault_samples;
+            }
             owner.acquisition = status;
             if (status.faults != 0u)
             {
@@ -243,12 +293,12 @@ static void ir_task(INT stacd, void *exinf)
         }
         publish_status();
         UINT flags;
+        uint32_t wait_started_ms = motion_now_ms();
         ER error = tk_wai_flg(runtime_event, IR_ACQ_EVENT | IR_COMMAND_EVENT, TWF_ORW | TWF_BITCLR,
                               &flags, IR_WATCHDOG_MS);
         if ((error < E_OK) && (owner.state != IR_RUNTIME_FAULT))
         {
-            owner.acquisition.faults |= IR_ACQ_TIMING;
-            runtime_fault();
+            timing_fault(IR_REASON_WATCHDOG, (uint32_t)(motion_now_ms() - wait_started_ms) * 1000u);
             publish_status();
         }
     }
@@ -271,6 +321,11 @@ ER ir_runtime_init(void)
         return runtime_event;
     }
     owner.failed_channels = 7u;
+#if MOTION_LINE_AUTOSTART
+    owner.failed_channels = line_boot_calibration(owner.calibration);
+    if(owner.failed_channels==0u)owner.state=IR_RUNTIME_READY;
+    /* healthy stays false until acquisition and fresh bridge publication pass. */
+#endif
     published = owner;
     motion_ir_bridge_init(&bridge);
     /* Phase 1: prevent any movement before the sensor task starts. */

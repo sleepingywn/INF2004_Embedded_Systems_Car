@@ -17,7 +17,7 @@ subsystem, ask its owner or open a pull request for them to review.
 
 | # | Subsystem (what it does) | Student ID | GitHub username | Code | Tests |
 |---|---|---|---|---|---|
-| 1 | *example:* LED heartbeat on GP19 | | | `app_program/subsystem1/` | `testing/subsystem1/` |
+| 1 | Binary telemetry and bounded MQTT handoff; GP19 heartbeat retained | | | `app_program/subsystem1/` | `testing/subsystem1/` |
 | 2 | Motors, encoders, PID, motion controller and barcode decoding; example producer retained for compatibility | 2501308 | | `app_program/subsystem2/` | `testing/subsystem2/` |
 | 3 | *example:* Consumer: collects samples into statistics | | | `app_program/subsystem3/` | `testing/subsystem3/` |
 | 4 | IMU / terrain monitoring: pitch, roll, humps, tilt, collision (GY-511, LSM303D) | | | `app_program/subsystem4/` | `testing/subsystem4/` |
@@ -68,7 +68,7 @@ fixed.
 | GP17 | S4 | I2C0 SCL: GY-511 (Robo Pico Grove 4) |
 | GP18 | | |
 | GP19 | *example:* S1 | external LED (LED + 330 Ω to GND) |
-| GP20 | | |
+| GP20 | S2 | Robo Pico active-low button; opt-in 30 s circuit start/stop |
 | GP21 | | |
 | GP22 | | |
 | GP26 | S3 | IR Left A0 – barcode sensor (ADC0) |
@@ -193,11 +193,11 @@ limit there. The numbers below include the examples, B2 motion and S3 IR runtime
 
 | Object | Limit | S1 | S2 | S3 | S4 | S5 |
 |---|---|---|---|---|---|---|
-| Task | 32 | 1 | 2 | 2 | 1 | |
+| Task | 32 | 2 | 2 | 2 | 1 | |
 | Semaphore | 16 | | 1 | | | |
 | Event flag | 16 | | 1 | 1 | 2 | |
 | Mailbox | 12 | | | 1 | | |
-| Mutex | 12 | | 1 | 2 | 1 | |
+| Mutex | 12 | 1 | 2 | 2 | 1 | |
 | Message buffer | 12 | | | | 1 | |
 | Fixed memory pool | 12 | | 1 | | | |
 | Variable memory pool | 12 | | | | | |
@@ -205,3 +205,32 @@ limit there. The numbers below include the examples, B2 motion and S3 IR runtime
 | Alarm handler | 12 | | | | | |
 
 (The kernel's USB and WiFi service tasks also use a few of these.)
+
+## Telemetry integration proposal (2026-11-02)
+
+S1 collects every 250 ms in its existing priority-12 task. One S1 mutex protects a latest-frame slot and an eight-record event FIFO. The Wi-Fi task polls this handoff and publishes at QoS 1. Application tasks do not call network APIs. S2 now has a separate nonblocking observer snapshot mutex in addition to its command mailbox mutex.
+
+The MQTT shared-library bridge and S4 consumer changes remain proposed integration changes for team/instructor review; this record does not claim that review occurred. The user authorised implementation and software validation. Hardware validation is not implied.
+
+Application startup releases B2 after subsystem start functions succeed. Motors stay stopped before release; a five-second timeout latches a fault. Calibration and health faults still apply. The development console defaults off. APP_CONSOLE=1 and MOTION_DEVELOPMENT=1 are explicit bench overrides.
+
+See tools/dashboard/README.md for deployment, protocol and validation limitations. Topic base: inf2004/se08/car01/v1. Project broker port: 1884 (1883 is occupied by the installer-created Windows service).
+
+Stationary-fix follow-up: default APP_CONSOLE=0 now selects S1's diagnostic-only USB task (priority 22, core 0). It accepts h/i/c/f and cannot drive, reset or bypass motor faults. Full bench console is still opt-in. S1 checks S4 timestamp age using the existing kernel-clock contract; no S4 code was changed in this follow-up. B2 diagnostics are copied under its existing status mutex (no additional kernel objects).
+
+## Bounded line-tracing integration (2026-11-02)
+
+User requested ending wheel calibration and integrating encoder speed control
+with Buddy 3 line tracing. Buddy 2 now owns shared forward speed PI and the
+local-only MOTION_LINE_TRACE request. LINE_DEMO=1 explicitly enables a distinct
+_line image with a maximum two-second, 20%-duty line trial. Default remains
+LINE_DEMO=0 with diagnostic-only USB controls. S1's console routes the opt-in
+commands to Buddy 2; no new tasks/IRQs/kernel objects or B3/B4 edits were needed.
+
+This count-domain mode does not enable metric calibration: raw counts remain
+available, calibrated/valid physical odometry stays false, and existing B4 and
+network contracts remain intact. Local reset/arm, healthy calibrated IR, fresh
+line/encoder inputs and operator start are required; no IR bypass, automatic
+barcode turn or mission renewal is enabled. Software checks and both firmware
+profiles build successfully. No integration flash/hardware test has run.
+Details and prepared image: testing/integration/LINE_FOLLOW_INTEGRATION.md.

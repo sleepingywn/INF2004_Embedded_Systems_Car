@@ -142,6 +142,7 @@ EXPORT INT usermain(void)
 	startup_check(subsystem4_start(), "subsystem4_start");
 	startup_check(subsystem5_start(), "subsystem5_start");
 
+	startup_check(motion_application_ready(), "motion_application_ready");
 	startup_check(int_console_start(), "int_console_start");
 	tm_printf((UB*)"all subsystems started\n\n");
 

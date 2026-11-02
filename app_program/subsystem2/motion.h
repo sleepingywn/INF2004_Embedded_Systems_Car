@@ -14,7 +14,8 @@ typedef enum
     MOTION_TURN,
     MOTION_FOLLOW,
     MOTION_BENCH,
-    MOTION_RESET
+    MOTION_RESET,
+    MOTION_LINE_TRACE /* local bounded count-domain line trial, no metric claims */
 } motion_command_t;
 typedef enum
 {
@@ -107,7 +108,9 @@ typedef struct
     uint16_t right_speed_bits : 12;
     uint32_t barcode : 3; /* 0 none, 1 A/left, 2 B/right, 3 C, 4 D/U-turn */
     uint32_t source : 2;
-    uint32_t reserved : 3;
+    bool raw_valid : 1; /* coherent encoder acquisition, independent of calibration */
+    bool ready : 1; /* application startup gate released; faults still apply */
+    uint32_t reserved : 1;
     uint16_t left_duty_bits : 11;
     uint16_t right_duty_bits : 11;
     uint32_t invalid_edges;
@@ -169,7 +172,22 @@ ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source, uint32_t is
                 uint16_t ttl_ms);
 ER motion_stop(void);
 ER motion_set_fault(motion_fault_source_t source, bool asserted);
+typedef struct {
+    uint32_t first_timeout_ms, first_timeout_interval_ms, max_loop_ms;
+    uint32_t app_ready_ms, radio_init_ms, released_ms;
+    uint8_t timeout_reason; /* 1 startup, 2 loop, 3 encoder, 4 request, 5 manoeuvre, 6 reacquire */
+    uint8_t fault_sources; /* bit per motion_fault_source_t */
+    uint8_t first_timeout_state;
+    uint16_t line_speed_left_cps,line_speed_right_cps;
+    uint16_t line_target_left_cps,line_target_right_cps;
+    int8_t line_error;
+    uint8_t line_step,line_active;
+} motion_diagnostics_t;
+ER motion_get_diagnostics(motion_diagnostics_t *out);
 ER motion_get_status(motion_status_t *status);
+/* IR task only: tolerate brief snapshot contention. The 2 ms wait request is
+ * rounded by the kernel tick; the motion publisher itself never waits. */
+ER motion_get_ir_status(motion_status_t *status);
 /* S3 task context only. Caller supplies FULL acquisition time and current
  * B2 epoch, not merely reception time. Never call these from an ADC ISR. */
 ER motion_publish_line(const line_msg_t *line, uint32_t sampled_ms, uint32_t epoch);
@@ -181,5 +199,7 @@ ER motion_debug_line(line_msg_t *line, uint32_t *sampled_ms);
 ER motion_debug_barcode(bc_msg_t *barcode, uint32_t *sampled_ms, uint32_t *count);
 ER motion_init(void);
 ER motion_start(void);
+/* Called by app_main only after all subsystem start functions succeed. */
+ER motion_application_ready(void);
 void motion_task(INT stacd, void *exinf);
 #endif

@@ -443,6 +443,7 @@ EXPORT ER int_console_start(void)
 
 #else  /* !APP_CONSOLE */
 
-EXPORT ER int_console_start(void) { return E_OK; }
+IMPORT ER s1_diagnostic_start(void);
+EXPORT ER int_console_start(void) { return s1_diagnostic_start(); }
 
 #endif /* APP_CONSOLE */

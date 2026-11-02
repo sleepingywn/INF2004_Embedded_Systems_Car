@@ -16,7 +16,7 @@
 #include "../app.h"
 
 #ifndef APP_CONSOLE
-#define APP_CONSOLE		1
+#define APP_CONSOLE		0
 #endif
 
 #define CONSOLE_PRI		22	/* below every subsystem band (12-21) */

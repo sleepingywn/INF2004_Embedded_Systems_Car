@@ -110,13 +110,48 @@ ifeq ($(CONSOLE)$(CRASH_REPORT),usb_cdc1)
 CRASH_SUFFIX := _crash
 endif
 
+# Explicit local bounded line-follow profile; default console stays diagnostic-only.
+LINE_DEMO ?= 0
+ifneq ($(filter $(LINE_DEMO),0 1),$(LINE_DEMO))
+$(error Unknown LINE_DEMO '$(LINE_DEMO)'; use 0 or 1)
+endif
+ifeq ($(LINE_DEMO),1)
+ifneq ($(CONSOLE),usb_cdc)
+$(error LINE_DEMO=1 requires CONSOLE=usb_cdc)
+endif
+LINE_SUFFIX := _line
+endif
+
+# Explicit battery circuit trial: GP20 starts one USB-armed run, up to 30 s.
+LINE_CIRCUIT ?= 0
+ifneq ($(filter $(LINE_CIRCUIT),0 1),$(LINE_CIRCUIT))
+$(error Unknown LINE_CIRCUIT '$(LINE_CIRCUIT)'; use 0 or 1)
+endif
+ifeq ($(LINE_CIRCUIT),1)
+ifneq ($(LINE_DEMO),1)
+$(error LINE_CIRCUIT=1 requires LINE_DEMO=1)
+endif
+LINE_SUFFIX := _line30_button
+endif
+
+LINE_AUTOSTART ?= 0
+ifneq ($(filter $(LINE_AUTOSTART),0 1),$(LINE_AUTOSTART))
+$(error Unknown LINE_AUTOSTART '$(LINE_AUTOSTART)'; use 0 or 1)
+endif
+ifeq ($(LINE_AUTOSTART),1)
+ifneq ($(LINE_CIRCUIT),1)
+$(error LINE_AUTOSTART=1 requires LINE_CIRCUIT=1)
+endif
+LINE_SUFFIX := _line30_auto5
+endif
+
 #
 # Images are named after the profile they were built with.  Every image is
 # flashed by hand from a downloads folder, so identically-named artifacts are
 # a live hazard: an SMP=1 build was once flashed in place of an SMP=0 one and
 # only the banner in the log revealed it.
 #
-EXE_FILE := mtk3pico_smp$(SMP)_$(CONSOLE)$(WIFI_SUFFIX)$(NET_SUFFIX)$(MQTT_SUFFIX)$(CRASH_SUFFIX)$(TEST_SUFFIX)
+EXE_FILE := mtk3pico_smp$(SMP)_$(CONSOLE)$(WIFI_SUFFIX)$(NET_SUFFIX)$(MQTT_SUFFIX)$(CRASH_SUFFIX)$(TEST_SUFFIX)$(LINE_SUFFIX)
 
 GCC := arm-none-eabi-gcc
 AS := arm-none-eabi-gcc
@@ -176,7 +211,7 @@ ifeq ($(SMP),1)
 CFLAGS  += -DCNF_SMP=1
 ASFLAGS += -DCNF_SMP=1
 endif
-CFLAGS  += -DAPP_TEST=$(TEST)
+CFLAGS  += -DAPP_TEST=$(TEST) -DMOTION_LINE_DEMO=$(LINE_DEMO) -DMOTION_LINE_CIRCUIT=$(LINE_CIRCUIT) -DMOTION_LINE_AUTOSTART=$(LINE_AUTOSTART)
 CFLAGS  += -DTM_CONSOLE_UART=$(CRASH_REPORT)
 ifeq ($(CRASH_REPORT),0)
 CFLAGS  += -DBOARD_UART0_FREE=1
@@ -209,7 +244,7 @@ endif
 # before any recipe executes.
 ################################################################################
 
-PROFILE_ID := smp$(SMP)-$(CONSOLE)-wifi$(WIFI)-net$(NET)-mqtt$(MQTT)-crash$(CRASH_REPORT)-test$(TEST)
+PROFILE_ID := smp$(SMP)-$(CONSOLE)-wifi$(WIFI)-net$(NET)-mqtt$(MQTT)-crash$(CRASH_REPORT)-test$(TEST)-line$(LINE_DEMO)-circuit$(LINE_CIRCUIT)-auto$(LINE_AUTOSTART)
 PROFILE_FILE := .build_profile
 
 ifneq ($(strip $(shell cat $(PROFILE_FILE) 2>/dev/null)),$(PROFILE_ID))

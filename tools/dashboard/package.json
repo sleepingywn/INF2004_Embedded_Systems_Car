@@ -1,0 +1,12 @@
+{
+  "name": "se08-robocar-dashboard",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node-red --userDir . --settings settings.js flows.json"
+  },
+  "dependencies": {
+    "node-red": "5.0.9",
+    "@flowfuse/node-red-dashboard": "1.34.1"
+  }
+}

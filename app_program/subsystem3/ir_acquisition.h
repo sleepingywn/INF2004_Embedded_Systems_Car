@@ -30,9 +30,21 @@ typedef struct
     uint32_t line_b : 12;
 } ir_raw_frame_t;
 
+/* First failure is retained until an explicit acquisition restart. */
+typedef enum {
+    IR_REASON_NONE, IR_REASON_LAUNCH_LATE, IR_REASON_SCAN_OVERLAP,
+    IR_REASON_SCAN_TIMEOUT, IR_REASON_ADC, IR_REASON_OVERFLOW,
+    IR_REASON_QUEUE_AGE, IR_REASON_WATCHDOG, IR_REASON_STARTUP,
+    IR_REASON_HARDWARE
+} ir_fault_reason_t;
+
 typedef struct
 {
     uint32_t samples;
+    uint32_t first_fault_us; /* low hardware microseconds; wraps at ~71 min */
+    uint32_t first_fault_detail; /* us for timing; register bits for ADC */
+    uint32_t first_fault_samples;
+    uint8_t first_fault_reason;
     uint32_t max_lateness_us;
     uint32_t max_scan_us;
     uint8_t faults : 4;

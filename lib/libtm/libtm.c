@@ -84,14 +84,20 @@ EXPORT INT tm_putchar( INT c )
 {
 	static const char CR = CHR_CR;
 	UB buf = (UB)c;
+#if !TM_CONSOLE_USB_CDC
 	INT imask;
+#endif
 
+#if !TM_CONSOLE_USB_CDC
 	DI(imask);
+#endif
 	if (buf == CHR_LF) {
 		tm_snd_dat((const UB*)&CR, 1);
 	}
 	tm_snd_dat(&buf, 1);
+#if !TM_CONSOLE_USB_CDC
 	EI(imask);
+#endif
 
 	return 0;
 }
@@ -103,13 +109,19 @@ EXPORT INT tm_putchar( INT c )
 EXPORT INT tm_putstring( const UB *buff )
 {
 	const UB* p = buff;
+#if !TM_CONSOLE_USB_CDC
 	INT imask;
+#endif
 
+#if !TM_CONSOLE_USB_CDC
 	DI(imask);
+#endif
 	while ( *p != (UB)'\0' ) {
 		tm_putchar(*p++);
 	}
+#if !TM_CONSOLE_USB_CDC
 	EI(imask);
+#endif
 
 	return 0;
 }

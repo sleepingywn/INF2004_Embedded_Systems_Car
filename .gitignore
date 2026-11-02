@@ -24,3 +24,16 @@ config/wifi_secrets.h
 
 # macOS
 .DS_Store
+
+# Local dashboard runtime, dependencies, credentials and telemetry logs
+tools/dashboard/node_modules/
+tools/dashboard/.config*
+tools/dashboard/flows_cred.json
+tools/dashboard/.env
+tools/dashboard/logs/
+tools/dashboard/context/
+tools/dashboard/.local/
+
+.playwright-cli/
+output/playwright/
+build_make/tools/elf2uf2.exe

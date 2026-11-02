@@ -20,6 +20,10 @@
 #include "lwip/timeouts.h"
 #include "wifi_secrets.h"
 #include "mqtt_utk.h"
+#include "../../../../app_program/subsystem1/telemetry_transport.h"
+#ifndef MQTT_TOPIC_BASE
+#define MQTT_TOPIC_BASE "inf2004/se08/car01/v1"
+#endif
 #include <tm/tmonitor.h>
 
 #define MQTT_UTK_HEARTBEAT_MS   5000
@@ -43,7 +47,42 @@ static UB		rx_data[MQTT_UTK_RX_DATA_MAX];
 static u16_t		rx_len;
 static u8_t		rx_truncated;
 
+static u8_t telemetry_busy;
+static int telemetry_event;
+static uint32_t telemetry_ticket;
+static void telemetry_timeout(void *arg);
+static void telemetry_done(void *arg, err_t result)
+{
+    (void)arg;
+    if (result == ERR_OK) s1_transport_ack(telemetry_event, telemetry_ticket);
+    telemetry_busy = 0;
+}
+static void telemetry_timeout(void *arg)
+{
+    uint8_t frame[S1_FRAME_SIZE];
+    err_t result;
+    (void)arg;
+    if (!telemetry_busy && mqtt_client_is_connected(client) &&
+        s1_transport_peek(frame, &telemetry_event, &telemetry_ticket)) {
+        telemetry_busy = 1;
+        result = mqtt_publish(client,
+            telemetry_event ? MQTT_TOPIC_BASE "/events" : MQTT_TOPIC_BASE "/telemetry",
+            frame, S1_FRAME_SIZE, 1, 0, telemetry_done, NULL);
+        if (result != ERR_OK) telemetry_busy = 0;
+    }
+    sys_timeout(100, telemetry_timeout, NULL);
+}
+
 static void heartbeat_timeout(void *arg);
+static void retry_timeout(void *arg);
+
+/* Keep the poll loop from bypassing the reconnect backoff. */
+static void schedule_retry(void)
+{
+	connecting = 1;
+	sys_untimeout(retry_timeout, NULL);
+	sys_timeout(MQTT_UTK_RETRY_MS, retry_timeout, NULL);
+}
 
 /* mqtt.c NUL-terminates the topic before handing it over, but it is only
  * valid for the duration of this call -- copy it out. */
@@ -147,6 +186,10 @@ static void connection_cb(mqtt_client_t *c, void *arg, mqtt_connection_status_t 
 		 * is allowed to reconnect. Leaving it set would wedge the client
 		 * permanently after the first disconnect. */
 		connecting = 0;
+		sys_untimeout(retry_timeout, NULL);
+        telemetry_busy = 0;
+        sys_untimeout(telemetry_timeout, NULL);
+        sys_timeout(100, telemetry_timeout, NULL);
 
 		tm_printf((UB*)"mqtt: connected to " MQTT_BROKER_IP "\n");
 
@@ -180,7 +223,11 @@ static void connection_cb(mqtt_client_t *c, void *arg, mqtt_connection_status_t 
 		 * into a tight reconnect loop. */
 		tm_printf((UB*)"mqtt: connection status %d, retrying in %ds\n",
 			  (int)status, MQTT_UTK_RETRY_MS / 1000);
-		sys_timeout(MQTT_UTK_RETRY_MS, retry_timeout, NULL);
+		sys_untimeout(heartbeat_timeout, NULL);
+        sys_untimeout(telemetry_timeout, NULL);
+        /* lwIP clears pending request callbacks before reporting disconnect. */
+        telemetry_busy = 0;
+		schedule_retry();
 	}
 }
 
@@ -209,12 +256,18 @@ void mqtt_utk_start(void)
 
 	client_info.client_id = MQTT_CLIENT_ID;
 	client_info.keep_alive = MQTT_UTK_KEEPALIVE_S;
+#ifdef MQTT_USERNAME
+	client_info.client_user = MQTT_USERNAME;
+#endif
+#ifdef MQTT_PASSWORD
+	client_info.client_pass = MQTT_PASSWORD;
+#endif
 
 	connecting = 1;
 	err = mqtt_client_connect(client, &broker_addr, MQTT_BROKER_PORT,
 				  connection_cb, NULL, &client_info);
 	if(err != ERR_OK) {
 		tm_printf((UB*)"mqtt: mqtt_client_connect() failed, err=%d\n", (int)err);
-		connecting = 0;
+		schedule_retry();
 	}
 }

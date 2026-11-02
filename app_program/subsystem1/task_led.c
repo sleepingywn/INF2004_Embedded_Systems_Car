@@ -12,6 +12,7 @@
  */
 
 #include "subsystem1.h"
+extern void s1_collect(void);
 
 /*
  * Cyclic handler.  Runs in interrupt context, NOT as a task, so it must
@@ -42,6 +43,7 @@ EXPORT void led_task(INT stacd, void *exinf)
 		   the LED does not "catch up" with a burst of fast blinks. */
 		tk_can_wup(TSK_SELF);
 
+		s1_collect();
 		level = !level;
 		gpio_set_val(S1_LED_PIN, level);
 	}

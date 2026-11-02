@@ -4,8 +4,8 @@
  *
  *	Producers (tm_snd_dat, called from any context including handlers) only
  *	append to a ring buffer and return.  A service task owns TinyUSB and
- *	drains the ring to the CDC endpoint.  An SMP producer may spin briefly
- *	behind the other processor's ring update, but it never waits for the host
+ *	drains the ring to the CDC endpoint. A producer drops its record if the
+ *	ring lock is busy; it never waits for the host
  *	or performs a scheduler wait.  An unplugged or unenumerated host therefore
  *	cannot stall the kernel -- output is dropped and counted instead.
  */
@@ -13,6 +13,7 @@
 #include <tk/tkernel.h>
 #include <tk/typedef.h>
 #include <sys/sysdef.h>
+#include <tm/usb_console.h>
 
 #if TK_SUPPORT_SMP
 #include <tk/smp.h>
@@ -58,12 +59,13 @@ LOCAL T_SPLOCK		tx_lock;
  * The interrupt-preserving form is required because T-Monitor output is
  * permitted from both task and handler context.
  */
-LOCAL void tx_lock_enter(UINT *intsts)
+LOCAL BOOL tx_lock_try(UINT *intsts)
 {
 #if TK_SUPPORT_SMP
-	(void)ISpinLock(&tx_lock, intsts);
+	return ISpinTryLock(&tx_lock, intsts) == E_OK;
 #else
 	DI(*intsts);
+	return TRUE;
 #endif
 }
 
@@ -76,8 +78,6 @@ LOCAL void tx_lock_leave(UINT intsts)
 #endif
 }
 
-/* Bytes discarded because the ring was full.  Exposed so a test can assert
-   that a run produced no loss rather than assuming it. */
 /* Received bytes: written only by usb_service_task, read only by
    tm_usb_console_getc() (one reader).  Bytes are dropped when it is full. */
 #define USB_RX_SIZE	64U
@@ -97,7 +97,30 @@ EXPORT INT tm_usb_console_getc(void)
 	return c;
 }
 
-EXPORT volatile UW	tm_usb_dropped;
+/* A core writes only its own counters with local interrupts masked. */
+LOCAL volatile TM_USB_DIAG tx_diag[TK_MAX_CORE];
+
+LOCAL UINT tx_core(void)
+{
+#if TK_SUPPORT_SMP
+    return in_w(SIO_CPUID_ADDR) & 1u;
+#else
+    return 0;
+#endif
+}
+
+EXPORT void tm_usb_console_diag(TM_USB_DIAG *diag)
+{
+    *diag = (TM_USB_DIAG){0};
+    for (UINT core = 0; core < TK_MAX_CORE; ++core) {
+        diag->dropped_bytes += tx_diag[core].dropped_bytes;
+        diag->dropped_records += tx_diag[core].dropped_records;
+        diag->truncated_records += tx_diag[core].truncated_records;
+        diag->contentions += tx_diag[core].contentions;
+        UW elapsed = tx_diag[core].max_enqueue_us;
+        if (elapsed > diag->max_enqueue_us) diag->max_enqueue_us = elapsed;
+    }
+}
 
 /*
  * Link state, for diagnostics that cannot rely on the console itself:
@@ -123,7 +146,7 @@ EXPORT UW tm_usb_pending(void)
 	UINT	intsts;
 	UW	pending;
 
-	tx_lock_enter(&intsts);
+	if (!tx_lock_try(&intsts)) return USB_TX_SIZE; /* conservatively nonempty */
 	pending = (tx_head - tx_tail) & USB_TX_MASK;
 	tx_lock_leave(intsts);
 
@@ -199,7 +222,7 @@ LOCAL void usb_service_task(INT stacd, void *exinf)
 			available = tm_tusb_write_available();
 			while(available > 0) {
 				count = 0;
-				tx_lock_enter(&intsts);
+				if (!tx_lock_try(&intsts)) break;
 				while(count < USB_TX_CHUNK && count < available &&
 				      tx_tail != tx_head) {
 					chunk[count++] = tx_buffer[tx_tail];
@@ -245,10 +268,8 @@ EXPORT ER tm_usb_console_start(void)
 
 	if(usb_started) return E_OK;
 
-#if TK_SUPPORT_SMP
-	ercd = InitSpinLock(&tx_lock);
-	if(ercd < E_OK) return ercd;
-#endif
+	/* Static zero is already an unlocked spinlock. Do not reset a lock that
+	   early-boot output might be using on the other core. */
 
 	/* TinyUSB is initialised inside the task itself, so the task id is
 	   published before the controller can raise its first interrupt. */
@@ -290,27 +311,38 @@ EXPORT ER tm_usb_console_start(void)
 	return E_OK;
 }
 
-/*
- * Append to the ring.  This may spin on the short SMP ring lock, but never
- * waits on the host and never performs a scheduler wait.
- */
+/* Accept a bounded record whole, never spin behind another producer. */
+EXPORT void tm_usb_console_record(const UB *buf, INT size, INT truncated)
+{
+    UINT intsts;
+    UW started = in_w(TIMER_TIMERAWL);
+    BOOL locked = tx_lock_try(&intsts);
+    /* Try-lock restores PRIMASK on failure; mask briefly for per-core stats. */
+    if (!locked) DI(intsts);
+    volatile TM_USB_DIAG *diag = &tx_diag[tx_core()];
+    if (truncated) ++diag->truncated_records;
+    if (!locked) ++diag->contentions;
+    if (size > 0) {
+        UW free_bytes = locked ? ((tx_tail - tx_head - 1u) & USB_TX_MASK) : 0;
+        if (!locked || (UW)size > TM_USB_RECORD_SIZE || (UW)size > free_bytes) {
+            diag->dropped_bytes += (UW)size;
+            ++diag->dropped_records;
+        } else {
+            for (INT i = 0; i < size; ++i) {
+                tx_buffer[tx_head] = buf[i];
+                tx_head = (tx_head + 1u) & USB_TX_MASK;
+            }
+        }
+    }
+    UW elapsed = in_w(TIMER_TIMERAWL) - started;
+    if (elapsed > diag->max_enqueue_us) diag->max_enqueue_us = elapsed;
+    if (locked) tx_lock_leave(intsts);
+    else EI(intsts);
+}
+
 EXPORT void tm_usb_console_put(const UB *buf, INT size)
 {
-	UW	next;
-	UINT	intsts;
-
-	tx_lock_enter(&intsts);
-	while(size-- > 0) {
-		next = (tx_head + 1U) & USB_TX_MASK;
-		if(next == tx_tail) {		/* full: drop, and count it */
-			tm_usb_dropped++;
-			buf++;
-			continue;
-		}
-		tx_buffer[tx_head] = *buf++;
-		tx_head = next;
-	}
-	tx_lock_leave(intsts);
+    tm_usb_console_record(buf, size, 0);
 }
 
 #endif /* USE_TMONITOR && TM_CONSOLE_USB_CDC */

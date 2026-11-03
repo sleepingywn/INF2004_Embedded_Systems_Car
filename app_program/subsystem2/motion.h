@@ -173,6 +173,20 @@ ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source, uint32_t is
 ER motion_stop(void);
 ER motion_set_fault(motion_fault_source_t source, bool asserted);
 typedef struct {
+    uint32_t raw_left,raw_right,previous_left,previous_right,origin_left,origin_right;
+    uint32_t initial_invalid,invalid,dt_ms;
+    int32_t speed_previous_left,speed_previous_right,target_left,target_right;
+    uint8_t reason,speed_reason,raw_valid;
+    /* Frozen previous commanded interval, before owner reset. Deltas are
+     * forward-positive logical counts; original raw counters remain above. */
+    int32_t delta_left,delta_right,prior_target_left,prior_target_right;
+    uint16_t prior_duty_left,prior_duty_right;
+    uint8_t pause_eligible,pause_used_left,pause_used_right,pause_budget;
+    uint32_t pause_age_left_ms,pause_age_right_ms;
+    uint32_t settle_age_left_ms,settle_age_right_ms; /* UINT32_MAX if unused */
+    uint32_t pause_window_left_ms,pause_window_right_ms,pause_window_limit_ms;
+} motion_encoder_failure_t;
+typedef struct {
     uint32_t first_timeout_ms, first_timeout_interval_ms, max_loop_ms;
     uint32_t app_ready_ms, radio_init_ms, released_ms;
     uint8_t timeout_reason; /* 1 startup, 2 loop, 3 encoder, 4 request, 5 manoeuvre, 6 reacquire */
@@ -181,16 +195,54 @@ typedef struct {
     uint16_t line_speed_left_cps,line_speed_right_cps;
     uint16_t line_target_left_cps,line_target_right_cps;
     int8_t line_error;
+    int8_t line_steering_error; /* Applied error, including bounded curve memory. */
+    int8_t line_tight_direction; /* +1 left pause, -1 right pause, 0 rolling */
+    uint8_t line_search_phase; /* 0 tracking, 1 initial sweep, 2 return sweep */
     uint8_t line_step,line_active;
+    uint16_t line_levels;
+    uint8_t line_adaptive_mode,line_stop_reason;
+    /* Frozen failing input, separate from last-successful-control diagnostics.
+     * Flags: 1 captured, 2 had line, 4 epoch matched, 8 line.fault asserted. */
+    uint32_t line_failure_age_ms,line_failure_elapsed_ms;
+    int8_t line_failure_error;
+    uint8_t line_failure_state,line_failure_flags;
+    motion_encoder_failure_t encoder_failure;
 } motion_diagnostics_t;
 ER motion_get_diagnostics(motion_diagnostics_t *out);
+/* Read-only stopped-run history. Index 0 is oldest; E_OBJ during motion,
+ * E_NOEXS for an absent index. Callers verify epoch/id across multiple reads. */
+#define MOTION_LINE_TRACE_SAMPLES 64u
+typedef struct {
+    uint32_t elapsed_ms,age_ms;
+    int32_t speed_left_cps,speed_right_cps;
+    uint16_t target_left_cps,target_right_cps;
+    int16_t duty_left,duty_right;
+    int8_t error,steering;
+    int8_t tight_direction;
+    uint8_t search_phase;
+    uint16_t levels; /* Packed calibrated left/right + validity, same sample. */
+    uint8_t adaptive_mode,stop_reason;
+    uint8_t state,step,flags; /* flags: input present=2, epoch match=4, fault=8 */
+} motion_line_trace_sample_t;
+typedef struct {
+    motion_line_trace_sample_t sample;
+    uint32_t epoch,id;
+    uint16_t count;
+} motion_line_trace_entry_t;
+ER motion_get_line_trace(unsigned index,motion_line_trace_entry_t *out);
 ER motion_get_status(motion_status_t *status);
 /* IR task only: tolerate brief snapshot contention. The 2 ms wait request is
  * rounded by the kernel tick; the motion publisher itself never waits. */
 ER motion_get_ir_status(motion_status_t *status);
 /* S3 task context only. Caller supplies FULL acquisition time and current
- * B2 epoch, not merely reception time. Never call these from an ADC ISR. */
+ * B2 epoch, not merely reception time. Never call these from an ADC ISR.
+ * E_OK means accepted. MOTION_IR_SUPERSEDED means rejected because the epoch
+ * changed: discard the sample/capture and resynchronise, never retry it under
+ * a new epoch. Other failures remain negative kernel errors. */
+enum { MOTION_IR_SUPERSEDED = 1 };
 ER motion_publish_line(const line_msg_t *line, uint32_t sampled_ms, uint32_t epoch);
+ER motion_publish_line_observed(const line_msg_t *line, uint16_t levels,
+                                uint32_t sampled_ms, uint32_t epoch);
 ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t epoch);
 /* INTEGRATION TEST: latest line sample / barcode capture received from S3,
  * whatever the motion state.  motion_debug_line returns E_NOEXS before the

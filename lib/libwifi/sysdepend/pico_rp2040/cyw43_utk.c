@@ -3,6 +3,7 @@
 #include "cyw43.h"
 #include "cyw43_country.h"
 #include "cyw43_utk.h"
+#include "cyw43_led_request.h"
 
 #if TM_NET_LWIP
 /* lwip_init() must run before cyw43_wifi_set_up() -- cyw43_cb_tcpip_init()
@@ -67,6 +68,26 @@ static T_CYW43_UTK_STATUS radio_status = {
     .init_result = -5,
     .strongest_rssi = -32768,
 };
+
+static volatile uint32_t led_request;
+void cyw43_utk_set_led(uint32_t on)
+{
+    led_request=cyw43_led_word((uint32_t)(time_us_64()/1000u),on!=0u);
+    mp_memory_barrir();
+}
+/* Called only while the radio service owns the CYW43 stack, regardless of
+ * association state. No SPI/GPIO transaction is made by the motion task. */
+static void service_led(void)
+{
+    static int previous=-1;
+    static uint32_t last_attempt;
+    uint32_t now=(uint32_t)(time_us_64()/1000u);
+    mp_memory_barrir();
+    bool level=cyw43_led_level(led_request,now);
+    if((int)level==previous || (uint32_t)(now-last_attempt)<100u)return;
+    last_attempt=now;
+    if(cyw43_gpio_set(&cyw43_state,0,level)==0)previous=level; /* Pico W WL_GPIO0 */
+}
 
 #if TM_NET_LWIP
 static const char *link_status_str(int32_t status)
@@ -330,6 +351,7 @@ void cyw43_utk_task(int32_t stacd, void *exinf)
         }
 #endif
         cyw43_utk_poll_requested = 0;
+        service_led();
         cyw43_thread_exit();
 #if TM_NET_LWIP
         sys_check_timeouts();

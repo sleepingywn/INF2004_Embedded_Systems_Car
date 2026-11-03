@@ -24,5 +24,8 @@ typedef struct {
 int32_t cyw43_utk_start(void);
 void cyw43_utk_get_status(T_CYW43_UTK_STATUS *status);
 void cyw43_utk_task(int32_t stacd, void *exinf);
+/* Nonblocking request for Pico W WL_GPIO0 LED; refresh within 500 ms.
+ * Only the radio owner task performs the actual GPIO transaction. */
+void cyw43_utk_set_led(uint32_t on);
 
 #endif

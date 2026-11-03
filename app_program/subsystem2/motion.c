@@ -89,6 +89,7 @@ static struct
     bc_msg_t barcode;
     uint32_t line_ms;
     uint32_t line_epoch;
+    uint16_t line_levels;
     uint32_t barcode_ms;
     uint32_t barcode_epoch;
     uint32_t rejected_requests;
@@ -112,6 +113,57 @@ static motion_status_t state;
 static motion_request_t active;
 static motion_pid_t pid[2];
 static line_follow_t line_trial;
+/* Owner-only recording; the observer gets a copy only after motion stops.
+ * Recording performs no locks, allocation or USB writes in the motor loop. */
+static struct line_history {
+    motion_line_trace_sample_t samples[MOTION_LINE_TRACE_SAMPLES];
+    uint32_t epoch,id,last_ms;
+    unsigned next,count;
+} line_history,observer_line_history;
+static bool line_history_dirty,observer_line_history_available;
+static void line_history_clear(uint32_t epoch,uint32_t id)
+{
+    line_history.epoch=epoch;line_history.id=id;
+    line_history.next=line_history.count=0;
+    line_history_dirty=true;
+}
+static void line_history_record(uint32_t now,const line_msg_t *line,uint32_t sampled_ms,
+                                uint32_t epoch,bool have_line,line_step_t result)
+{
+    bool overlap_transition=false;
+    if(have_line && line && line_history.count) {
+        unsigned previous=(line_history.next+MOTION_LINE_TRACE_SAMPLES-1u)%MOTION_LINE_TRACE_SAMPLES;
+        overlap_transition=(line->state==LINE_BOTH_BLACK)!=
+            (line_history.samples[previous].state==LINE_BOTH_BLACK);
+    }
+#if MOTION_LINE_ADAPTIVE
+    if(line_history.count) {
+        unsigned previous=(line_history.next+MOTION_LINE_TRACE_SAMPLES-1u)%MOTION_LINE_TRACE_SAMPLES;
+        overlap_transition=overlap_transition || line_history.samples[previous].adaptive_mode!=line_trial.adaptive.mode;
+    }
+#endif
+    /* A short overlap can begin and clear between ordinary 100ms samples. */
+    if(result==LINE_STEP_OK && line_history.count && now-line_history.last_ms<100u && !overlap_transition)return;
+    motion_line_trace_sample_t *s=&line_history.samples[line_history.next];
+    *s=(motion_line_trace_sample_t){
+        .elapsed_ms=now-line_trial.started_ms,.age_ms=have_line ? now-sampled_ms:UINT32_MAX,
+        .speed_left_cps=line_trial.speed.left.filtered_milli_cps/1000,
+        .speed_right_cps=line_trial.speed.right.filtered_milli_cps/1000,
+        .target_left_cps=(uint16_t)line_trial.speed.left.target_cps,
+        .target_right_cps=(uint16_t)line_trial.speed.right.target_cps,
+        .duty_left=motion_left_duty(&state),.duty_right=motion_right_duty(&state),
+        .error=have_line ? (int8_t)line->err:0,.steering=line_trial.steering_error,
+        .tight_direction=line_trial.tight.direction,
+        .search_phase=line_trial.search.phase,
+        .levels=line_trial.observed_levels,.adaptive_mode=(uint8_t)line_trial.adaptive.mode,
+        .stop_reason=(uint8_t)line_trial.adaptive.stop_reason,
+        .state=have_line ? (uint8_t)line->state:255u,.step=(uint8_t)result,
+        .flags=(have_line ? 2u:0u) | (have_line && epoch==state.epoch ? 4u:0u) |
+               (have_line && line->fault ? 8u:0u)};
+    line_history.next=(line_history.next+1u)%MOTION_LINE_TRACE_SAMPLES;
+    if(line_history.count<MOTION_LINE_TRACE_SAMPLES)++line_history.count;
+    line_history.last_ms=now;line_history_dirty=true;
+}
 static bool line_usb_connected(void)
 {
 #if MOTION_LINE_CIRCUIT
@@ -196,8 +248,32 @@ static void publish_observer_status(void)
     if (status_mutex > 0 && tk_loc_mtx(status_mutex, TMO_POL) == E_OK) {
         observer_status = state;
         observer_diagnostics = diagnostics;
+        observer_line_history_available=!owner_flags.active_valid;
+        if(observer_line_history_available && line_history_dirty) {
+            observer_line_history=line_history;
+            line_history_dirty=false;
+        }
         tk_unl_mtx(status_mutex);
     }
+}
+
+ER motion_get_line_trace(unsigned index,motion_line_trace_entry_t *out)
+{
+    if(!out)return E_PAR;
+    if(status_mutex<=0)return E_OBJ;
+    ER e=tk_loc_mtx(status_mutex,TMO_POL);
+    if(e<E_OK)return e;
+    if(!observer_line_history_available)e=E_OBJ;
+    else if(index>=observer_line_history.count)e=E_NOEXS;
+    else {
+        unsigned first=(observer_line_history.next+MOTION_LINE_TRACE_SAMPLES-
+                        observer_line_history.count)%MOTION_LINE_TRACE_SAMPLES;
+        *out=(motion_line_trace_entry_t){
+            .sample=observer_line_history.samples[(first+index)%MOTION_LINE_TRACE_SAMPLES],
+            .epoch=observer_line_history.epoch,.id=observer_line_history.id,
+            .count=(uint16_t)observer_line_history.count};
+    }
+    tk_unl_mtx(status_mutex);return e;
 }
 
 ER motion_get_diagnostics(motion_diagnostics_t *out)
@@ -444,8 +520,13 @@ ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source, uint32_t is
 
 ER motion_publish_line(const line_msg_t *line, uint32_t sampled_ms, uint32_t epoch)
 {
+    return motion_publish_line_observed(line,0,sampled_ms,epoch);
+}
+
+ER motion_publish_line_observed(const line_msg_t *line,uint16_t levels,uint32_t sampled_ms,uint32_t epoch)
+{
     if ((line == NULL) || (line->err < -100) || (line->err > 100) || (line->state > LINE_FAULT) ||
-        (line->t_ms != (sampled_ms & 0x7fffu)))
+        (line->t_ms != (sampled_ms & 0x7fffu)) || (levels && !line_levels_valid(levels)))
     {
         return E_PAR;
     }
@@ -458,15 +539,20 @@ ER motion_publish_line(const line_msg_t *line, uint32_t sampled_ms, uint32_t epo
     {
         return error;
     }
-    if ((epoch != shared.status.epoch) ||
-        (shared.have_line && (shared.line_epoch == epoch) &&
-         (((uint32_t)(sampled_ms - shared.line_ms) >= 0x80000000u) ||
-          (sampled_ms == shared.line_ms))))
+    if (epoch != shared.status.epoch)
+    {
+        tk_unl_mtx(mailbox_mutex);
+        return MOTION_IR_SUPERSEDED;
+    }
+    if (shared.have_line && (shared.line_epoch == epoch) &&
+        (((uint32_t)(sampled_ms - shared.line_ms) >= 0x80000000u) ||
+         (sampled_ms == shared.line_ms)))
     {
         tk_unl_mtx(mailbox_mutex);
         return E_OBJ;
     }
     shared.line = *line;
+    shared.line_levels = levels;
     debug_rx.line = *line;
     debug_rx.line_ms = sampled_ms;
     debug_rx.have_line = true;
@@ -495,7 +581,12 @@ ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t
     debug_rx.barcode = *barcode;          /* keep a copy even if rejected */
     debug_rx.barcode_ms = sampled_ms;
     ++debug_rx.barcode_count;
-    if (shared.have_barcode || (epoch != shared.status.epoch))
+    if (epoch != shared.status.epoch)
+    {
+        tk_unl_mtx(mailbox_mutex);
+        return MOTION_IR_SUPERSEDED;
+    }
+    if (shared.have_barcode)
     {
         tk_unl_mtx(mailbox_mutex);
         return E_OBJ;
@@ -623,6 +714,9 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags,
         owner_flags.stop_seen = false;
         tk_clr_flg(events, ~STOP_BIT);
         reset_control();
+        diagnostics.line_failure_flags=0;
+        diagnostics.encoder_failure=(motion_encoder_failure_t){0};
+        line_history_clear(state.epoch,request->id);
         if (owner_flags.encoder_ready)
         {
             encoder_hw_snapshot(&previous_counts);
@@ -675,8 +769,14 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags,
             break;
         case MOTION_LINE_TRACE:
             state.state=MOTION_TRACING;
+#if MOTION_LINE_ADAPTIVE
+            last_barcode_ms=now; /* never replay a pre-start route capture */
+#endif
             line_follow_begin(&line_trial,state.left_count,state.right_count,state.invalid_edges,state.time_ms,now);
             diagnostics.line_active=1;diagnostics.line_step=LINE_STEP_WAIT;
+            diagnostics.line_failure_flags=0;
+            diagnostics.encoder_failure=(motion_encoder_failure_t){0};
+            line_history_clear(state.epoch,request->id);
             break;
         case MOTION_FOLLOW:
             state.state = MOTION_TRACING;
@@ -829,7 +929,7 @@ static void apply_velocity(int16_t left, int16_t right, uint32_t now, uint16_t d
 }
 
 static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint32_t line_ms,
-                         uint32_t line_epoch, bool have_line)
+                         uint32_t line_epoch, bool have_line,uint16_t levels)
 {
     if (!owner_flags.active_valid || (state.state == MOTION_PULSING))
     {
@@ -844,18 +944,70 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
     }
     output_rest_until = 0;
     if(active.command==MOTION_LINE_TRACE) {
-        line_step_t result=state.raw_valid ? line_follow_step(&line_trial,
+        line_trial.observed_levels=levels; /* also record input if encoder snapshot is missing */
+        unsigned prior_pause_mask=line_pause_eligible(&line_trial);
+        line_step_t result=state.raw_valid ? line_follow_step_observed(&line_trial,
             state.left_count,state.right_count,state.invalid_edges,state.time_ms,now,
-            line,line_ms,state.epoch,line_epoch,have_line,line_usb_connected()) : LINE_STEP_ENCODER;
+            line,line_ms,state.epoch,line_epoch,have_line,line_usb_connected(),levels) : LINE_STEP_ENCODER;
         diagnostics.line_step=(uint8_t)result;
+        diagnostics.line_levels=levels;
+        diagnostics.line_adaptive_mode=(uint8_t)line_trial.adaptive.mode;
+        diagnostics.line_stop_reason=(uint8_t)line_trial.adaptive.stop_reason;
+        if(result==LINE_STEP_ROUTE_REQUIRED) {
+            motor_hw_stop();state.left_duty_bits=state.right_duty_bits=0;
+            line_history_record(now,line,line_ms,line_epoch,have_line,result);
+            end_request(MOTION_CANCELLED);return;
+        }
+        diagnostics.line_tight_direction=line_trial.tight.direction;
+        diagnostics.line_search_phase=line_trial.search.phase;
         if(result==LINE_STEP_DONE) {end_request(MOTION_COMPLETED);return;}
         if(result==LINE_STEP_DISCONNECTED) {end_request(MOTION_CANCELLED);return;}
         if(result==LINE_STEP_WAIT)return;
         if(result!=LINE_STEP_OK) {
-            fault_stop(result==LINE_STEP_IR ? MOTION_FAULT_IR :
+            if(result==LINE_STEP_ENCODER) {
+                unsigned pause_mask=prior_pause_mask;
+                diagnostics.encoder_failure=(motion_encoder_failure_t){
+                    .reason=state.raw_valid ? line_trial.encoder_reject:LINE_ENCODER_RAW_MISSING,
+                    .speed_reason=state.raw_valid ? line_trial.speed_reject:0,
+                    .raw_valid=state.raw_valid,
+                    .raw_left=state.left_count,.raw_right=state.right_count,
+                    .previous_left=line_trial.origin_left-(uint32_t)line_trial.previous_total[0],
+                    .previous_right=line_trial.origin_right+(uint32_t)line_trial.previous_total[1],
+                    .origin_left=line_trial.origin_left,.origin_right=line_trial.origin_right,
+                    .initial_invalid=line_trial.invalid,.invalid=state.invalid_edges,
+                    .dt_ms=state.time_ms-line_trial.previous_ms,
+                    .speed_previous_left=line_trial.speed.previous_left,
+                    .speed_previous_right=line_trial.speed.previous_right,
+                    .target_left=line_trial.speed_reject ? line_trial.rejected_target_left:line_trial.speed.left.target_cps,
+                    .target_right=line_trial.speed_reject ? line_trial.rejected_target_right:line_trial.speed.right.target_cps,
+                    .delta_left=state.raw_valid ? clamp_i64(-(int64_t)motion_count_delta(state.left_count,
+                        line_trial.origin_left-(uint32_t)line_trial.previous_total[0]),INT32_MIN,INT32_MAX):0,
+                    .delta_right=state.raw_valid ? motion_count_delta(state.right_count,
+                        line_trial.origin_right+(uint32_t)line_trial.previous_total[1]):0,
+                    .prior_target_left=line_trial.speed.left.target_cps,.prior_target_right=line_trial.speed.right.target_cps,
+                    .prior_duty_left=(uint16_t)line_trial.speed.left.duty,.prior_duty_right=(uint16_t)line_trial.speed.right.duty,
+                    .pause_eligible=(uint8_t)pause_mask,.pause_budget=LINE_PAUSE_REVERSE_BUDGET,
+                    .pause_used_left=line_trial.pause_reverse_used[0],.pause_used_right=line_trial.pause_reverse_used[1],
+                    .pause_age_left_ms=(pause_mask&1u) ? now-line_trial.output_pause_ms[0]:UINT32_MAX,
+                    .pause_age_right_ms=(pause_mask&2u) ? now-line_trial.output_pause_ms[1]:UINT32_MAX,
+                    .settle_age_left_ms=line_trial.pause_reverse_used[0] ? now-line_trial.last_settle_ms[0]:UINT32_MAX,
+                    .settle_age_right_ms=line_trial.pause_reverse_used[1] ? now-line_trial.last_settle_ms[1]:UINT32_MAX,
+                    .pause_window_left_ms=line_trial.pause_window_active[0] ? now-line_trial.pause_window_ms[0]:UINT32_MAX,
+                    .pause_window_right_ms=line_trial.pause_window_active[1] ? now-line_trial.pause_window_ms[1]:UINT32_MAX,
+                    .pause_window_limit_ms=MOTION_LINE_ADAPTIVE ? LINE_PAUSE_SETTLE_MS:0};
+            }
+            line_history_record(now,line,line_ms,line_epoch,have_line,result);
+            diagnostics.line_failure_flags=1u | (have_line ? 2u:0u) |
+                (have_line && line_epoch==state.epoch ? 4u:0u) |
+                (have_line && line->fault ? 8u:0u);
+            diagnostics.line_failure_state=have_line ? (uint8_t)line->state:255u;
+            diagnostics.line_failure_error=have_line ? (int8_t)line->err:0;
+            diagnostics.line_failure_age_ms=have_line ? now-line_ms:UINT32_MAX;
+            diagnostics.line_failure_elapsed_ms=now-line_trial.started_ms;
+            fault_stop((result==LINE_STEP_IR || result==LINE_STEP_CROSSING_EXHAUSTED || result==LINE_STEP_RECOVERY_EXHAUSTED || result==LINE_STEP_TIGHT_UNSEEN || result==LINE_STEP_SEARCH_TIMEOUT || result==LINE_STEP_OVERLAP_TIMEOUT) ? MOTION_FAULT_IR :
                        result==LINE_STEP_STALL ? MOTION_FAULT_STALL :
-                       result==LINE_STEP_TIME ? MOTION_FAULT_TIMEOUT :
-                       result==LINE_STEP_LIMIT ? MOTION_FAULT_RANGE : MOTION_FAULT_ENCODER);
+                       (result==LINE_STEP_TIME || result==LINE_STEP_TIGHT_TIMEOUT) ? MOTION_FAULT_TIMEOUT :
+                       (result==LINE_STEP_LIMIT || result==LINE_STEP_SEARCH_RANGE || result==LINE_STEP_OVERLAP_RANGE) ? MOTION_FAULT_RANGE : MOTION_FAULT_ENCODER);
             return;
         }
         int16_t ld=(int16_t)line_trial.speed.left.duty*MOTION_LEFT_MOTOR_SIGN;
@@ -864,10 +1016,12 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
         state.left_duty_bits=(uint16_t)motion_bits_encode(ld,11u);
         state.right_duty_bits=(uint16_t)motion_bits_encode(rd,11u);
         diagnostics.line_error=(int8_t)line->err;
+        diagnostics.line_steering_error=line_trial.steering_error;
         diagnostics.line_speed_left_cps=(uint16_t)(line_trial.speed.left.filtered_milli_cps/1000);
         diagnostics.line_speed_right_cps=(uint16_t)(line_trial.speed.right.filtered_milli_cps/1000);
         diagnostics.line_target_left_cps=(uint16_t)line_trial.speed.left.target_cps;
         diagnostics.line_target_right_cps=(uint16_t)line_trial.speed.right.target_cps;
+        line_history_record(now,line,line_ms,line_epoch,have_line,result);
         return;
     }
     int16_t left = (int16_t)motion_request_left(&active);
@@ -1166,6 +1320,7 @@ void motion_task(INT stacd, void *exinf)
         line_msg_t line = shared.line;
         uint32_t line_ms = shared.line_ms;
         uint32_t line_epoch = shared.line_epoch;
+        uint16_t levels = shared.line_levels;
         bool have_line = shared.have_line;
         bc_msg_t barcode = shared.barcode;
         bool have_barcode = shared.have_barcode;
@@ -1188,6 +1343,11 @@ void motion_task(INT stacd, void *exinf)
             }
             last_update = now;
         }
+        /* Encoder acquisition and mailbox access may cross a millisecond.
+         * Freshness must compare against a time sampled AFTER those inputs;
+         * otherwise now - state.time_ms underflows for a brand-new sample.
+         * Keep dt/last_update on the owner-loop schedule above. */
+        now = motion_now_ms();
         if (pending && renewal)
         {
             if (owner_flags.active_valid && (active.epoch == request.epoch) &&
@@ -1211,10 +1371,27 @@ void motion_task(INT stacd, void *exinf)
         if (have_barcode)
         {
             char decoded = motion_barcode_decode(&barcode);
-            bool fresh_capture = fresh(now, barcode_ms, MOTION_INPUT_MAX_AGE_MS) &&
+            uint32_t capture_age=(MOTION_LINE_ADAPTIVE && active.command==MOTION_LINE_TRACE) ?
+                LINE_FOLLOW_INPUT_AGE_MS:MOTION_INPUT_MAX_AGE_MS;
+            bool fresh_capture = fresh(now, barcode_ms, capture_age) &&
                                  (barcode_epoch == state.epoch) &&
                                  ((uint32_t)(barcode_ms - last_barcode_ms) > 0u) &&
                                  ((uint32_t)(barcode_ms - last_barcode_ms) < 0x80000000u);
+#if MOTION_LINE_ADAPTIVE
+            if (owner_flags.active_valid && active.command==MOTION_LINE_TRACE &&
+                fresh_capture && decoded && have_line && line_epoch==state.epoch &&
+                fresh(now,line_ms,LINE_FOLLOW_INPUT_AGE_MS) && !line.fault &&
+                line.state!=LINE_FAULT && line.state!=LINE_CALIBRATING && line.state!=LINE_LOST)
+            {
+                last_barcode_ms=barcode_ms;
+                state.barcode=(unsigned)(decoded-'A'+1);
+                /* C agrees with the explicit straight trial policy. A/B/D
+                 * require navigation not yet available in this count-domain
+                 * trial: stop rather than silently driving past that command. */
+                if(decoded!='C')line_trial.adaptive.route_blocked=true;
+            }
+            else
+#endif
             if (owner_flags.active_valid && active.command!=MOTION_LINE_TRACE &&
                 (state.state == MOTION_TRACING) && fresh_capture &&
                 decoded && have_line && (line_epoch == state.epoch) &&
@@ -1237,7 +1414,7 @@ void motion_task(INT stacd, void *exinf)
         }
         if ((dt >= MOTION_PERIOD_MS) && (dt <= 100u) && (state.faults == 0u))
         {
-            control_step(now, (uint16_t)dt, &line, line_ms, line_epoch, have_line);
+            control_step(now, (uint16_t)dt, &line, line_ms, line_epoch, have_line,levels);
         }
         state.updated_ms = motion_now_ms();
         ++state.sequence;

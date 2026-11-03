@@ -31,27 +31,69 @@ static void steering_and_sensors(void)
     line_init(&tracker);
     int error=line_update(&tracker,ir_normalise(&cal,3500),ir_normalise(&cal,500),10,&state);
     int32_t lt,rt;
-    assert(error==100 && line_follow_targets(error,&lt,&rt) && lt==0 && rt==1200);
+    assert(error==100 && line_follow_targets(error,&lt,&rt) && lt==250 && rt==750);
     error=line_update(&tracker,0,100,10,&state);
-    assert(error==-100 && line_follow_targets(error,&lt,&rt) && lt==1200 && rt==0);
-    assert(line_follow_targets(50,&lt,&rt) && lt==600 && rt==1200);
-    assert(line_follow_targets(-50,&lt,&rt) && lt==1200 && rt==600);
+    assert(error==-100 && line_follow_targets(error,&lt,&rt) && lt==750 && rt==250);
+    assert(line_follow_targets(0,&lt,&rt) && lt==700 && rt==700);
     assert(!line_follow_targets(101,&lt,&rt));
 
     line_follow_t f;line_msg_t l=centered();
     line_follow_begin(&f,0,0,0,0,0);
     assert(step(&f,0,0,0,0,&l,0)==LINE_STEP_WAIT);
-    l.err=100;
-    assert(step(&f,0,24,0,20,&l,20)==LINE_STEP_OK);
-    assert(f.speed.left.duty==0 && f.speed.left.integral_milli==0);
-    for(uint32_t t=40;t<300;t+=20)assert(step(&f,0,t*12/10,0,t,&l,t)==LINE_STEP_OK);
-    /* The stopped inner wheel is allowed to restart without a false stall. */
+    l.err=60; /* full rolling turn, below separate tight-turn entry */
+    for(uint32_t t=20;t<300;t+=20)
+        assert(step(&f,0u-t/2u,t,0,t,&l,t)==LINE_STEP_OK);
+    assert(f.speed.left.target_cps==250 && f.speed.right.target_cps==750);
+    int32_t previous=f.speed.left.target_cps;
     l.err=0;
-    assert(step(&f,0,360,0,300,&l,300)==LINE_STEP_OK);
-    assert(f.speed.left.duty>0);
-    assert(f.speed.left.target_cps==1200 && f.speed.right.target_cps==1200);
+    assert(step(&f,(uint32_t)-150,300,0,300,&l,300)==LINE_STEP_OK);
+    assert(f.speed.left.target_cps>previous && f.speed.left.target_cps<=previous+80);
     /* Unequal travel from a curve must not invoke straight-line equalisation. */
     assert(f.previous_total[0]!=f.previous_total[1]);
+
+    /* A stationary inner wheel is still a real stall at the existing 200 ms,
+     * even when its target is reduced for a curve. No guard was relaxed. */
+    line_follow_begin(&f,0,0,0,0,0);l.err=60;
+    for(uint32_t t=20;t<200;t+=20)assert(step(&f,0,t,0,t,&l,t)==LINE_STEP_OK);
+    assert(step(&f,0,200,0,200,&l,200)==LINE_STEP_STALL);
+}
+static void curve_response(void)
+{
+    int32_t previous_outer=LINE_CRUISE_CPS,previous_inner=LINE_CRUISE_CPS;
+    for(int error=0;error<=100;++error) {
+        int32_t l,r,ml,mr;
+        assert(line_follow_targets(error,&l,&r));
+        assert(line_follow_targets(-error,&ml,&mr));
+        assert(l==mr && r==ml && l>=250 && l<=r && r<=750);
+        /* Average speed must decrease and curvature increase even when the
+         * outer wheel rises slightly above the straight target. */
+        assert(l+r<=previous_inner+previous_outer);
+        assert((int64_t)l*previous_outer<=(int64_t)previous_inner*r);
+        previous_inner=l;previous_outer=r;
+    }
+    /* Previously 49<->51 crossed the immediate-stop/restart boundary.
+     * Include full sign changes and centered/edge jumps, with dt jitter. */
+    const int errors[]={49,51,0,100,-100,-49,-51,0};
+    line_follow_t f;line_msg_t line=centered();
+    line_follow_begin(&f,0,0,0,0,0);
+    assert(f.speed.left.duty==LEFT_FEEDFORWARD && f.speed.right.duty==RIGHT_FEEDFORWARD);
+    uint32_t now=0;
+    for(unsigned i=0;i<36;++i) {
+        uint32_t dt=20u+20u*(i%3u);now+=dt;
+        line.err=errors[i%8u];
+        int old_left=(int)f.speed.left.duty,old_right=(int)f.speed.right.duty;
+        int32_t old_lt=f.speed.left.target_cps,old_rt=f.speed.right.target_cps;
+        assert(step(&f,0u-now,now,0,now,&line,now)==LINE_STEP_OK);
+        int dl=(int)f.speed.left.duty-old_left,dr=(int)f.speed.right.duty-old_right;
+        int up_bound=(int)(250u*dt/1000u),down_bound=(int)(500u*dt/1000u);
+        assert(dl>=-down_bound && dl<=up_bound && dr>=-down_bound && dr<=up_bound);
+        int32_t lt=f.speed.left.target_cps,rt=f.speed.right.target_cps;
+        int32_t target_bound=(int32_t)(4000u*dt/1000u);
+        assert(lt>=250 && lt<=750 && rt>=250 && rt<=750);
+        assert(lt-old_lt<=target_bound && old_lt-lt<=target_bound);
+        assert(rt-old_rt<=target_bound && old_rt-rt<=target_bound);
+        assert(f.speed.left.duty<=200 && f.speed.right.duty<=200);
+    }
 }
 static void faults_and_wrap(void)
 {
@@ -86,8 +128,38 @@ static void full_duration(void)
     }
     assert(step(&f,0,0,0,start+LINE_FOLLOW_MAX_MS,&l,start+LINE_FOLLOW_MAX_MS)==LINE_STEP_DONE);
 }
+static void ambiguous_curve_gap(void)
+{
+    line_follow_t f;line_tracker_t tracker;line_state_t state;
+    line_msg_t line=centered();line_init(&tracker);
+    line_follow_begin(&f,0,0,0,0,0);
+    line.err=line_update(&tracker,0,100,20,&state);line.state=state;
+    assert(step(&f,(uint32_t)-20,20,0,20,&line,20)==LINE_STEP_OK);
+    for(uint32_t t=40;t<=600;t+=20) {
+        line.err=line_update(&tracker,0,0,20,&state);line.state=state;
+        assert(line.err==0 && line.state==LINE_ON);
+        assert(step(&f,0u-t,t,0,t,&line,t)==LINE_STEP_OK);
+        if(t<500)assert(f.steering_error<0);
+        if(t>=520)assert(f.steering_error==0);
+        if(t>=200 && t<500)assert(f.speed.left.target_cps>f.speed.right.target_cps);
+    }
+    /* Guards take precedence even while curve-memory correction is armed. */
+    line.err=-100;line.state=LINE_EDGE_ONLY;
+    assert(step(&f,(uint32_t)-620,620,0,620,&line,620)==LINE_STEP_OK);
+    line.err=line_update(&tracker,0,0,2000,&state);line.state=state;
+    assert(line.state==LINE_LOST);
+    assert(step(&f,(uint32_t)-640,640,0,640,&line,640)==LINE_STEP_IR);
+    line=centered();line.state=LINE_BOTH_BLACK;
+    assert(step(&f,(uint32_t)-640,640,0,640,&line,640)==LINE_STEP_IR);
+    line=centered();line.fault=1;
+    assert(step(&f,(uint32_t)-640,640,0,640,&line,640)==LINE_STEP_IR);
+    line=centered();
+    assert(step(&f,(uint32_t)-640,640,0,640,&line,500)==LINE_STEP_IR);
+    assert(line_follow_step(&f,(uint32_t)-640,640,0,640,640,&line,640,7,8,true,true)==LINE_STEP_IR);
+    puts("PASS: actual S3 curve-to-white gap gets bounded steering; LOST/junction/fault/stale/epoch guards prevail");
+}
 int main(void)
 {
-    input_guards();steering_and_sensors();faults_and_wrap();full_duration();
-    puts("PASS: actual IR steering sign, stale/invalid/lost/junction inputs, independent targets, zero/restart, stalls, limits, raw/time wrap and deadline");
+    input_guards();steering_and_sensors();curve_response();faults_and_wrap();full_duration();ambiguous_curve_gap();
+    puts("PASS: actual IR steering sign, stale/invalid/lost/junction inputs, independent rolling targets, bounded PWM/target changes, stalls, limits, raw/time wrap and deadline");
 }

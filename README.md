@@ -17,6 +17,14 @@ You need a **Raspberry Pi Pico W**, a USB cable, and a computer running
 macOS, Linux, or Windows with **WSL (Ubuntu)**. On Windows, run every
 command below inside the WSL Ubuntu terminal.
 
+## Current GP20 line-following trial (V5)
+
+The opt-in V5 image starts with GP20 and runs for at most 30 seconds. See the
+[V5 release guide](testing/integration/ADAPTIVE_V5_RELEASE.md) for current behavior,
+wiring, build/test commands, operator feedback and remaining limitations. Earlier
+trial records describe historical versions. This profile does not enable metric
+odometry or claim arbitrary-course completion.
+
 ---
 
 ## 1. Set up the Pico C SDK and the compiler

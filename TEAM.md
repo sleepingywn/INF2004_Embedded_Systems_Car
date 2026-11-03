@@ -75,6 +75,10 @@ fixed.
 | GP27 | S3 | IR Centre A0 – line sensor A, left-hand (ADC1) |
 | GP28 | S3 | IR Right A0 – line sensor B, right-hand (ADC2); Robo Pico VBAT-sense jumper must be open |
 
+Pico W onboard green LED (`WL_GPIO0`, **not RP2040 GP0**): S2 supplies
+GP20 circuit status; the existing CYW43 service task alone writes the wireless
+GPIO. No external GPIO is reassigned and the S1 GP19 heartbeat is unchanged.
+
 ## 3. Peripherals
 
 **Subsystems, tasks and peripherals are three different things:**
@@ -234,3 +238,18 @@ line/encoder inputs and operator start are required; no IR bypass, automatic
 barcode turn or mission renewal is enabled. Software checks and both firmware
 profiles build successfully. No integration flash/hardware test has run.
 Details and prepared image: testing/integration/LINE_FOLLOW_INTEGRATION.md.
+
+
+## GP20 adaptive V5 integration (2026-11-04)
+
+The current opt-in circuit trial is `LINE_DEMO=1 LINE_CIRCUIT=1
+LINE_AUTOSTART=0 LINE_SEARCH=0 LINE_ADAPTIVE=1`. It uses GP20 start/stop,
+Pico W LED status, calibrated IR pair observations, encoder speed feedback,
+bounded crossing/recovery and bounded pause settling. V5 was flashed and
+stationary-verified; the operator subsequently reported a good test. This does
+not establish all-course reliability or calibrated metric motion.
+
+Buddy 3 runtime changes handle superseded-epoch handoffs and circuit calibration;
+the compact line-message contract remains compatible. No Buddy 4 implementation
+change is included. See [V5 release/status](testing/integration/ADAPTIVE_V5_RELEASE.md)
+for supported behavior, reproducible validation and outstanding issues.

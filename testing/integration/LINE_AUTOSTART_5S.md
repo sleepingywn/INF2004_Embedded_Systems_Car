@@ -1,5 +1,9 @@
 # Five-second power-on start, 30-second circuit trial
 
+On 2026-11-03 the user requested GP20 start again. The replacement
+[GP20 curve trial](GP20_CURVE_TRIAL.md) has been flashed.
+This document records the earlier autostart firmware, now replaced on the robot.
+
 User replaced the GP20 start workflow with: "just do a 5 second delay when turn
 on". The old button permission was first disarmed with an acknowledged STOP.
 The new explicit `LINE_AUTOSTART=1` profile starts one bounded line run after

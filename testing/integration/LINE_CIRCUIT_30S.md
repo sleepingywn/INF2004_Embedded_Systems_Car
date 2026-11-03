@@ -1,7 +1,8 @@
 # GP20 battery-powered circuit trial
 
-Superseded for the current robot by [five-second power-on start](LINE_AUTOSTART_5S.md)
-at the user's request on 2026-11-02. This file retains the button-profile record.
+For the current prepared GP20 revision, see [GP20 curve trial](GP20_CURVE_TRIAL.md).
+This file retains the original 2026-11-02 USB-armed button-profile record,
+which was temporarily replaced by [five-second start](LINE_AUTOSTART_5S.md).
 
 User reported the first integrated 2-second run followed the line, then requested
 a 30-second trial on the actual circuit, untethered, using the onboard GP20 button.

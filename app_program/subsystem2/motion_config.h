@@ -34,6 +34,18 @@
 #ifndef MOTION_LINE_AUTOSTART
 #define MOTION_LINE_AUTOSTART 0
 #endif
+#ifndef MOTION_LINE_SEARCH
+#define MOTION_LINE_SEARCH 0
+#endif
+#ifndef MOTION_LINE_ADAPTIVE
+#define MOTION_LINE_ADAPTIVE 0
+#endif
+#if MOTION_LINE_ADAPTIVE && (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART || MOTION_LINE_SEARCH)
+#error "Adaptive control requires GP20 circuit mode with legacy search disabled"
+#endif
+#if MOTION_LINE_SEARCH && (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART)
+#error "Bounded search requires the explicit GP20 circuit profile"
+#endif
 #if MOTION_LINE_AUTOSTART && !MOTION_LINE_CIRCUIT
 #error "Autostart requires the bounded battery circuit profile"
 #endif

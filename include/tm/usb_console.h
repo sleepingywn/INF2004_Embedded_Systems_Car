@@ -19,4 +19,6 @@ IMPORT void tm_usb_console_record(const UB *buf, INT size, INT truncated);
 IMPORT void tm_usb_console_diag(TM_USB_DIAG *diag);
 /* Existing USB service state: 3 means host asserted DTR. */
 IMPORT UW tm_usb_state(void);
+/* RP2040: caller must stop outputs first. Success reboots and never returns. */
+IMPORT INT tm_usb_enter_bootsel(void);
 #endif

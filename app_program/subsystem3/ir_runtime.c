@@ -1,6 +1,6 @@
 #include "ir_runtime.h"
 #include "../subsystem2/motion_ir_bridge.h"
-#if MOTION_LINE_AUTOSTART
+#if MOTION_LINE_CIRCUIT
 #include "../../config/line_boot_calibration.h"
 #endif
 #define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
@@ -182,7 +182,7 @@ static void process_frame(const ir_raw_frame_t *frame)
     if (!runtime_flags.epoch_known || (motion.epoch != owner.epoch))
     {
         owner.epoch = motion.epoch;
-        epoch_floor_ms = now;
+        epoch_floor_ms = motion_now_ms();
         runtime_flags.epoch_known = true;
         motion_ir_bridge_init(&bridge);
         ir_acquisition_discard();
@@ -200,6 +200,17 @@ static void process_frame(const ir_raw_frame_t *frame)
         owner.normalized[ch].value = normalized[ch];
     }
     ER error = motion_ir_bridge_sample(&bridge, normalized, true, frame->sampled_ms, owner.epoch);
+    if (error == MOTION_IR_SUPERSEDED)
+    {
+        /* STOP/reset raced the earlier status read. Reject old data, including
+         * partial/completed barcodes, but keep acquisition running. Observe a
+         * new coherent epoch and timestamp fence before admitting any frame. */
+        ++owner.epoch_resyncs;
+        runtime_flags.epoch_known = false;
+        motion_ir_bridge_init(&bridge);
+        ir_acquisition_discard();
+        return; /* do not clear a real health fault or replay this sample */
+    }
     if (error < E_OK)
     {
         ++owner.handoff_errors;
@@ -321,7 +332,7 @@ ER ir_runtime_init(void)
         return runtime_event;
     }
     owner.failed_channels = 7u;
-#if MOTION_LINE_AUTOSTART
+#if MOTION_LINE_CIRCUIT
     owner.failed_channels = line_boot_calibration(owner.calibration);
     if(owner.failed_channels==0u)owner.state=IR_RUNTIME_READY;
     /* healthy stays false until acquisition and fresh bridge publication pass. */

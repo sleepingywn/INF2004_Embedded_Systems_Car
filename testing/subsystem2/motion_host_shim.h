@@ -5,25 +5,30 @@
 #define APP_H
 #define TM_USB_CONSOLE_H
 #define TM_CONSOLE_USB_CDC 1
+#ifndef TM_WIFI_CYW43
 #define TM_WIFI_CYW43 0
+#endif
 #define TK_SUPPORT_SMP 0
 #ifndef MOTION_LINE_DEMO
 #define MOTION_LINE_DEMO 1
 #endif
 typedef int ER,ID,INT; typedef unsigned UINT; typedef uint32_t UW;typedef void (*FP)(void);
 typedef struct {unsigned mtxatr;} T_CMTX;
-typedef struct {unsigned unused;} T_CFLG;
+typedef struct {unsigned flgatr;} T_CFLG;
 typedef struct {unsigned cycatr;FP cychdr;unsigned cyctim,cycphs;} T_CCYC;
 typedef struct {UINT flgptn;} T_RFLG;
 #define E_OK 0
 #define E_PAR (-17)
 #define E_OBJ (-41)
+#define E_IO (-57)
 #define E_TMOUT (-50)
 #define E_NOEXS (-52)
 #define TMO_POL 0
 #define TA_INHERIT 1
 #define TA_HLNG 1
 #define TP_PRC2 2
+#define TP_PRC1 1
+#define TA_TFIFO 0
 #define TWF_ORW 1
 #define TWF_BITCLR 2
 #define TIMER_TIMERAWH 1
@@ -35,4 +40,5 @@ ER tk_ref_flg(ID,T_RFLG*);ER tk_wai_flg(ID,UINT,UINT,UINT*,int);
 ID tk_cre_mtx(const T_CMTX*);ID tk_cre_flg(const T_CFLG*);ID tk_cre_cyc(const T_CCYC*);
 ID app_start_task(FP,int,int,const char*);ER tk_sta_cyc(ID);
 UW in_w(UW);UW tm_usb_state(void);
+ER tk_dly_tsk(unsigned);
 #endif

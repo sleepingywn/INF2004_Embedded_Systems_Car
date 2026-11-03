@@ -28,8 +28,8 @@ static void print_diagnostics(void)
         tm_printf((UB*)"[diag] IR calibration_samples=%u failed_channels=0x%x handoff_errors=%u lateness_us=%u scan_us=%u\n",
             (UINT)ir.calibration_samples,(UINT)ir.failed_channels,(UINT)ir.handoff_errors,
             (UINT)ir.acquisition.max_lateness_us,(UINT)ir.acquisition.max_scan_us);
-        tm_printf((UB*)"[diag] IR handoff_stage=%u handoff_error=%d handoff_ms=%u\n",
-            (UINT)ir.last_handoff_stage,(INT)ir.last_handoff_error,(UINT)ir.last_handoff_ms);
+        tm_printf((UB*)"[diag] IR handoff_stage=%u handoff_error=%d handoff_ms=%u epoch_resyncs=%u\n",
+            (UINT)ir.last_handoff_stage,(INT)ir.last_handoff_error,(UINT)ir.last_handoff_ms,(UINT)ir.epoch_resyncs);
         tm_printf((UB*)"[diag] IR first_reason=%u first_us=%u detail=%u first_samples=%u\n",
             (UINT)ir.acquisition.first_fault_reason,(UINT)ir.acquisition.first_fault_us,
             (UINT)ir.acquisition.first_fault_detail,(UINT)ir.acquisition.first_fault_samples);

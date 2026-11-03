@@ -33,7 +33,7 @@ static void set_w(UINT address,UW value){out_w(address,value);}
 static void clr_w(UINT address,UW value){out_w(address,value);}
 #include "../../app_program/subsystem3/ir_acquisition.c"
 UINT mock_mask,mock_core,mock_clock;
-static UW fifo_value,fifo_status;
+static UW fifo_value,fifo_status,last_adc_command;
 UW in_w(UINT address) {
     if(address==TIMER_TIMERAWL) return mock_clock;
     if(address==TIMER_TIMERAWH) return 0;
@@ -43,7 +43,7 @@ UW in_w(UINT address) {
     if(address==RESETS_RESET_DONE) return RESETS_RESET_ADC|RESETS_RESET_TIMER;
     return 0;
 }
-static void out_w(UINT address,UW value){(void)address;(void)value;}
+static void out_w(UINT address,UW value){if(address==ADC_CS)last_adc_command=value;}
 static void reset(void) {
     acquisition=(ir_acq_status_t){0};
     memset(&scan,0,sizeof(scan));
@@ -53,6 +53,24 @@ static void reset(void) {
     mock_clock=10000;fifo_status=IR_FIFO_EMPTY;fifo_value=0;wakes=0;
 }
 int main(void) {
+    /* Vary only ADC2 through the real scan ISR. Verify channel selection and
+     * unscaled raw propagation independently of white/black calibration. */
+    const unsigned right_values[]={43,160,2533};
+    for(unsigned i=0;i<3;++i) {
+        reset();timer_interrupt(3);
+        assert(scan.active && scan.channel==IR_CH_BARCODE);
+        assert(last_adc_command==(ADC_CS_EN|ADC_CS_STRAT_ONCE));
+        fifo_status=0;fifo_value=183;adc_interrupt(22);
+        assert(scan.channel==IR_CH_LINE_A);
+        assert(last_adc_command==(ADC_CS_EN|ADC_CS_STRAT_ONCE|(1u<<ADC_CS_AINSEL_POS)));
+        fifo_value=173;adc_interrupt(22);
+        assert(scan.channel==IR_CH_LINE_B);
+        assert(last_adc_command==(ADC_CS_EN|ADC_CS_STRAT_ONCE|(2u<<ADC_CS_AINSEL_POS)));
+        fifo_value=right_values[i];adc_interrupt(22);
+        assert(!scan.active && acquisition.faults==0 && queue.head==1);
+        assert(ring[0].barcode==183 && ring[0].line_a==173 && ring[0].line_b==right_values[i]);
+    }
+    puts("ADC0/1/2 ordering and unchanged GP28 raw propagation for low/white/black samples: PASS");
     reset();mock_clock=10800;timer_interrupt(3);
     assert(acquisition.running && scan.active && acquisition.first_fault_reason==IR_REASON_NONE);
     reset();mock_clock=10968;timer_interrupt(3);

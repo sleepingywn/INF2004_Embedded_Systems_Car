@@ -37,3 +37,6 @@ tools/dashboard/.local/
 .playwright-cli/
 output/playwright/
 build_make/tools/elf2uf2.exe
+
+# Local standalone barcode terminal build
+testing/subsystem3/ir_line_bench/build-terminal/

@@ -15,7 +15,7 @@
 
 #include "barcode_sense.h"
 
-static void bc_push(bc_capture_t *c, uint8_t w)
+static void bc_push(bc_capture_t *c, bc_width_t w)
 {
 	if (c->count < BC_MAX_ELEMS) {
 		c->widths[c->count++] = w;

@@ -24,6 +24,12 @@
 
 #include "sensor_line.h"
 #include "barcode_sense.h"
+#ifdef BARCODE_TERMINAL
+#include "../../../app_program/subsystem2/motion_logic.h"
+#include "../../../config/line_boot_calibration.h"
+#include "scan_drive.h"
+#include "barcode_report.h"
+#endif
 
 /* ======================= unit tests ================================ */
 static int g_fail_total;
@@ -84,6 +90,8 @@ static void run_unit_tests(void)
 	/* S3-U07: line error and states for the selected LINE_MODE */
 	{
 		line_tracker_t t;
+
+
 		line_state_t st;
 		int8_t e;
 		line_init(&t);
@@ -243,6 +251,22 @@ static const char *state_name(line_state_t s)
 static ir_cal_t	s_cal[IR_NUM_CH];
 static uint8_t	s_cal_failed;
 
+#ifdef BARCODE_TERMINAL
+static void load_saved_calibration(void)
+{
+    s_cal_failed = line_boot_calibration(s_cal);
+    printf("Loaded saved IR calibration (no startup sweep).\n");
+    for (uint ch = 0; ch < IR_NUM_CH; ++ch) {
+        printf("  GP%u: white=%u black=%u %s\n", 26 + ch,
+               (unsigned)s_cal[ch].white, (unsigned)s_cal[ch].black,
+               (s_cal_failed & (1u << ch)) ? "INVALID -> IR FAULT" : "ok");
+    }
+    printf("Ready: barcode output is the decoded letter (A-D or Z).\n");
+    printf("Keys: c = recalibrate for 3 s; p = sensor readings; t = tests.\n");
+    printf("Manual calibration lasts until reboot; reboot reloads saved values.\n");
+}
+#endif
+
 static void calibrate(void)
 {
 	ir_cal_acc_t acc;
@@ -279,6 +303,9 @@ static void calibrate(void)
 
 int main(void)
 {
+#ifdef BARCODE_TERMINAL
+    bool drive_available=scan_drive_init();
+#endif
 	stdio_init_all();
 	/* Wait for a serial monitor (max 30 s) so the test results are seen. */
 	for (int i = 0; i < 300 && !stdio_usb_connected(); i++) sleep_ms(100);
@@ -288,15 +315,31 @@ int main(void)
 
 	adc_init();
 	adc_gpio_init(26); adc_gpio_init(27); adc_gpio_init(28);
+#ifdef BARCODE_TERMINAL
+	load_saved_calibration();
+#endif
 	add_repeating_timer_us(-1000, sample_cb, NULL, &s_timer);	/* fixed 1 kHz */
-
+#ifndef BARCODE_TERMINAL
 	calibrate();
+#endif
 
 	line_tracker_t lt;
 	bc_capture_t bc;
 	line_init(&lt);
 	bc_init(&bc);
+#ifdef BARCODE_TERMINAL
+	bool print_line = false;
+	printf("Barcode terminal diagnostics v11 LETTERS + RETRY: Code39 A-D and Z.\n");
+    puts("EXPERIMENT: width ratios disabled; three longest elements per character are wide.");
+    printf("Barcode thresholds: black-on=%u white-off=%u; quiet timeout=%u ms.\n",
+           (unsigned)BC_BAR_ON, (unsigned)BC_BAR_OFF, (unsigned)BC_QUIET_MS);
+#else
 	bool print_line = true;
+#endif
+#ifdef BARCODE_TERMINAL
+    puts("GP20 press/release: scan + automatic retries; press again cancels.");
+    if (!drive_available) puts("DRIVE unavailable: motor timer failed");
+#endif
 	uint32_t period = 0;
 	absolute_time_t next = make_timeout_time_ms(10);
 
@@ -305,6 +348,14 @@ int main(void)
 		next = delayed_by_ms(next, 10);
 
 		int c = getchar_timeout_us(0);
+#ifdef BARCODE_TERMINAL
+        if ((c=='c' || c=='t') && scan_session) scan_drive_stop(5);
+        if (drive_available && scan_drive_poll(!(s_cal_failed & (1u << IR_CH_BARCODE)))) {
+            bc_init(&bc);line_init(&lt);
+            uint32_t irq=save_and_disable_interrupts();s_tail=s_head;restore_interrupts(irq);
+            next=make_timeout_time_ms(10);
+        }
+#endif
 		if (c == 'c') { calibrate(); line_init(&lt); bc_init(&bc); continue; }
 		if (c == 't') { g_fail_total = 0; run_unit_tests(); continue; }
 		if (c == 'p') print_line = !print_line;
@@ -314,20 +365,71 @@ int main(void)
 		uint32_t sa = 0, sb = 0, k = 0;
 		uint8_t n_bc = 0;
 		bc_msg_t msg;
+#ifdef BARCODE_TERMINAL
+        bc_msg_t trace[4];
+        bool trace_short[4];
+        unsigned trace_count = 0, trace_dropped = 0;
+#endif
 		while (ring_pop(&s)) {
 			n_bc = ir_normalise(&s_cal[IR_CH_BARCODE], s.r[IR_CH_BARCODE]);
-			if (!(s_cal_failed & (1u << IR_CH_BARCODE)) && bc_feed(&bc, n_bc, &msg)) {
+#ifdef BARCODE_TERMINAL
+            if (!scan_drive_accept_samples()) bc_init(&bc);
+            bool was_active = bc_active(&bc);
+            bool emitted = scan_drive_accept_samples() && !(s_cal_failed & (1u << IR_CH_BARCODE)) &&
+                           bc_feed(&bc, n_bc, &msg);
+            if (emitted || (was_active && !bc_active(&bc))) {
+                /* Preserve even captures shorter than BC_MIN_ELEMS, which
+                 * production deliberately discards as noise. Print only after
+                 * draining samples so USB output does not delay this loop. */
+                if (trace_count < 4u) {
+                    bc_msg_t *event = &trace[trace_count];
+                    if (emitted) *event = msg;
+                    else {
+                        memset(event, 0, sizeof(*event));
+                        event->hdr.count = bc.count;
+                        event->hdr.overflow = bc.overflow;
+                        memcpy(event->widths, bc.widths, bc.count * sizeof(bc.widths[0]));
+                    }
+                    trace_short[trace_count++] = !emitted;
+                } else ++trace_dropped;
+            }
+#else
+            if (!(s_cal_failed & (1u << IR_CH_BARCODE)) && bc_feed(&bc, n_bc, &msg)) {
+
 				printf("\n*** BARCODE #%u: %u elements%s\n    ",
 				       msg.hdr.seq, msg.hdr.count,
 				       msg.hdr.overflow ? " (OVERFLOW)" : "");
 				for (uint i = 0; i < msg.hdr.count; i++)
 					printf("%c%u%s", (i % 2 == 0) ? 'B' : 'S', msg.widths[i],
 					       (i + 1 < msg.hdr.count) ? " " : "\n\n");
-			}
+
+            }
+#endif
 			sa += ir_normalise(&s_cal[IR_CH_LINE_A], s.r[IR_CH_LINE_A]);
 			sb += ir_normalise(&s_cal[IR_CH_LINE_B], s.r[IR_CH_LINE_B]);
 			k++;
 		}
+
+#ifdef BARCODE_TERMINAL
+        for (unsigned event = 0; event < trace_count; ++event) {
+            const bc_msg_t *capture = &trace[event];
+            char code = motion_code39_decode(capture);
+            scan_drive_result(capture->hdr.count,capture->hdr.overflow);
+            if (code) printf("%c\n",code);
+            printf("SCAN: %s elements=%u/29 code=%c overflow=%u\n",
+                   trace_short[event] ? "short capture (white timeout)" :
+                   capture->hdr.count != 29u ? "incomplete (white timeout)" :
+                   code ? "decoded" : "pattern rejected",
+                   capture->hdr.count, code ? code : '?', capture->hdr.overflow);
+            printf("widths_ms:");
+            for (unsigned i = 0; i < capture->hdr.count; ++i)
+                printf(" %c%u", (i % 2u) ? 'S' : 'B', capture->widths[i]);
+            puts("");
+            barcode_report(capture);
+
+        }
+        if (trace_dropped) printf("SCAN: %u diagnostic events omitted\n", trace_dropped);
+#endif
 
 		line_state_t st;
 		int8_t err = 0;
@@ -344,6 +446,10 @@ int main(void)
 			       err, state_name(st), bc_active(&bc) ? "CAPTURING" : "idle");
 		}
 		if (s_overruns) {
+#ifdef BARCODE_TERMINAL
+            if (scan_session) scan_drive_stop(6);
+            bc_init(&bc);
+#endif
 			printf("WARNING: %lu sample ring overruns\n", (unsigned long)s_overruns);
 			s_overruns = 0;
 		}

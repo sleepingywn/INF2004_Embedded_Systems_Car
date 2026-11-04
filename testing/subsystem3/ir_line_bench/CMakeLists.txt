@@ -22,8 +22,15 @@ target_compile_options(ir_line_bench PRIVATE -Wall -Wextra)
 if(DEFINED LINE_MODE)
     target_compile_definitions(ir_line_bench PRIVATE LINE_MODE=${LINE_MODE})
 endif()
-target_link_libraries(ir_line_bench pico_stdlib hardware_adc hardware_sync)
+target_link_libraries(ir_line_bench pico_stdlib hardware_adc hardware_sync hardware_pwm hardware_clocks)
 
 pico_enable_stdio_usb(ir_line_bench 1)
 pico_enable_stdio_uart(ir_line_bench 0)
 pico_add_extra_outputs(ir_line_bench)
+
+# Terminal-only barcode experiment: reuse the controller's pure Code 39 decoder.
+option(BARCODE_TERMINAL "Barcode IDs and GP20 straight scan trial" OFF)
+if(BARCODE_TERMINAL)
+    target_sources(ir_line_bench PRIVATE ${S3_DIR}/../subsystem2/motion_logic.c)
+    target_compile_definitions(ir_line_bench PRIVATE BARCODE_TERMINAL=1 BARCODE_SLOW_SCAN=1 BARCODE_RELAXED_WIDTHS=1 BC_BAR_ON=60u BC_BAR_OFF=45u)
+endif()

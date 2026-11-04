@@ -70,10 +70,27 @@
 #define BC_MAX_ELEMS		63u	/* fits the 6-bit count                       */
 #define BC_EXPECTED_ELEMS	29u	/* Code 39 "*X*": 3 x 9 elements + 2 gaps (assumed); 0 = disable early finish */
 #define BC_MIN_ELEMS		5u	/* shorter captures are treated as noise      */
-#define BC_BAR_ON		60u	/* enter "bar" at or above (hysteresis)       */
-#define BC_BAR_OFF		35u	/* leave "bar" at or below                    */
-#define BC_QUIET_MS		150u	/* white run this long ends a capture (< 255) */
-#define BC_WIDTH_SAT		255u	/* width value meaning ">= 255 samples"       */
+/* Standalone experiments may override these; production defaults stay 60/35. */
+#ifndef BC_BAR_ON
+#define BC_BAR_ON          60u
+#endif
+#ifndef BC_BAR_OFF
+#define BC_BAR_OFF         35u
+#endif
+/* Wider durations are local to the standalone slow-scan experiment.
+ * Never use this profile for the packed inter-task production ABI. */
+#ifdef BARCODE_SLOW_SCAN
+#ifndef BARCODE_TERMINAL
+#error "BARCODE_SLOW_SCAN is only supported in the standalone terminal test"
+#endif
+typedef uint16_t bc_width_t;
+#define BC_QUIET_MS         1500u
+#define BC_WIDTH_SAT        65535u
+#else
+typedef uint8_t bc_width_t;
+#define BC_QUIET_MS         150u
+#define BC_WIDTH_SAT        255u
+#endif
 
 /* ---------------------------------------------------------------------
  *  Line state: 7 states -> 3 bits.
@@ -124,7 +141,7 @@ typedef struct {
 
 typedef struct {
 	bc_hdr_t	hdr;
-	uint8_t		widths[BC_MAX_ELEMS];	/* samples per element, saturating at 255 */
+	bc_width_t	widths[BC_MAX_ELEMS];	/* samples per element; BC_WIDTH_SAT = saturated */
 } bc_msg_t;
 
 /* Calibration for one channel: two 12-bit ADC values packed in 24 bits. */
@@ -137,7 +154,7 @@ _Static_assert(IR_CH_LINE_A != IR_CH_LINE_B && IR_CH_LINE_A != IR_CH_BARCODE &&
 	       IR_CH_LINE_B != IR_CH_BARCODE, "IR sensor roles must be distinct");
 _Static_assert(sizeof(line_msg_t) == 4, "line_msg_t must be 32 bits");
 _Static_assert(sizeof(bc_hdr_t) == 2, "bc_hdr_t must be 16 bits");
-_Static_assert(BC_QUIET_MS < 255u, "BC_QUIET_MS must fit the 8-bit run counter");
+_Static_assert(BC_QUIET_MS < BC_WIDTH_SAT, "quiet timeout must fit the duration counter");
 _Static_assert(LINE_OFF_WHITE < LINE_ON_BLACK, "white threshold must be below black");
 _Static_assert(BC_BAR_OFF < BC_BAR_ON, "barcode hysteresis thresholds reversed");
 

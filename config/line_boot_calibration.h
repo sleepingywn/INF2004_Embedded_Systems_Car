@@ -2,7 +2,8 @@
 #define LINE_BOOT_CALIBRATION_H
 #include "../app_program/subsystem3/ir_types.h"
 
-/* Only the explicit battery circuit images load these measured references.
+/* The explicit battery circuit images and standalone barcode terminal test
+ * load these measured references.
  * GP26 retains the Nov 2 barcode reference. GP27/28 use the medians of eight
  * stationary white and black samples at operating height on Nov 3:
  * .local/gp20-recal-white-20261103-221840.json and

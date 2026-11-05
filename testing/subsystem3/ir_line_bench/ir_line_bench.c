@@ -209,8 +209,8 @@ static void run_unit_tests(void)
 
 /* ======================= live mode ================================= */
 #ifdef BARCODE_TERMINAL
-#define BC_RAW_WHITE_MAX 2050u
-#define BC_RAW_BLACK_MIN 2300u
+#define BC_RAW_WHITE_MAX 220u
+#define BC_RAW_BLACK_MIN 240u
 _Static_assert(BC_RAW_WHITE_MAX < BC_RAW_BLACK_MIN && BC_RAW_BLACK_MIN <= 4095u,
                "Invalid raw barcode ADC thresholds");
 #endif

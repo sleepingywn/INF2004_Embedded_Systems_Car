@@ -208,6 +208,13 @@ static void run_unit_tests(void)
 }
 
 /* ======================= live mode ================================= */
+#ifdef BARCODE_TERMINAL
+#define BC_RAW_WHITE_MAX 2050u
+#define BC_RAW_BLACK_MIN 2300u
+_Static_assert(BC_RAW_WHITE_MAX < BC_RAW_BLACK_MIN && BC_RAW_BLACK_MIN <= 4095u,
+               "Invalid raw barcode ADC thresholds");
+#endif
+
 #define RING_LEN	64u			/* power of two, 64 ms of samples */
 typedef struct { uint16_t r[IR_NUM_CH]; } raw3_t;
 
@@ -331,8 +338,9 @@ int main(void)
 	bool print_line = false;
 	printf("Barcode terminal diagnostics v11 LETTERS + RETRY: Code39 A-D and Z.\n");
     puts("EXPERIMENT: width ratios disabled; three longest elements per character are wide.");
-    printf("Barcode thresholds: black-on=%u white-off=%u; quiet timeout=%u ms.\n",
-           (unsigned)BC_BAR_ON, (unsigned)BC_BAR_OFF, (unsigned)BC_QUIET_MS);
+    printf("Barcode raw ADC thresholds: black >= %u, white <= %u. BC is display only.\n",
+           BC_RAW_BLACK_MIN, BC_RAW_WHITE_MAX);
+    printf("Barcode quiet timeout=%u ms.\n", (unsigned)BC_QUIET_MS);
 #else
 	bool print_line = true;
 #endif
@@ -350,7 +358,8 @@ int main(void)
 		int c = getchar_timeout_us(0);
 #ifdef BARCODE_TERMINAL
         if ((c=='c' || c=='t') && scan_session) scan_drive_stop(5);
-        if (drive_available && scan_drive_poll(!(s_cal_failed & (1u << IR_CH_BARCODE)))) {
+        /* The raw ADC thresholds do not depend on barcode calibration. */
+        if (drive_available && scan_drive_poll(true)) {
             bc_init(&bc);line_init(&lt);
             uint32_t irq=save_and_disable_interrupts();s_tail=s_head;restore_interrupts(irq);
             next=make_timeout_time_ms(10);
@@ -363,6 +372,7 @@ int main(void)
 		/* drain ~10 samples: barcode at full 1 kHz, line sensors averaged */
 		raw3_t s;
 		uint32_t sa = 0, sb = 0, k = 0;
+		uint16_t raw_bc = 0;
 		uint8_t n_bc = 0;
 		bc_msg_t msg;
 #ifdef BARCODE_TERMINAL
@@ -371,12 +381,16 @@ int main(void)
         unsigned trace_count = 0, trace_dropped = 0;
 #endif
 		while (ring_pop(&s)) {
-			n_bc = ir_normalise(&s_cal[IR_CH_BARCODE], s.r[IR_CH_BARCODE]);
+			raw_bc = s.r[IR_CH_BARCODE];
+			n_bc = ir_normalise(&s_cal[IR_CH_BARCODE], raw_bc);
 #ifdef BARCODE_TERMINAL
-            if (!scan_drive_accept_samples()) bc_init(&bc);
-            bool was_active = bc_active(&bc);
-            bool emitted = scan_drive_accept_samples() && !(s_cal_failed & (1u << IR_CH_BARCODE)) &&
-                           bc_feed(&bc, n_bc, &msg);
+            const bool accept_samples = scan_drive_accept_samples();
+            if (!accept_samples) bc_init(&bc);
+            const bool was_active = bc_active(&bc);
+            /* Keep the current colour inside the raw hysteresis band. */
+            const bool is_black = raw_bc >= BC_RAW_BLACK_MIN ||
+                                  (bc.is_bar && raw_bc > BC_RAW_WHITE_MAX);
+            const bool emitted = accept_samples && bc_feed(&bc, is_black ? 100u : 0u, &msg);
             if (emitted || (was_active && !bc_active(&bc))) {
                 /* Preserve even captures shorter than BC_MIN_ELEMS, which
                  * production deliberately discards as noise. Print only after
@@ -441,8 +455,8 @@ int main(void)
 
 		/* print every 20th period (5 lines/s) so the console stays readable */
 		if (print_line && (++period % 20u) == 0u) {
-			printf("BC=%3u  A=%3u  B=%3u  |  err=%+4d  state=%-10s  barcode=%s\n",
-			       n_bc, k ? (unsigned)(sa / k) : 0u, k ? (unsigned)(sb / k) : 0u,
+			printf("BC=%3u  BC_RAW=%4u  A=%3u  B=%3u  |  err=%+4d  state=%-10s  barcode=%s\n",
+			       n_bc, (unsigned)raw_bc, k ? (unsigned)(sa / k) : 0u, k ? (unsigned)(sb / k) : 0u,
 			       err, state_name(st), bc_active(&bc) ? "CAPTURING" : "idle");
 		}
 		if (s_overruns) {

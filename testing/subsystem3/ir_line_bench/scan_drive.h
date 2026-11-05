@@ -8,7 +8,8 @@
 #include "../../../app_program/subsystem2/forward_speed.h"
 #include "../../../app_program/subsystem2/motion_logic.h"
 #define SCAN_RUN_MS 8000u
-#define SCAN_TARGET_CPS 450
+#define SCAN_FORWARD_TARGET_CPS 450
+#define SCAN_REVERSE_TARGET_CPS 450
 static volatile uint32_t scan_counts[2], scan_invalid;
 static uint8_t scan_previous[2];
 static volatile bool scan_running;
@@ -73,11 +74,14 @@ static bool scan_motor_tick(repeating_timer_t *timer)
     }
     if (scan_direction<0 && total[0]>=(int32_t)scan_back_goal[0] &&
         total[1]>=(int32_t)scan_back_goal[1]) {scan_drive_stop(8);return true;}
-    int32_t trim=clamp_i64((int64_t)(total[0]-total[1])*2,-60,60);
+    int32_t target_cps = scan_direction < 0 ? SCAN_REVERSE_TARGET_CPS : SCAN_FORWARD_TARGET_CPS;
+    /* Keep steering correction from requesting a stopped or negative wheel target. */
+    int32_t trim_limit = target_cps / 2 < 60 ? target_cps / 2 : 60;
+    int32_t trim = clamp_i64(((int64_t)total[0] - total[1]) * 2, -trim_limit, trim_limit);
     if (scan_invalid!=scan_bad_origin ||
         !speed_control_targets_step(&scan_speed,total[0],total[1],dt,
-                                    scan_direction<0 && total[0]>=(int32_t)scan_back_goal[0] ? 0:SCAN_TARGET_CPS-(trim>0?trim:0),
-                                    scan_direction<0 && total[1]>=(int32_t)scan_back_goal[1] ? 0:SCAN_TARGET_CPS+(trim<0?trim:0))) {
+                                    scan_direction<0 && total[0]>=(int32_t)scan_back_goal[0] ? 0:target_cps-(trim>0?trim:0),
+                                    scan_direction<0 && total[1]>=(int32_t)scan_back_goal[1] ? 0:target_cps+(trim<0?trim:0))) {
         scan_drive_stop(3);return true;
     }
     scan_step_us=now;
@@ -181,7 +185,8 @@ static bool scan_drive_poll(bool calibrated)
         puts("DRIVE rejected: barcode calibration invalid");
         line_button_arm(&scan_button,now,!gpio_get(20));return false;
     }
-    puts("DRIVE: forward up to 8 seconds; incomplete scans retry; GP20 stops");
+    printf("DRIVE: forward up to 8 seconds at %u counts/s; incomplete scans retry; GP20 stops\n",
+           (unsigned)SCAN_FORWARD_TARGET_CPS);
     scan_session=true;scan_retries=0;scan_begin_leg(1);return true;
 }
 #endif

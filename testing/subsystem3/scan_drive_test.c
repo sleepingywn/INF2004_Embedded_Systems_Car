@@ -99,27 +99,62 @@ int main(void)
     assert(scan_phase == SCAN_WAIT_COMMAND && scan_pending_command == 'A');
     test_us += SCAN_TURN_SETTLE_US;
     scan_drive_poll(true);
-    assert(scan_phase == SCAN_TURN && scan_running);
-    assert(scan_leg_goal[0] == 1334 && scan_leg_goal[1] == 1334);
+    assert(scan_phase == SCAN_RIGHT_ARC && scan_running);
     assert(levels[4][1] > 0 && levels[4][0] == 0);
-    assert(levels[5][1] > 0 && levels[5][0] == 0);
+    assert(levels[5][0] > 0 && levels[5][1] == 0);
 
-    /* The right turn reaches both targets and stops while still on black. */
-    for (unsigned i = 0; i < 148; ++i) {
+    /* An early edge, or the left sensor alone, cannot acquire the right branch. */
+    for (unsigned i = 0; i < 38; ++i) {
         test_us += 20000u;
-        scan_counts[0] += 9;
-        scan_counts[1] -= 9;
+        scan_counts[0] += 13;
+        scan_counts[1] += 5;
+        scan_drive_observe_line(true, false, i < 10, false, i < 10 ? -80 : 80);
+        scan_motor_tick(NULL);
+        assert(scan_phase == SCAN_RIGHT_ARC && scan_running);
+    }
+    assert(scan_speed.left.target_cps == 650 && scan_speed.right.target_cps == 250);
+    for (unsigned i = 0; i < 3; ++i) {
+        test_us += 20000u;
+        scan_counts[0] += 13;
+        scan_counts[1] += 5;
+        scan_drive_observe_line(true, false, true, false, -80);
         scan_motor_tick(NULL);
         assert(scan_running);
+        if (i < 2) assert(scan_phase == SCAN_RIGHT_ARC);
     }
+    assert(scan_phase == SCAN_LINE_FOLLOW);
+    assert(scan_speed.left.target_cps > scan_speed.right.target_cps);
+    assert(levels[5][1] == 0);
     test_us += 20000u;
-    scan_counts[0] += 2;
-    scan_counts[1] -= 2;
+    scan_counts[0] += 12;
+    scan_counts[1] += 6;
+    scan_drive_observe_line(true, false, false, false, 60);
+    scan_motor_tick(NULL);
+    assert(scan_speed.left.target_cps < scan_speed.right.target_cps);
+    scan_drive_observe_line(true, false, false, true, 0);
+    stopped();
+    assert(scan_reason == 18 && !scan_session);
+
+    reset_test();
+    request_run();
+    scan_drive_command('A');
+    test_us += SCAN_TURN_SETTLE_US;
+    scan_drive_poll(true);
+    assert(scan_phase == SCAN_RIGHT_ARC && scan_running);
+    test_us = scan_deadline_us;
     scan_motor_tick(NULL);
     stopped();
-    assert(scan_reason == 12 && !scan_session);
-    scan_drive_observe_junction(true);
+    assert(scan_reason == 16);
+
+    reset_test();
+    request_run();
+    scan_drive_command('A');
+    test_us += SCAN_TURN_SETTLE_US;
+    scan_drive_poll(true);
+    test_us += SCAN_LINE_FRESH_US + 1u;
+    scan_motor_tick(NULL);
     stopped();
+    assert(scan_reason == 18);
 
     reset_test();
     scan_drive_start_demo();
@@ -167,6 +202,6 @@ int main(void)
     stopped();
     assert(scan_reason == 13);
 
-    puts("PASS: sustained junction selects right, no-junction stop, cancellation, straight and U-turn commands");
+    puts("PASS: right arc, outgoing edge acquisition, proportional line tracing, line-loss/stale/timeout stops, straight and U-turn");
     puts("PASS: 8s scan limit, stalls, encoder faults, incomplete retry and encoder return");
 }

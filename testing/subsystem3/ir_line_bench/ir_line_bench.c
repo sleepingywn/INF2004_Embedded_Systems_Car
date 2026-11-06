@@ -340,7 +340,7 @@ int main(void)
 	bc_init(&bc);
 #ifdef BARCODE_TERMINAL
 	bool print_line = false;
-	printf("Barcode terminal JUNCTION RIGHT TRIAL: Code39 A-D and Z.\n");
+	printf("Barcode terminal RIGHT LINE TRACE TRIAL: Code39 A-D and Z.\n");
     puts("EXPERIMENT: width ratios disabled; three longest elements per character are wide.");
     printf("Barcode raw ADC thresholds: black >= %u, white <= %u. BC is display only.\n",
            BC_RAW_BLACK_MIN, BC_RAW_WHITE_MAX);
@@ -440,7 +440,10 @@ int main(void)
 
 
 #ifdef BARCODE_TERMINAL
-        scan_drive_observe_junction(st == LINE_BOTH_BLACK && !s_overruns);
+        const bool line_valid = st != LINE_FAULT && !s_overruns;
+        const bool right_edge = k && sb / k >= LINE_ON_BLACK && sa / k < LINE_ON_BLACK;
+        scan_drive_observe_line(line_valid, st == LINE_BOTH_BLACK, right_edge,
+                                st == LINE_LOST, err);
 #endif
 
 #ifdef BARCODE_TERMINAL

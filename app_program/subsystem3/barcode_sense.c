@@ -82,7 +82,7 @@ bool bc_feed(bc_capture_t *c, uint8_t n, bc_msg_t *out)
 
 	if (bar == c->is_bar) {			/* same colour: extend the run */
 		if (c->run < BC_WIDTH_SAT) c->run++;
-		if (!bar && c->run >= BC_QUIET_MS) {
+		if (!bar && c->run >= BC_QUIET_SAMPLES) {
 			/* long white after the last bar: barcode is over.
 			   The trailing white is not stored. */
 			return bc_finish(c, out);

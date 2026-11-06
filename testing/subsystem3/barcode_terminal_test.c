@@ -47,7 +47,7 @@ int main(void)
     /* Quiet timeout must end exactly at the configured number of samples. */
     bc_init(&capture);
     assert(!bc_feed(&capture, 100, &message));
-    for (unsigned t = 1; t < BC_QUIET_MS; ++t) {
+    for (unsigned t = 1; t < BC_QUIET_SAMPLES; ++t) {
         assert(!bc_feed(&capture, 0, &message));
         assert(bc_active(&capture));
     }

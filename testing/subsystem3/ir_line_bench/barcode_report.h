@@ -2,6 +2,12 @@
 #define BARCODE_REPORT_H
 #include <stdio.h>
 #include "../../../app_program/subsystem2/motion_logic.h"
+/* Keep full sample precision for decoding and round only for display. */
+static inline unsigned barcode_width_ms(bc_width_t samples)
+{
+    return ((uint32_t)samples * BC_SAMPLE_PERIOD_US + 500u) / 1000u;
+}
+
 /* Diagnostic-only: never promotes a rejected capture into a decoded ID. */
 static void barcode_report(const bc_msg_t *capture)
 {
@@ -29,21 +35,21 @@ static void barcode_report(const bc_msg_t *capture)
             printf("group%u (%s): ",group+1,pattern ? "widths valid":"WIDTHS INVALID; estimate");
 #endif
             for(unsigned i=0;i<9;++i) printf("%c",labels[offset+i]);
-            printf("; narrow max=%u wide min=%u ms\n",(unsigned)sorted[5],(unsigned)sorted[6]);
+            printf("; narrow max=%u wide min=%u ms\n",barcode_width_ms(sorted[5]),barcode_width_ms(sorted[6]));
         }
         labels[9]=labels[19]='G';
     } else puts("Partial/overflow capture: character alignment unknown; no N/W assignment");
     printf("sequence:");
     for(unsigned i=0;i<capture->hdr.count;++i) {
         printf("%s%c:%c(%ums)",i ? " -> ":" ",i%2 ? 'S':'B',labels[i],
-               (unsigned)capture->widths[i]);
+               barcode_width_ms(capture->widths[i]));
     }
     puts("");
     printf("black_bars:");
-    for(unsigned i=0;i<capture->hdr.count;i+=2) printf(" %c(%u)",labels[i],(unsigned)capture->widths[i]);
+    for(unsigned i=0;i<capture->hdr.count;i+=2) printf(" %c(%u)",labels[i],barcode_width_ms(capture->widths[i]));
     puts("");
     printf("white_gaps:");
-    for(unsigned i=1;i<capture->hdr.count;i+=2) printf(" %c(%u)",labels[i],(unsigned)capture->widths[i]);
+    for(unsigned i=1;i<capture->hdr.count;i+=2) printf(" %c(%u)",labels[i],barcode_width_ms(capture->widths[i]));
     puts("");
 }
 #endif

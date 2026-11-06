@@ -176,11 +176,11 @@ static void run_unit_tests(void)
 		bool got = false;
 		for (int i = 0; i < 9 && !got; i++) got = feed_run(&c, (i % 2 == 0) ? 95 : 5, 12, &m, NULL);
 		int at = -1;
-		if (!got) got = feed_run(&c, 5, BC_QUIET_MS + 20, &m, &at);
+		if (!got) got = feed_run(&c, 5, BC_QUIET_SAMPLES + 20, &m, &at);
 		bool k = got && m.hdr.count == 9 && !m.hdr.overflow &&
-			 at == (int)BC_QUIET_MS - 1 && m.widths[8] == 12;
+			 at == (int)BC_QUIET_SAMPLES - 1 && m.widths[8] == 12;
 		/* sample 0 of the white run closes the last bar (run = 1); the run
-		   reaches BC_QUIET_MS on sample index QUIET-1 */
+		   reaches BC_QUIET_SAMPLES on sample index QUIET-1 */
 		report("S3-U10", k, "9 elements: sent after BC_QUIET_MS white, count=9");
 	}
 
@@ -209,13 +209,17 @@ static void run_unit_tests(void)
 
 /* ======================= live mode ================================= */
 #ifdef BARCODE_TERMINAL
-#define BC_RAW_WHITE_MAX 220u
+#define BC_RAW_WHITE_MAX 200u
 #define BC_RAW_BLACK_MIN 240u
 _Static_assert(BC_RAW_WHITE_MAX < BC_RAW_BLACK_MIN && BC_RAW_BLACK_MIN <= 4095u,
                "Invalid raw barcode ADC thresholds");
 #endif
 
-#define RING_LEN	64u			/* power of two, 64 ms of samples */
+#ifdef BARCODE_TERMINAL
+#define RING_LEN 256u  /* About 85 ms at the terminal sample rate. */
+#else
+#define RING_LEN 64u
+#endif
 typedef struct { uint16_t r[IR_NUM_CH]; } raw3_t;
 
 static volatile raw3_t	s_ring[RING_LEN];
@@ -325,7 +329,7 @@ int main(void)
 #ifdef BARCODE_TERMINAL
 	load_saved_calibration();
 #endif
-	add_repeating_timer_us(-1000, sample_cb, NULL, &s_timer);	/* fixed 1 kHz */
+	add_repeating_timer_us(-(int64_t)BC_SAMPLE_PERIOD_US, sample_cb, NULL, &s_timer);
 #ifndef BARCODE_TERMINAL
 	calibrate();
 #endif
@@ -340,6 +344,8 @@ int main(void)
     puts("EXPERIMENT: width ratios disabled; three longest elements per character are wide.");
     printf("Barcode raw ADC thresholds: black >= %u, white <= %u. BC is display only.\n",
            BC_RAW_BLACK_MIN, BC_RAW_WHITE_MAX);
+    printf("Barcode sampling: %u us per sample (~%u Hz).\n",
+           BC_SAMPLE_PERIOD_US, 1000000u / BC_SAMPLE_PERIOD_US);
     printf("Barcode quiet timeout=%u ms.\n", (unsigned)BC_QUIET_MS);
 #else
 	bool print_line = true;
@@ -369,7 +375,7 @@ int main(void)
 		if (c == 't') { g_fail_total = 0; run_unit_tests(); continue; }
 		if (c == 'p') print_line = !print_line;
 
-		/* drain ~10 samples: barcode at full 1 kHz, line sensors averaged */
+		/* Drain all samples for barcode capture and average the line readings. */
 		raw3_t s;
 		uint32_t sa = 0, sb = 0, k = 0;
 		uint16_t raw_bc = 0;
@@ -387,7 +393,6 @@ int main(void)
             const bool accept_samples = scan_drive_accept_samples();
             if (!accept_samples) bc_init(&bc);
             const bool was_active = bc_active(&bc);
-            /* Keep the current colour inside the raw hysteresis band. */
             const bool is_black = raw_bc >= BC_RAW_BLACK_MIN ||
                                   (bc.is_bar && raw_bc > BC_RAW_WHITE_MAX);
             const bool emitted = accept_samples && bc_feed(&bc, is_black ? 100u : 0u, &msg);
@@ -437,7 +442,7 @@ int main(void)
                    capture->hdr.count, code ? code : '?', capture->hdr.overflow);
             printf("widths_ms:");
             for (unsigned i = 0; i < capture->hdr.count; ++i)
-                printf(" %c%u", (i % 2u) ? 'S' : 'B', capture->widths[i]);
+                printf(" %c%u", (i % 2u) ? 'S' : 'B', barcode_width_ms(capture->widths[i]));
             puts("");
             barcode_report(capture);
 

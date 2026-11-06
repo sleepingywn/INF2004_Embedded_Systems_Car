@@ -340,7 +340,7 @@ int main(void)
 	bc_init(&bc);
 #ifdef BARCODE_TERMINAL
 	bool print_line = false;
-	printf("Barcode terminal diagnostics v11 LETTERS + RETRY: Code39 A-D and Z.\n");
+	printf("Barcode terminal A RIGHT TURN TRIAL: Code39 A-D and Z.\n");
     puts("EXPERIMENT: width ratios disabled; three longest elements per character are wide.");
     printf("Barcode raw ADC thresholds: black >= %u, white <= %u. BC is display only.\n",
            BC_RAW_BLACK_MIN, BC_RAW_WHITE_MAX);
@@ -352,7 +352,8 @@ int main(void)
 #endif
 #ifdef BARCODE_TERMINAL
     puts("GP20 press/release: scan + automatic retries; press again cancels.");
-    if (!drive_available) puts("DRIVE unavailable: motor timer failed");
+    if (drive_available) scan_drive_start_demo();
+    else puts("DRIVE unavailable: motor timer failed");
 #endif
 	uint32_t period = 0;
 	absolute_time_t next = make_timeout_time_ms(10);
@@ -433,7 +434,7 @@ int main(void)
         for (unsigned event = 0; event < trace_count; ++event) {
             const bc_msg_t *capture = &trace[event];
             char code = motion_code39_decode(capture);
-            scan_drive_result(capture->hdr.count,capture->hdr.overflow);
+            scan_drive_result(capture->hdr.count, capture->hdr.overflow, code);
             if (code) printf("%c\n",code);
             printf("SCAN: %s elements=%u/29 code=%c overflow=%u\n",
                    trace_short[event] ? "short capture (white timeout)" :

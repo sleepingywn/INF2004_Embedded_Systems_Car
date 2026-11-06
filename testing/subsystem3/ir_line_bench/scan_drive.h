@@ -11,17 +11,20 @@
 #define SCAN_FORWARD_TARGET_CPS 450
 #define SCAN_REVERSE_TARGET_CPS 450
 #define SCAN_DEMO_DELAY_US 2000000u
-#define SCAN_DEMO_FORWARD_MS 1000u
+#define SCAN_JUNCTION_CONFIRM_US 30000u
+#define SCAN_JUNCTION_COMMAND 'A'
+#define SCAN_STRAIGHT_DISTANCE_UM 100000u
 #define SCAN_TURN_SETTLE_US 300000u
 #define SCAN_TURN_TIMEOUT_MS 6000u
 #define SCAN_RIGHT_TURN_DEG 90u
+#define SCAN_U_TURN_DEG 180u
 static volatile uint32_t scan_counts[2], scan_invalid;
 static uint8_t scan_previous[2];
 static volatile bool scan_running;
 static volatile unsigned scan_reason;
 typedef enum {SCAN_IDLE,SCAN_FORWARD,SCAN_WAIT_RESULT,SCAN_WAIT_BACK,
               SCAN_REVERSE,SCAN_WAIT_FORWARD,SCAN_WAIT_DEMO,SCAN_DEMO_FORWARD,
-              SCAN_WAIT_TURN,SCAN_TURN_RIGHT} scan_phase_t;
+              SCAN_WAIT_COMMAND,SCAN_TURN,SCAN_STRAIGHT} scan_phase_t;
 static volatile bool scan_session;
 static volatile scan_phase_t scan_phase;
 static int scan_direction=1;
@@ -30,6 +33,9 @@ static uint32_t scan_deadline_us, scan_step_us, scan_progress_us[2], scan_origin
 static speed_control_t scan_speed;
 static line_button_t scan_button;
 static repeating_timer_t scan_timer;
+static char scan_pending_command;
+static bool scan_junction_candidate;
+static uint32_t scan_junction_since_us;
 /* Reason 1=duration, 2=button, 3=encoder/control fault, 4=stalled,
  * 5=calibration/tests, 6=sampling overrun, 7=timer unavailable. */
 static void scan_drive_stop(unsigned reason)
@@ -66,10 +72,13 @@ static bool scan_motor_tick(repeating_timer_t *timer)
     uint32_t now=time_us_32();
     if (scan_session && !gpio_get(20)) { scan_drive_stop(2); return true; }
     if (!scan_running) return true;
-    const bool turning = scan_phase == SCAN_TURN_RIGHT;
-    const bool bounded = turning || scan_direction < 0;
+    const bool turning = scan_phase == SCAN_TURN;
+    const bool straight = scan_phase == SCAN_STRAIGHT;
+    const bool bounded = turning || straight || scan_direction < 0;
     if ((int32_t)(now - scan_deadline_us) >= 0) {
-        scan_drive_stop(turning ? 13 : scan_direction < 0 ? 10 : 1);
+        if (turning) scan_drive_stop(13);
+        else if (straight) scan_drive_stop(15);
+        else scan_drive_stop(scan_direction < 0 ? 10 : 1);
         return true;
     }
     uint32_t dt = now - scan_step_us;
@@ -93,7 +102,7 @@ static bool scan_motor_tick(repeating_timer_t *timer)
         return true;
     }
     if (reached[0] && reached[1]) {
-        scan_drive_stop(turning ? 12 : 8);
+        scan_drive_stop(turning ? 12 : straight ? 14 : 8);
         return true;
     }
 
@@ -135,12 +144,12 @@ static bool scan_drive_init(void)
 }
 static bool scan_begin_leg(scan_phase_t phase)
 {
-    const bool turning = phase == SCAN_TURN_RIGHT;
+    const bool turning = phase == SCAN_TURN;
     const int direction = phase == SCAN_REVERSE ? -1 : 1;
     uint32_t duration_ms = SCAN_RUN_MS;
-    if (phase == SCAN_DEMO_FORWARD) duration_ms = SCAN_DEMO_FORWARD_MS;
     if (phase == SCAN_REVERSE) duration_ms += 2000u;
-    if (turning) duration_ms = SCAN_TURN_TIMEOUT_MS;
+    if (turning) duration_ms = scan_pending_command == 'D' ? 2u * SCAN_TURN_TIMEOUT_MS : SCAN_TURN_TIMEOUT_MS;
+    if (phase == SCAN_STRAIGHT) duration_ms = SCAN_TURN_TIMEOUT_MS;
 
     uint32_t irq = save_and_disable_interrupts();
     if (!scan_session || !gpio_get(20)) {
@@ -154,6 +163,7 @@ static bool scan_begin_leg(scan_phase_t phase)
     scan_speed.left.integral_floor_milli=scan_speed.right.integral_floor_milli=-200000;
     scan_direction=direction;
     scan_phase = phase;
+    scan_junction_candidate = false;
     if (phase == SCAN_FORWARD) {
         scan_pass_origin[0] = scan_counts[0];
         scan_pass_origin[1] = scan_counts[1];
@@ -170,44 +180,57 @@ static bool scan_begin_leg(scan_phase_t phase)
 }
 static bool scan_drive_accept_samples(void)
 {
-    return !scan_session || scan_phase==SCAN_FORWARD || scan_phase==SCAN_WAIT_RESULT;
+    return !scan_session || scan_phase == SCAN_FORWARD ||
+           scan_phase == SCAN_DEMO_FORWARD || scan_phase == SCAN_WAIT_RESULT;
 }
-/* Use the same per-wheel turn arc as the integrated motion controller. */
-static void scan_set_right_turn_goals(void)
+static void scan_set_travel_goals(uint64_t distance_um)
 {
-    const uint64_t arc_um = (uint64_t)MOTION_TRACK_WIDTH_MM * 1000u *
-                            SCAN_RIGHT_TURN_DEG * 355u / (360u * 113u);
-    scan_leg_goal[0] = (uint32_t)((arc_um * MOTION_LEFT_COUNTS_REV +
+    scan_leg_goal[0] = (uint32_t)((distance_um * MOTION_LEFT_COUNTS_REV +
                          MOTION_LEFT_CIRCUMFERENCE_UM / 2u) / MOTION_LEFT_CIRCUMFERENCE_UM);
-    scan_leg_goal[1] = (uint32_t)((arc_um * MOTION_RIGHT_COUNTS_REV +
+    scan_leg_goal[1] = (uint32_t)((distance_um * MOTION_RIGHT_COUNTS_REV +
                          MOTION_RIGHT_CIRCUMFERENCE_UM / 2u) / MOTION_RIGHT_CIRCUMFERENCE_UM);
 }
 
 static void scan_drive_command(char code)
 {
-    if (code != 'A' || !scan_session) return;
+    if (!scan_session || (code != 'A' && code != 'C' && code != 'D')) return;
     scan_drive_stop(0);
-    scan_phase = SCAN_WAIT_TURN;
+    scan_pending_command = code;
+    scan_phase = SCAN_WAIT_COMMAND;
     scan_pause_until = time_us_32() + SCAN_TURN_SETTLE_US;
+}
+
+static void scan_drive_observe_junction(bool both_black)
+{
+    if (!scan_session || !scan_running ||
+        (scan_phase != SCAN_FORWARD && scan_phase != SCAN_DEMO_FORWARD) ||
+        !both_black) {
+        scan_junction_candidate = false;
+        return;
+    }
+
+    uint32_t now = time_us_32();
+    if (!scan_junction_candidate) {
+        scan_junction_candidate = true;
+        scan_junction_since_us = now;
+    } else if (now - scan_junction_since_us >= SCAN_JUNCTION_CONFIRM_US) {
+        scan_drive_command(SCAN_JUNCTION_COMMAND);
+        puts("JUNCTION: both line sensors black; taking the default route");
+    }
 }
 
 static void scan_drive_start_demo(void)
 {
-    puts("STARTUP: forward 1 s, then A -> right 90 deg. Starts in 2 s. GP20 cancels.");
+    puts("STARTUP: starts in 2 s, then forward up to 8 s to find a junction. GP20 cancels.");
     scan_pause_until = time_us_32() + SCAN_DEMO_DELAY_US;
     scan_phase = SCAN_WAIT_DEMO;
     scan_session = true;
 }
 
 /* Return to the beginning of this pass after an incomplete capture. */
-static void scan_drive_result(unsigned count, bool overflow, char code)
+static void scan_drive_result(unsigned count, bool overflow)
 {
     if (!scan_session || (scan_phase!=SCAN_FORWARD && scan_phase!=SCAN_WAIT_RESULT)) return;
-    if (count == 29 && !overflow) {
-        if (code == 'A') scan_drive_command(code);
-        else scan_drive_stop(9);
-        return;
-    }
     if (count<5 || count>=29 || overflow) return;
     scan_drive_stop(0);
     scan_phase=SCAN_WAIT_BACK;
@@ -223,9 +246,10 @@ static bool scan_drive_poll(bool calibrated)
     if(scan_reason) {
         uint32_t irq=save_and_disable_interrupts();unsigned reason=scan_reason;scan_reason=0;
         restore_interrupts(irq);
-        printf("DRIVE stopped: reason=%u (1=forward complete 2=button 3=encoder/control 4=stall 5=calibration/tests 6=sampling 7=timer 8=reverse returned 9=29 elements 10=reverse timeout 11=no retryable capture 12=right turn complete 13=turn timeout)\n",reason);
+        printf("DRIVE stopped: reason=%u (1=forward complete 2=button 3=encoder/control 4=stall 5=calibration/tests 6=sampling 7=timer 8=reverse returned 10=reverse timeout 11=no retryable capture 12=turn complete 13=turn timeout 14=straight complete 15=straight timeout)\n",reason);
         if (reason == 1 && scan_phase == SCAN_DEMO_FORWARD) {
-            scan_drive_command('A');
+            puts("STARTUP: no confirmed junction within 8 s");
+            scan_drive_stop(11);
         } else if(reason==1 && scan_phase==SCAN_FORWARD) {
             scan_phase=SCAN_WAIT_RESULT;scan_pause_until=time_us_32()+2000000u;
         } else if(reason==8 && scan_phase==SCAN_REVERSE) {
@@ -239,11 +263,20 @@ static bool scan_drive_poll(bool calibrated)
         if (scan_phase == SCAN_WAIT_DEMO && pause_elapsed) {
             puts("STARTUP: moving forward");
             scan_begin_leg(SCAN_DEMO_FORWARD);
-        } else if (scan_phase == SCAN_WAIT_TURN && pause_elapsed) {
-            scan_set_right_turn_goals();
-            printf("COMMAND A: pivot right %u deg (%u/%u encoder counts)\n",
-                   SCAN_RIGHT_TURN_DEG, (unsigned)scan_leg_goal[0], (unsigned)scan_leg_goal[1]);
-            scan_begin_leg(SCAN_TURN_RIGHT);
+        } else if (scan_phase == SCAN_WAIT_COMMAND && pause_elapsed) {
+            if (scan_pending_command == 'C') {
+                scan_set_travel_goals(SCAN_STRAIGHT_DISTANCE_UM);
+                printf("COMMAND C: straight %u mm\n", SCAN_STRAIGHT_DISTANCE_UM / 1000u);
+                scan_begin_leg(SCAN_STRAIGHT);
+            } else {
+                unsigned angle = scan_pending_command == 'D' ? SCAN_U_TURN_DEG : SCAN_RIGHT_TURN_DEG;
+                /* Match the integrated controller's per-wheel pivot arc. */
+                uint64_t arc_um = (uint64_t)MOTION_TRACK_WIDTH_MM * 1000u * angle * 355u / (360u * 113u);
+                scan_set_travel_goals(arc_um);
+                printf("COMMAND %c: pivot right %u deg (%u/%u encoder counts)\n",
+                       scan_pending_command, angle, (unsigned)scan_leg_goal[0], (unsigned)scan_leg_goal[1]);
+                scan_begin_leg(SCAN_TURN);
+            }
         } else if (scan_phase == SCAN_WAIT_RESULT && pause_elapsed) {
             scan_drive_stop(11);
         }

@@ -340,7 +340,7 @@ int main(void)
 	bc_init(&bc);
 #ifdef BARCODE_TERMINAL
 	bool print_line = false;
-	printf("Barcode terminal A RIGHT TURN TRIAL: Code39 A-D and Z.\n");
+	printf("Barcode terminal JUNCTION RIGHT TRIAL: Code39 A-D and Z.\n");
     puts("EXPERIMENT: width ratios disabled; three longest elements per character are wide.");
     printf("Barcode raw ADC thresholds: black >= %u, white <= %u. BC is display only.\n",
            BC_RAW_BLACK_MIN, BC_RAW_WHITE_MAX);
@@ -430,11 +430,24 @@ int main(void)
 			k++;
 		}
 
+		line_state_t st;
+		int8_t err = 0;
+		if (k == 0 || (s_cal_failed & ((1u << IR_CH_LINE_A) | (1u << IR_CH_LINE_B)))) {
+			st = LINE_FAULT;		/* no fresh samples, or line sensor not calibrated */
+		} else {
+			err = line_update(&lt, (uint8_t)(sa / k), (uint8_t)(sb / k), 10, &st);
+		}
+
+
+#ifdef BARCODE_TERMINAL
+        scan_drive_observe_junction(st == LINE_BOTH_BLACK && !s_overruns);
+#endif
+
 #ifdef BARCODE_TERMINAL
         for (unsigned event = 0; event < trace_count; ++event) {
             const bc_msg_t *capture = &trace[event];
             char code = motion_code39_decode(capture);
-            scan_drive_result(capture->hdr.count, capture->hdr.overflow, code);
+            scan_drive_result(capture->hdr.count, capture->hdr.overflow);
             if (code) printf("%c\n",code);
             printf("SCAN: %s elements=%u/29 code=%c overflow=%u\n",
                    trace_short[event] ? "short capture (white timeout)" :
@@ -451,13 +464,6 @@ int main(void)
         if (trace_dropped) printf("SCAN: %u diagnostic events omitted\n", trace_dropped);
 #endif
 
-		line_state_t st;
-		int8_t err = 0;
-		if (k == 0 || (s_cal_failed & ((1u << IR_CH_LINE_A) | (1u << IR_CH_LINE_B)))) {
-			st = LINE_FAULT;		/* no fresh samples, or line sensor not calibrated */
-		} else {
-			err = line_update(&lt, (uint8_t)(sa / k), (uint8_t)(sb / k), 10, &st);
-		}
 
 		/* print every 20th period (5 lines/s) so the console stays readable */
 		if (print_line && (++period % 20u) == 0u) {

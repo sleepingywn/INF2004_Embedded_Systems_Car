@@ -311,3 +311,23 @@ Automatic reverse assumes a clear return path; this standalone bench does
 not add obstacle detection. Real return accuracy and repeated physical scans
 still need verification. Existing production motion and message formats are
 unchanged. Rank-only decoding remains experimental.
+
+### Junction turn trial
+
+On the track, the car detected the outgoing line after turning right, but
+did not continue tracing it. Sustained right-hand line tracing is still
+unverified. The left turn uses the same acquisition and tracing code with
+the wheel speeds and preferred pickup sensor mirrored.
+
+The bench defaults to **A for right**. To test **B for left**, stop the
+current run with GP20, send lowercase `l` in the serial monitor, then
+press and release GP20 to start a new pass. Send `r` to select right
+again. The selection lasts until changed or rebooted. Both line sensors
+must see black for 20 ms to trigger the selected turn. Decoded barcodes
+are printed separately from this manual route selection.
+
+Send `p` to toggle live readings. Watch for `drive=left-arc` or
+`drive=right-arc`, then `LEFT EXIT` or `RIGHT EXIT` with the acquisition
+readings. `drive=line-trace` reports the tracing phase. Stop reason 16
+means the branch exit was never acquired. Reason 18 means the line was
+lost or the sensor data became invalid or stale.

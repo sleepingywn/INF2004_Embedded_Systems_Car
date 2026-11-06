@@ -340,7 +340,7 @@ int main(void)
 	bc_init(&bc);
 #ifdef BARCODE_TERMINAL
 	bool print_line = false;
-	printf("Barcode terminal RIGHT LINE TRACE TRIAL: Code39 A-D and Z.\n");
+	printf("Barcode terminal JUNCTION LINE TRACE TRIAL: Code39 A-D and Z.\n");
     puts("EXPERIMENT: width ratios disabled; three longest elements per character are wide.");
     printf("Barcode raw ADC thresholds: black >= %u, white <= %u. BC is display only.\n",
            BC_RAW_BLACK_MIN, BC_RAW_WHITE_MAX);
@@ -352,6 +352,7 @@ int main(void)
 #endif
 #ifdef BARCODE_TERMINAL
     puts("GP20 press/release: scan + automatic retries; press again cancels.");
+    puts("Junction direction: send 'l' for left (B) or 'r' for right (A, default).");
     if (drive_available) scan_drive_start_demo();
     else puts("DRIVE unavailable: motor timer failed");
 #endif
@@ -365,6 +366,10 @@ int main(void)
 		int c = getchar_timeout_us(0);
 #ifdef BARCODE_TERMINAL
         if ((c=='c' || c=='t') && scan_session) scan_drive_stop(5);
+        if (c == 'l' || c == 'r') {
+            scan_junction_command = c == 'l' ? 'B' : 'A';
+            printf("Next junction: %s\n", c == 'l' ? "left" : "right");
+        }
         /* The raw ADC thresholds do not depend on barcode calibration. */
         if (drive_available && scan_drive_poll(true)) {
             bc_init(&bc);line_init(&lt);
@@ -441,9 +446,8 @@ int main(void)
 
 #ifdef BARCODE_TERMINAL
         const bool line_valid = st != LINE_FAULT && !s_overruns;
-        const bool right_edge = k && sb / k >= LINE_ON_BLACK && sa / k < LINE_ON_BLACK;
-        scan_drive_observe_line(line_valid, st == LINE_BOTH_BLACK, right_edge,
-                                st == LINE_LOST, err);
+        scan_drive_observe_line(line_valid, st == LINE_BOTH_BLACK, st == LINE_LOST,
+                                k ? sa / k : 0u, k ? sb / k : 0u, err);
 #endif
 
 #ifdef BARCODE_TERMINAL
@@ -470,9 +474,16 @@ int main(void)
 
 		/* print every 20th period (5 lines/s) so the console stays readable */
 		if (print_line && (++period % 20u) == 0u) {
-			printf("BC=%3u  BC_RAW=%4u  A=%3u  B=%3u  |  err=%+4d  state=%-10s  barcode=%s\n",
+            const char *drive_status = "";
+#ifdef BARCODE_TERMINAL
+            const scan_phase_t phase = scan_phase;
+            if (phase == SCAN_RIGHT_ARC) drive_status = "  drive=right-arc";
+            if (phase == SCAN_LEFT_ARC) drive_status = "  drive=left-arc";
+            if (phase == SCAN_LINE_FOLLOW) drive_status = "  drive=line-trace";
+#endif
+			printf("BC=%3u  BC_RAW=%4u  A=%3u  B=%3u  |  err=%+4d  state=%-10s  barcode=%s%s\n",
 			       n_bc, (unsigned)raw_bc, k ? (unsigned)(sa / k) : 0u, k ? (unsigned)(sb / k) : 0u,
-			       err, state_name(st), bc_active(&bc) ? "CAPTURING" : "idle");
+			       err, state_name(st), bc_active(&bc) ? "CAPTURING" : "idle", drive_status);
 		}
 		if (s_overruns) {
 #ifdef BARCODE_TERMINAL

@@ -1,4 +1,4 @@
-/* Standalone scan bench and local A-command turn trial. */
+/* Standalone scan bench and junction turn trial. */
 #ifndef SCAN_DRIVE_H
 #define SCAN_DRIVE_H
 #include "hardware/pwm.h"
@@ -12,16 +12,18 @@
 #define SCAN_REVERSE_TARGET_CPS 450
 #define SCAN_DEMO_DELAY_US 2000000u
 #define SCAN_JUNCTION_CONFIRM_US 20000u
-#define SCAN_RIGHT_EDGE_CONFIRM_US 30000u
-#define SCAN_RIGHT_SETTLE_US 100000u
-#define SCAN_JUNCTION_COMMAND 'A'
+#define SCAN_EXIT_CONFIRM_US 10000u
+#define SCAN_EXIT_MIN_DARKNESS 35u
+#define SCAN_EXIT_MIN_CONTRAST 10
+#define SCAN_LINE_GAIN_Q10 3072u
 #define SCAN_STRAIGHT_DISTANCE_UM 100000u
 #define SCAN_TURN_SETTLE_US 300000u
 #define SCAN_TURN_TIMEOUT_MS 6000u
-#define SCAN_RIGHT_ARC_OUTER_CPS 750
-#define SCAN_RIGHT_ARC_INNER_CPS 200
-/* About 10 degrees with the provisional wheel calibration. */
-#define SCAN_RIGHT_ARC_MIN_LEAD 300
+#define SCAN_ARC_OUTER_CPS 750
+#define SCAN_ARC_INNER_CPS 200
+/* Accept the turn-side sensor after about 5 degrees, then either side after 10. */
+#define SCAN_ARC_MIN_LEAD 150
+#define SCAN_ARC_EITHER_SIDE_LEAD 300
 #define SCAN_LINE_FRESH_US 100000u
 #define SCAN_LINE_FOLLOW_US 8000000u
 #define SCAN_U_TURN_DEG 180u
@@ -31,7 +33,7 @@ static volatile bool scan_running;
 static volatile unsigned scan_reason;
 typedef enum {SCAN_IDLE,SCAN_FORWARD,SCAN_WAIT_RESULT,SCAN_WAIT_BACK,
               SCAN_REVERSE,SCAN_WAIT_FORWARD,SCAN_WAIT_DEMO,SCAN_DEMO_FORWARD,
-              SCAN_WAIT_COMMAND,SCAN_TURN,SCAN_STRAIGHT,SCAN_RIGHT_ARC,SCAN_LINE_FOLLOW} scan_phase_t;
+              SCAN_WAIT_COMMAND,SCAN_TURN,SCAN_STRAIGHT,SCAN_RIGHT_ARC,SCAN_LEFT_ARC,SCAN_LINE_FOLLOW} scan_phase_t;
 static volatile bool scan_session;
 static volatile scan_phase_t scan_phase;
 static int scan_direction=1;
@@ -41,6 +43,13 @@ static speed_control_t scan_speed;
 static line_button_t scan_button;
 static repeating_timer_t scan_timer;
 static char scan_pending_command;
+static char scan_junction_command = 'A';
+
+static bool scan_is_arc(scan_phase_t phase)
+{
+    return phase == SCAN_RIGHT_ARC || phase == SCAN_LEFT_ARC;
+}
+
 static bool scan_line_candidate;
 static uint32_t scan_line_since_us;
 static int8_t scan_line_error;
@@ -83,18 +92,18 @@ static bool scan_motor_tick(repeating_timer_t *timer)
     if (!scan_running) return true;
     const bool turning = scan_phase == SCAN_TURN;
     const bool straight = scan_phase == SCAN_STRAIGHT;
-    const bool right_arc = scan_phase == SCAN_RIGHT_ARC;
+    const bool branch_arc = scan_is_arc(scan_phase);
     const bool line_follow = scan_phase == SCAN_LINE_FOLLOW;
     const bool bounded = turning || straight || scan_direction < 0;
     if ((int32_t)(now - scan_deadline_us) >= 0) {
         if (turning) scan_drive_stop(13);
         else if (straight) scan_drive_stop(15);
-        else if (right_arc) scan_drive_stop(16);
+        else if (branch_arc) scan_drive_stop(16);
         else if (line_follow) scan_drive_stop(17);
         else scan_drive_stop(scan_direction < 0 ? 10 : 1);
         return true;
     }
-    if ((right_arc || line_follow) && now - scan_line_sample_us > SCAN_LINE_FRESH_US) {
+    if ((branch_arc || line_follow) && now - scan_line_sample_us > SCAN_LINE_FRESH_US) {
         scan_drive_stop(18);
         return true;
     }
@@ -128,13 +137,14 @@ static bool scan_motor_tick(repeating_timer_t *timer)
     int32_t trim = clamp_i64(((int64_t)total[0] - total[1]) * 2, -trim_limit, trim_limit);
     int32_t left_target = reached[0] ? 0 : target_cps - (trim > 0 ? trim : 0);
     int32_t right_target = reached[1] ? 0 : target_cps + (trim < 0 ? trim : 0);
-    if (right_arc) {
-        left_target = SCAN_RIGHT_ARC_OUTER_CPS;
-        right_target = SCAN_RIGHT_ARC_INNER_CPS;
+    if (branch_arc) {
+        const bool right = scan_phase == SCAN_RIGHT_ARC;
+        left_target = right ? SCAN_ARC_OUTER_CPS : SCAN_ARC_INNER_CPS;
+        right_target = right ? SCAN_ARC_INNER_CPS : SCAN_ARC_OUTER_CPS;
     } else if (line_follow) {
         int16_t left, right;
         if (!motion_line_targets(scan_line_error, SCAN_FORWARD_TARGET_CPS,
-                                 SCAN_RIGHT_ARC_OUTER_CPS, 2048u, &left, &right)) {
+                                 SCAN_ARC_OUTER_CPS, SCAN_LINE_GAIN_Q10, &left, &right)) {
             scan_drive_stop(3);
             return true;
         }
@@ -179,7 +189,7 @@ static bool scan_begin_leg(scan_phase_t phase)
     uint32_t duration_ms = SCAN_RUN_MS;
     if (phase == SCAN_REVERSE) duration_ms += 2000u;
     if (turning) duration_ms = scan_pending_command == 'D' ? 2u * SCAN_TURN_TIMEOUT_MS : SCAN_TURN_TIMEOUT_MS;
-    if (phase == SCAN_STRAIGHT || phase == SCAN_RIGHT_ARC) duration_ms = SCAN_TURN_TIMEOUT_MS;
+    if (phase == SCAN_STRAIGHT || scan_is_arc(phase)) duration_ms = SCAN_TURN_TIMEOUT_MS;
 
     uint32_t irq = save_and_disable_interrupts();
     if (!scan_session || !gpio_get(20)) {
@@ -201,10 +211,11 @@ static bool scan_begin_leg(scan_phase_t phase)
     scan_origin[0]=scan_counts[0];scan_origin[1]=scan_counts[1];scan_bad_origin=scan_invalid;
     scan_step_us=time_us_32();scan_deadline_us=scan_step_us+duration_ms*1000u;
     scan_progress_us[0]=scan_progress_us[1]=scan_step_us;
-    if (phase == SCAN_RIGHT_ARC) {
+    if (scan_is_arc(phase)) {
         scan_line_sample_us = scan_step_us;
-        /* Start curving immediately, before the first speed-control update. */
-        scan_speed.right.duty = START_DUTY * 3u / 4u;
+        /* Bias the inner wheel before the first speed-control update. */
+        wheel_speed_t *inner = phase == SCAN_RIGHT_ARC ? &scan_speed.right : &scan_speed.left;
+        inner->duty = START_DUTY * 3u / 4u;
     }
     scan_running=true;
     scan_write(4,direction<0 && !scan_leg_goal[0] ? 0:scan_speed.left.duty,MOTION_LEFT_MOTOR_SIGN*scan_direction);
@@ -228,11 +239,15 @@ static void scan_set_travel_goals(uint64_t distance_um)
 
 static void scan_drive_command(char code)
 {
-    if (!scan_session || (code != 'A' && code != 'C' && code != 'D')) return;
+    if (!scan_session || (code != 'A' && code != 'B' && code != 'C' && code != 'D')) return;
+    if (code == 'A' || code == 'B') {
+        scan_begin_leg(code == 'A' ? SCAN_RIGHT_ARC : SCAN_LEFT_ARC);
+        return;
+    }
     scan_drive_stop(0);
     scan_pending_command = code;
     scan_phase = SCAN_WAIT_COMMAND;
-    scan_pause_until = time_us_32() + (code == 'A' ? SCAN_RIGHT_SETTLE_US : SCAN_TURN_SETTLE_US);
+    scan_pause_until = time_us_32() + SCAN_TURN_SETTLE_US;
 }
 
 static void scan_drive_observe_junction(bool both_black)
@@ -249,15 +264,18 @@ static void scan_drive_observe_junction(bool both_black)
         scan_line_candidate = true;
         scan_line_since_us = now;
     } else if (now - scan_line_since_us >= SCAN_JUNCTION_CONFIRM_US) {
-        scan_drive_command(SCAN_JUNCTION_COMMAND);
-        puts("JUNCTION: both line sensors black; taking the default route");
+        scan_drive_command(scan_junction_command);
+        const scan_phase_t phase = scan_phase;
+        if (scan_is_arc(phase))
+            printf("JUNCTION: %c, %s arc started\n", scan_junction_command,
+                   phase == SCAN_RIGHT_ARC ? "right" : "left");
     }
 }
 
-static void scan_drive_observe_line(bool valid, bool both_black, bool right_edge,
-                                    bool line_lost, int8_t error)
+static void scan_drive_observe_line(bool valid, bool both_black, bool line_lost,
+                                    uint8_t a, uint8_t b, int8_t error)
 {
-    if (scan_phase != SCAN_RIGHT_ARC && scan_phase != SCAN_LINE_FOLLOW) {
+    if (!scan_is_arc(scan_phase) && scan_phase != SCAN_LINE_FOLLOW) {
         scan_drive_observe_junction(valid && both_black);
         return;
     }
@@ -272,22 +290,31 @@ static void scan_drive_observe_line(bool valid, bool both_black, bool right_edge
     scan_line_sample_us = now;
     scan_line_error = error;
     bool acquired = false;
-    if (scan_running && scan_phase == SCAN_RIGHT_ARC) {
+    const scan_phase_t phase = scan_phase;
+    const bool turning_right = phase == SCAN_RIGHT_ARC;
+    if (scan_running && scan_is_arc(phase)) {
         int32_t left = motion_count_delta(scan_counts[0], scan_origin[0]);
         int32_t right = motion_count_delta(scan_counts[1], scan_origin[1]);
-        if (both_black || !right_edge || (int64_t)left - right < SCAN_RIGHT_ARC_MIN_LEAD) {
+        int64_t lead = turning_right ? (int64_t)left - right : (int64_t)right - left;
+        bool right_sighting = b >= SCAN_EXIT_MIN_DARKNESS && (int)b - a >= SCAN_EXIT_MIN_CONTRAST;
+        bool left_sighting = a >= SCAN_EXIT_MIN_DARKNESS && (int)a - b >= SCAN_EXIT_MIN_CONTRAST;
+        bool turn_side_sighting = turning_right ? right_sighting : left_sighting;
+        bool either_side_sighting = lead >= SCAN_ARC_EITHER_SIDE_LEAD && (left_sighting || right_sighting);
+        if (both_black || lead < SCAN_ARC_MIN_LEAD || !(turn_side_sighting || either_side_sighting)) {
             scan_line_candidate = false;
         } else if (!scan_line_candidate) {
             scan_line_candidate = true;
             scan_line_since_us = now;
-        } else if (now - scan_line_since_us >= SCAN_RIGHT_EDGE_CONFIRM_US) {
+        } else if (now - scan_line_since_us >= SCAN_EXIT_CONFIRM_US) {
             scan_phase = SCAN_LINE_FOLLOW;
             scan_deadline_us = now + SCAN_LINE_FOLLOW_US;
             acquired = true;
         }
     }
     restore_interrupts(irq);
-    if (acquired) puts("RIGHT EXIT: line acquired; tracing");
+    if (acquired)
+        printf("%s EXIT: line acquired; tracing (A=%u B=%u err=%+d)\n",
+               turning_right ? "RIGHT" : "LEFT", (unsigned)a, (unsigned)b, error);
 }
 
 static void scan_drive_start_demo(void)
@@ -317,7 +344,7 @@ static bool scan_drive_poll(bool calibrated)
     if(scan_reason) {
         uint32_t irq=save_and_disable_interrupts();unsigned reason=scan_reason;scan_reason=0;
         restore_interrupts(irq);
-        printf("DRIVE stopped: reason=%u (1=forward complete 2=button 3=encoder/control 4=stall 5=calibration/tests 6=sampling 7=timer 8=reverse returned 10=reverse timeout 11=no retryable capture 12=turn complete 13=turn timeout 14=straight complete 15=straight timeout 16=right exit not found 17=line trace complete 18=line lost or stale)\n",reason);
+        printf("DRIVE stopped: reason=%u (1=forward complete 2=button 3=encoder/control 4=stall 5=calibration/tests 6=sampling 7=timer 8=reverse returned 10=reverse timeout 11=no retryable capture 12=turn complete 13=turn timeout 14=straight complete 15=straight timeout 16=branch exit not found 17=line trace complete 18=line lost or stale)\n",reason);
         if (reason == 1 && scan_phase == SCAN_DEMO_FORWARD) {
             puts("STARTUP: no confirmed junction within 8 s");
             scan_drive_stop(11);
@@ -339,7 +366,7 @@ static bool scan_drive_poll(bool calibrated)
                 scan_set_travel_goals(SCAN_STRAIGHT_DISTANCE_UM);
                 printf("COMMAND C: straight %u mm\n", SCAN_STRAIGHT_DISTANCE_UM / 1000u);
                 scan_begin_leg(SCAN_STRAIGHT);
-            } else if (scan_pending_command == 'D') {
+            } else {
                 /* Match the integrated controller's per-wheel pivot arc. */
                 uint64_t arc_um = (uint64_t)MOTION_TRACK_WIDTH_MM * 1000u * SCAN_U_TURN_DEG * 355u /
                                   (360u * 113u);
@@ -347,10 +374,6 @@ static bool scan_drive_poll(bool calibrated)
                 printf("COMMAND D: pivot %u deg (%u/%u encoder counts)\n",
                        SCAN_U_TURN_DEG, (unsigned)scan_leg_goal[0], (unsigned)scan_leg_goal[1]);
                 scan_begin_leg(SCAN_TURN);
-            } else {
-                printf("COMMAND A: tight right arc at %u/%u counts/s, looking for the outgoing line\n",
-                       (unsigned)SCAN_RIGHT_ARC_OUTER_CPS, (unsigned)SCAN_RIGHT_ARC_INNER_CPS);
-                scan_begin_leg(SCAN_RIGHT_ARC);
             }
         } else if (scan_phase == SCAN_WAIT_RESULT && pause_elapsed) {
             scan_drive_stop(11);

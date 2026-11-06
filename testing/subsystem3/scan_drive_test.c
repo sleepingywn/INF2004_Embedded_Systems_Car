@@ -24,6 +24,7 @@ static void reset_test(void)
 {
     scan_running=false;scan_session=false;scan_phase=SCAN_IDLE;scan_reason=0;
     scan_counts[0]=scan_counts[1]=scan_invalid=0;test_us=0;button_up=true;
+    scan_junction_command = 'A';
     assert(scan_drive_init());stopped();
 }
 static void move_ticks(unsigned ticks,int direction)
@@ -95,55 +96,60 @@ int main(void)
     scan_drive_observe_junction(true);
     move_ticks(2, 1);
     scan_drive_observe_junction(true);
-    stopped();
-    assert(scan_phase == SCAN_WAIT_COMMAND && scan_pending_command == 'A');
-    test_us += SCAN_RIGHT_SETTLE_US - 1000u;
-    scan_drive_poll(true);
-    stopped();
-    test_us += 1000u;
-    scan_drive_poll(true);
-    assert(scan_phase == SCAN_RIGHT_ARC && scan_running);
+    assert(scan_phase == SCAN_RIGHT_ARC && scan_running && scan_step_us == test_us);
     assert(levels[4][1] > 0 && levels[4][0] == 0);
     assert(levels[5][0] > 0 && levels[5][1] == 0);
     assert(levels[4][1] > levels[5][0]);
 
-    /* An early edge, or the left sensor alone, cannot acquire the right branch. */
-    for (unsigned i = 0; i < 38; ++i) {
+    /* Ignore the right edge before enough turn, and ignore the junction itself. */
+    for (unsigned i = 0; i < 14; ++i) {
         test_us += 20000u;
         scan_counts[0] += 15;
         scan_counts[1] += 4;
-        scan_drive_observe_line(true, false, i < 10, false, i < 10 ? -80 : 80);
+        scan_drive_observe_line(true, i >= 10, false, i >= 10 ? 80 : 2, 80,
+                                i >= 10 ? 0 : -78);
         scan_motor_tick(NULL);
         assert(scan_phase == SCAN_RIGHT_ARC && scan_running);
     }
     assert(scan_speed.left.target_cps == 750 && scan_speed.right.target_cps == 200);
-    for (unsigned i = 0; i < 3; ++i) {
+    /* A right sensor reading below the old black threshold can acquire the exit. */
+    for (unsigned i = 0; i < 2; ++i) {
         test_us += 20000u;
         scan_counts[0] += 15;
         scan_counts[1] += 4;
-        scan_drive_observe_line(true, false, true, false, -80);
+        scan_drive_observe_line(true, false, false, 5, 45, -40);
         scan_motor_tick(NULL);
         assert(scan_running);
-        if (i < 2) assert(scan_phase == SCAN_RIGHT_ARC);
+        if (i == 0) assert(scan_phase == SCAN_RIGHT_ARC);
     }
     assert(scan_phase == SCAN_LINE_FOLLOW);
-    assert(scan_speed.left.target_cps > scan_speed.right.target_cps);
+    assert(scan_speed.left.target_cps == 570 && scan_speed.right.target_cps == 330);
     assert(levels[5][1] == 0);
     test_us += 20000u;
     scan_counts[0] += 12;
     scan_counts[1] += 6;
-    scan_drive_observe_line(true, false, false, false, 60);
+    scan_drive_observe_line(true, false, false, 65, 5, 60);
     scan_motor_tick(NULL);
     assert(scan_speed.left.target_cps < scan_speed.right.target_cps);
-    scan_drive_observe_line(true, false, false, true, 0);
+    scan_drive_observe_line(true, false, true, 0, 0, 0);
     stopped();
     assert(scan_reason == 18 && !scan_session);
 
     reset_test();
     request_run();
     scan_drive_command('A');
-    test_us += SCAN_RIGHT_SETTLE_US;
-    scan_drive_poll(true);
+    scan_counts[0] += SCAN_ARC_EITHER_SIDE_LEAD - 1;
+    scan_drive_observe_line(true, false, false, 45, 5, 40);
+    assert(scan_phase == SCAN_RIGHT_ARC && !scan_line_candidate);
+    ++scan_counts[0];
+    scan_drive_observe_line(true, false, false, 45, 5, 40);
+    test_us += SCAN_EXIT_CONFIRM_US;
+    scan_drive_observe_line(true, false, false, 45, 5, 40);
+    assert(scan_phase == SCAN_LINE_FOLLOW);
+
+    reset_test();
+    request_run();
+    scan_drive_command('A');
     assert(scan_phase == SCAN_RIGHT_ARC && scan_running);
     test_us = scan_deadline_us;
     scan_motor_tick(NULL);
@@ -153,8 +159,6 @@ int main(void)
     reset_test();
     request_run();
     scan_drive_command('A');
-    test_us += SCAN_RIGHT_SETTLE_US;
-    scan_drive_poll(true);
     test_us += SCAN_LINE_FRESH_US + 1u;
     scan_motor_tick(NULL);
     stopped();
@@ -182,6 +186,37 @@ int main(void)
 
     reset_test();
     request_run();
+    scan_junction_command = 'B';
+    scan_drive_observe_junction(true);
+    test_us += SCAN_JUNCTION_CONFIRM_US;
+    scan_drive_observe_junction(true);
+    assert(scan_running && scan_phase == SCAN_LEFT_ARC && scan_step_us == test_us);
+    assert(levels[4][0] == 0 && levels[5][1] == 0 && levels[5][0] > levels[4][1]);
+    for (unsigned i = 0; i < 16; ++i) {
+        test_us += 20000u;
+        scan_counts[0] += 4;
+        scan_counts[1] += 15;
+        /* The right sensor alone cannot acquire the left exit at this angle. */
+        scan_drive_observe_line(true, false, false, 5, 45, -40);
+        scan_motor_tick(NULL);
+        assert(scan_phase == SCAN_LEFT_ARC && scan_running);
+    }
+    assert(scan_speed.left.target_cps == SCAN_ARC_INNER_CPS);
+    assert(scan_speed.right.target_cps == SCAN_ARC_OUTER_CPS);
+    for (unsigned i = 0; i < 2; ++i) {
+        test_us += 20000u;
+        scan_counts[0] += 4;
+        scan_counts[1] += 15;
+        scan_drive_observe_line(true, false, false, 45, 5, 40);
+        scan_motor_tick(NULL);
+        assert(scan_running);
+        if (i == 0) assert(scan_phase == SCAN_LEFT_ARC);
+    }
+    assert(scan_phase == SCAN_LINE_FOLLOW);
+    assert(scan_speed.left.target_cps == 330 && scan_speed.right.target_cps == 570);
+
+    reset_test();
+    request_run();
     scan_drive_command('C');
     test_us += SCAN_TURN_SETTLE_US;
     scan_drive_poll(true);
@@ -206,6 +241,6 @@ int main(void)
     stopped();
     assert(scan_reason == 13);
 
-    puts("PASS: right arc, outgoing edge acquisition, proportional line tracing, line-loss/stale/timeout stops, straight and U-turn");
+    puts("PASS: right and left arcs, outgoing edge acquisition, proportional line tracing, line-loss/stale/timeout stops, straight and U-turn");
     puts("PASS: 8s scan limit, stalls, encoder faults, incomplete retry and encoder return");
 }

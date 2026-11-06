@@ -352,7 +352,7 @@ int main(void)
 #endif
 #ifdef BARCODE_TERMINAL
     puts("GP20 press/release: scan + automatic retries; press again cancels.");
-    puts("Junction direction: send 'l' for left (B) or 'r' for right (A, default).");
+    puts("Junction trial: B turns left automatically.");
     if (drive_available) scan_drive_start_demo();
     else puts("DRIVE unavailable: motor timer failed");
 #endif
@@ -366,10 +366,6 @@ int main(void)
 		int c = getchar_timeout_us(0);
 #ifdef BARCODE_TERMINAL
         if ((c=='c' || c=='t') && scan_session) scan_drive_stop(5);
-        if (c == 'l' || c == 'r') {
-            scan_junction_command = c == 'l' ? 'B' : 'A';
-            printf("Next junction: %s\n", c == 'l' ? "left" : "right");
-        }
         /* The raw ADC thresholds do not depend on barcode calibration. */
         if (drive_available && scan_drive_poll(true)) {
             bc_init(&bc);line_init(&lt);

@@ -24,7 +24,6 @@ static void reset_test(void)
 {
     scan_running=false;scan_session=false;scan_phase=SCAN_IDLE;scan_reason=0;
     scan_counts[0]=scan_counts[1]=scan_invalid=0;test_us=0;button_up=true;
-    scan_junction_command = 'A';
     assert(scan_drive_init());stopped();
 }
 static void move_ticks(unsigned ticks,int direction)
@@ -96,6 +95,11 @@ int main(void)
     scan_drive_observe_junction(true);
     move_ticks(2, 1);
     scan_drive_observe_junction(true);
+    assert(scan_phase == SCAN_LEFT_ARC && scan_running && scan_step_us == test_us);
+
+    reset_test();
+    request_run();
+    scan_drive_command('A');
     assert(scan_phase == SCAN_RIGHT_ARC && scan_running && scan_step_us == test_us);
     assert(levels[4][1] > 0 && levels[4][0] == 0);
     assert(levels[5][0] > 0 && levels[5][1] == 0);
@@ -186,7 +190,6 @@ int main(void)
 
     reset_test();
     request_run();
-    scan_junction_command = 'B';
     scan_drive_observe_junction(true);
     test_us += SCAN_JUNCTION_CONFIRM_US;
     scan_drive_observe_junction(true);

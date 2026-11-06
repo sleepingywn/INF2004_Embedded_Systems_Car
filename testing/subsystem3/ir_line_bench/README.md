@@ -319,12 +319,10 @@ did not continue tracing it. Sustained right-hand line tracing is still
 unverified. The left turn uses the same acquisition and tracing code with
 the wheel speeds and preferred pickup sensor mirrored.
 
-The bench defaults to **A for right**. To test **B for left**, stop the
-current run with GP20, send lowercase `l` in the serial monitor, then
-press and release GP20 to start a new pass. Send `r` to select right
-again. The selection lasts until changed or rebooted. Both line sensors
-must see black for 20 ms to trigger the selected turn. Decoded barcodes
-are printed separately from this manual route selection.
+The bench automatically runs **B for left** when both line sensors see
+black for 20 ms. Use the startup run or press and release GP20 to start
+another pass. The junction test selects B in firmware. Decoded barcodes
+are printed separately.
 
 Send `p` to toggle live readings. Watch for `drive=left-arc` or
 `drive=right-arc`, then `LEFT EXIT` or `RIGHT EXIT` with the acquisition

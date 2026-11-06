@@ -12,6 +12,7 @@
 #define SCAN_REVERSE_TARGET_CPS 450
 #define SCAN_DEMO_DELAY_US 2000000u
 #define SCAN_JUNCTION_CONFIRM_US 20000u
+#define SCAN_JUNCTION_COMMAND 'B'
 #define SCAN_EXIT_CONFIRM_US 10000u
 #define SCAN_EXIT_MIN_DARKNESS 35u
 #define SCAN_EXIT_MIN_CONTRAST 10
@@ -43,7 +44,6 @@ static speed_control_t scan_speed;
 static line_button_t scan_button;
 static repeating_timer_t scan_timer;
 static char scan_pending_command;
-static char scan_junction_command = 'A';
 
 static bool scan_is_arc(scan_phase_t phase)
 {
@@ -264,10 +264,10 @@ static void scan_drive_observe_junction(bool both_black)
         scan_line_candidate = true;
         scan_line_since_us = now;
     } else if (now - scan_line_since_us >= SCAN_JUNCTION_CONFIRM_US) {
-        scan_drive_command(scan_junction_command);
+        scan_drive_command(SCAN_JUNCTION_COMMAND);
         const scan_phase_t phase = scan_phase;
         if (scan_is_arc(phase))
-            printf("JUNCTION: %c, %s arc started\n", scan_junction_command,
+            printf("JUNCTION: %c, %s arc started\n", SCAN_JUNCTION_COMMAND,
                    phase == SCAN_RIGHT_ARC ? "right" : "left");
     }
 }

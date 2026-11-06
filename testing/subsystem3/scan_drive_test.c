@@ -97,26 +97,30 @@ int main(void)
     scan_drive_observe_junction(true);
     stopped();
     assert(scan_phase == SCAN_WAIT_COMMAND && scan_pending_command == 'A');
-    test_us += SCAN_TURN_SETTLE_US;
+    test_us += SCAN_RIGHT_SETTLE_US - 1000u;
+    scan_drive_poll(true);
+    stopped();
+    test_us += 1000u;
     scan_drive_poll(true);
     assert(scan_phase == SCAN_RIGHT_ARC && scan_running);
     assert(levels[4][1] > 0 && levels[4][0] == 0);
     assert(levels[5][0] > 0 && levels[5][1] == 0);
+    assert(levels[4][1] > levels[5][0]);
 
     /* An early edge, or the left sensor alone, cannot acquire the right branch. */
     for (unsigned i = 0; i < 38; ++i) {
         test_us += 20000u;
-        scan_counts[0] += 13;
-        scan_counts[1] += 5;
+        scan_counts[0] += 15;
+        scan_counts[1] += 4;
         scan_drive_observe_line(true, false, i < 10, false, i < 10 ? -80 : 80);
         scan_motor_tick(NULL);
         assert(scan_phase == SCAN_RIGHT_ARC && scan_running);
     }
-    assert(scan_speed.left.target_cps == 650 && scan_speed.right.target_cps == 250);
+    assert(scan_speed.left.target_cps == 750 && scan_speed.right.target_cps == 200);
     for (unsigned i = 0; i < 3; ++i) {
         test_us += 20000u;
-        scan_counts[0] += 13;
-        scan_counts[1] += 5;
+        scan_counts[0] += 15;
+        scan_counts[1] += 4;
         scan_drive_observe_line(true, false, true, false, -80);
         scan_motor_tick(NULL);
         assert(scan_running);
@@ -138,7 +142,7 @@ int main(void)
     reset_test();
     request_run();
     scan_drive_command('A');
-    test_us += SCAN_TURN_SETTLE_US;
+    test_us += SCAN_RIGHT_SETTLE_US;
     scan_drive_poll(true);
     assert(scan_phase == SCAN_RIGHT_ARC && scan_running);
     test_us = scan_deadline_us;
@@ -149,7 +153,7 @@ int main(void)
     reset_test();
     request_run();
     scan_drive_command('A');
-    test_us += SCAN_TURN_SETTLE_US;
+    test_us += SCAN_RIGHT_SETTLE_US;
     scan_drive_poll(true);
     test_us += SCAN_LINE_FRESH_US + 1u;
     scan_motor_tick(NULL);

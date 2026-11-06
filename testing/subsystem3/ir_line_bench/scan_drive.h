@@ -11,13 +11,15 @@
 #define SCAN_FORWARD_TARGET_CPS 450
 #define SCAN_REVERSE_TARGET_CPS 450
 #define SCAN_DEMO_DELAY_US 2000000u
-#define SCAN_JUNCTION_CONFIRM_US 30000u
+#define SCAN_JUNCTION_CONFIRM_US 20000u
+#define SCAN_RIGHT_EDGE_CONFIRM_US 30000u
+#define SCAN_RIGHT_SETTLE_US 100000u
 #define SCAN_JUNCTION_COMMAND 'A'
 #define SCAN_STRAIGHT_DISTANCE_UM 100000u
 #define SCAN_TURN_SETTLE_US 300000u
 #define SCAN_TURN_TIMEOUT_MS 6000u
-#define SCAN_RIGHT_ARC_OUTER_CPS 650
-#define SCAN_RIGHT_ARC_INNER_CPS 250
+#define SCAN_RIGHT_ARC_OUTER_CPS 750
+#define SCAN_RIGHT_ARC_INNER_CPS 200
 /* About 10 degrees with the provisional wheel calibration. */
 #define SCAN_RIGHT_ARC_MIN_LEAD 300
 #define SCAN_LINE_FRESH_US 100000u
@@ -199,7 +201,11 @@ static bool scan_begin_leg(scan_phase_t phase)
     scan_origin[0]=scan_counts[0];scan_origin[1]=scan_counts[1];scan_bad_origin=scan_invalid;
     scan_step_us=time_us_32();scan_deadline_us=scan_step_us+duration_ms*1000u;
     scan_progress_us[0]=scan_progress_us[1]=scan_step_us;
-    if (phase == SCAN_RIGHT_ARC) scan_line_sample_us = scan_step_us;
+    if (phase == SCAN_RIGHT_ARC) {
+        scan_line_sample_us = scan_step_us;
+        /* Start curving immediately, before the first speed-control update. */
+        scan_speed.right.duty = START_DUTY * 3u / 4u;
+    }
     scan_running=true;
     scan_write(4,direction<0 && !scan_leg_goal[0] ? 0:scan_speed.left.duty,MOTION_LEFT_MOTOR_SIGN*scan_direction);
     scan_write(5,direction<0 && !scan_leg_goal[1] ? 0:scan_speed.right.duty,
@@ -226,7 +232,7 @@ static void scan_drive_command(char code)
     scan_drive_stop(0);
     scan_pending_command = code;
     scan_phase = SCAN_WAIT_COMMAND;
-    scan_pause_until = time_us_32() + SCAN_TURN_SETTLE_US;
+    scan_pause_until = time_us_32() + (code == 'A' ? SCAN_RIGHT_SETTLE_US : SCAN_TURN_SETTLE_US);
 }
 
 static void scan_drive_observe_junction(bool both_black)
@@ -274,7 +280,7 @@ static void scan_drive_observe_line(bool valid, bool both_black, bool right_edge
         } else if (!scan_line_candidate) {
             scan_line_candidate = true;
             scan_line_since_us = now;
-        } else if (now - scan_line_since_us >= SCAN_JUNCTION_CONFIRM_US) {
+        } else if (now - scan_line_since_us >= SCAN_RIGHT_EDGE_CONFIRM_US) {
             scan_phase = SCAN_LINE_FOLLOW;
             scan_deadline_us = now + SCAN_LINE_FOLLOW_US;
             acquired = true;
@@ -342,7 +348,8 @@ static bool scan_drive_poll(bool calibrated)
                        SCAN_U_TURN_DEG, (unsigned)scan_leg_goal[0], (unsigned)scan_leg_goal[1]);
                 scan_begin_leg(SCAN_TURN);
             } else {
-                puts("COMMAND A: curve right and look for the outgoing line");
+                printf("COMMAND A: tight right arc at %u/%u counts/s, looking for the outgoing line\n",
+                       (unsigned)SCAN_RIGHT_ARC_OUTER_CPS, (unsigned)SCAN_RIGHT_ARC_INNER_CPS);
                 scan_begin_leg(SCAN_RIGHT_ARC);
             }
         } else if (scan_phase == SCAN_WAIT_RESULT && pause_elapsed) {

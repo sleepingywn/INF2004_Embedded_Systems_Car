@@ -19,7 +19,7 @@
  *	- Unsupported specifiers: floating point, long long and others.
  *		Coversion:	 a, A, e, E, f, F, g, G, n
  *		Size qualifier:  hh, ll, j, z, t, L
- *	- No limitation of output string length.
+ *	- USB console calls are bounded to TM_USB_RECORD_SIZE bytes.
  *	- Minimize stack usage.
  *		Depending on available stack size, define TM_OUTBUF_SZ by
  *		appropriate value.
@@ -34,45 +34,16 @@
 #if USE_TM_PRINTF
 #include <stdarg.h>
 
-#if TK_SUPPORT_SMP && TM_CONSOLE_USB_CDC
-#include <tk/smp.h>
-
-/*
- * tm_vsprintf() emits one logical call as several tm_putchar()/tm_snd_dat()
- * fragments.  The USB ring lock makes each fragment safe, but without this
- * outer lock two processors can still splice fragments from different calls
- * into one corrupted line.  Static zero initialization is the unlocked
- * representation of T_SPLOCK and is available before the startup banner.
- *
- * The interrupt-preserving form also prevents a normal handler on the same
- * processor from deadlocking against a task it interrupted.  Consequently a
- * tm_printf call is a diagnostic operation, not a hard-real-time operation:
- * local interrupts remain masked until that complete call has been emitted.
- */
-LOCAL T_SPLOCK tm_printf_smp_lock;
-EXPORT volatile UW tm_printf_smp_contentions;
-EXPORT volatile UW tm_printf_smp_calls[TK_MAX_CORE];
-
-LOCAL void tm_printf_lock(UINT *intsts)
-{
-	INT prc = tk_get_prc();
-
-	if(ISpinTryLock(&tm_printf_smp_lock, intsts) != E_OK) {
-		(void)atomic_inc((UW *)&tm_printf_smp_contentions);
-		(void)ISpinLock(&tm_printf_smp_lock, intsts);
-	}
-	if(prc >= 1 && prc <= TK_MAX_CORE) tm_printf_smp_calls[prc - 1]++;
-}
-
-LOCAL void tm_printf_unlock(UINT intsts)
-{
-	(void)ISpinUnlock(&tm_printf_smp_lock, intsts);
-}
+#if TM_CONSOLE_USB_CDC
+#include <tm/usb_console.h>
+#if TM_CONSOLE_UART
+IMPORT void tm_uart_console_record(const UB *buf, INT size);
+#endif
 #endif
 
 /* Output function */
 typedef	struct {
-	H	len;		/* Total output length */
+	INT	len;		/* Total output length */
 	H	cnt;		/* Buffer counts */
 	UB	*bufp;		/* Buffer pointer for tm_sprintf */
 } OutPar;
@@ -306,6 +277,7 @@ LOCAL	void	tm_vsprintf( OutFn ostr, OutPar *par, const UB *fmt, va_list ap )
 /*
  *	Output to console
  */
+#if !TM_CONSOLE_USB_CDC
 LOCAL	void	out_cons( UB *str, INT len,  OutPar *par )
 {
 #if	TM_OUTBUF_SZ == 0
@@ -334,38 +306,66 @@ LOCAL	void	out_cons( UB *str, INT len,  OutPar *par )
 #endif
 }
 
-EXPORT INT	tm_printf( const UB *format, ... )
+#endif /* !TM_CONSOLE_USB_CDC */
+
+#if TM_CONSOLE_USB_CDC
+/* Per-call storage also permits an interrupt to print while a task formats.
+ * Formatting does not change PRIMASK. Only the final bounded enqueue locks.
+ * Long messages are visibly truncated; no shared scratch buffer or heap. */
+LOCAL void out_record(UB *str, INT len, OutPar *par)
 {
-	va_list	ap;
-	INT	result;
-#if TK_SUPPORT_SMP && TM_CONSOLE_USB_CDC
-	UINT	intsts;
-
-	tm_printf_lock(&intsts);
+    if (str == NULL) return;
+    while (len-- > 0) {
+        UB c = *str++;
+        if (par->len < 0x7fffffff) ++par->len;
+        if (c == CHR_LF) {
+            if (par->cnt < TM_USB_RECORD_SIZE) par->bufp[par->cnt++] = CHR_CR;
+            else par->len = 0x7fffffff;
+        }
+        if (par->cnt < TM_USB_RECORD_SIZE) par->bufp[par->cnt++] = c;
+        else par->len = 0x7fffffff;
+    }
+}
 #endif
 
-#if	TM_OUTBUF_SZ == 0
-	H	len = 0;
-
-	va_start(ap, format);
-	tm_vsprintf(out_cons, (OutPar*)&len, format, ap);
-	va_end(ap);
-	result = len;
+EXPORT INT tm_printf(const UB *format, ...)
+{
+    va_list ap;
+    OutPar par;
+#if TM_CONSOLE_USB_CDC
+    UB obuf[TM_USB_RECORD_SIZE];
+    par.len = par.cnt = 0;
+    par.bufp = obuf;
+    va_start(ap, format);
+    tm_vsprintf(out_record, &par, format, ap);
+    va_end(ap);
+    INT truncated = par.len == 0x7fffffff;
+    if (truncated) {
+        /* Fixed marker fits even when the omitted character was a newline. */
+        obuf[TM_USB_RECORD_SIZE-5] = '.';
+        obuf[TM_USB_RECORD_SIZE-4] = '.';
+        obuf[TM_USB_RECORD_SIZE-3] = '.';
+        obuf[TM_USB_RECORD_SIZE-2] = CHR_CR;
+        obuf[TM_USB_RECORD_SIZE-1] = CHR_LF;
+    }
+    tm_usb_console_record(obuf, par.cnt, truncated);
+#if TM_CONSOLE_UART
+    tm_uart_console_record(obuf, par.cnt);
+#endif
+    return truncated ? -1 : par.len;
 #else
-	UB	obuf[TM_OUTBUF_SZ];
-	OutPar	par;
-
-	par.len = par.cnt = 0;
-	par.bufp = obuf;
-	va_start(ap, format);
-	tm_vsprintf(out_cons, (OutPar*)&par, format, ap);
-	va_end(ap);
-	result = par.len;
+#if TM_OUTBUF_SZ > 0
+    UB obuf[TM_OUTBUF_SZ];
+    par.bufp = obuf;
+#else
+    par.bufp = NULL;
 #endif
-#if TK_SUPPORT_SMP && TM_CONSOLE_USB_CDC
-	tm_printf_unlock(intsts);
+    par.len = par.cnt = 0;
+    va_start(ap, format);
+    tm_vsprintf(out_cons, &par, format, ap);
+    va_end(ap);
+    return par.len;
 #endif
-	return result;
 }
 
 /*

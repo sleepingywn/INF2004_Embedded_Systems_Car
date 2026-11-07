@@ -63,8 +63,14 @@ void ir_acquisition_stop(void)
     scan.active = false;
 }
 
-static void acquisition_fault(unsigned fault)
+static void acquisition_fault(unsigned fault, ir_fault_reason_t reason, uint32_t detail)
 {
+    if (acquisition.first_fault_reason == IR_REASON_NONE) {
+        acquisition.first_fault_us = in_w(TIMER_TIMERAWL);
+        acquisition.first_fault_reason = reason;
+        acquisition.first_fault_detail = detail;
+        acquisition.first_fault_samples = acquisition.samples;
+    }
     acquisition.faults |= fault;
     ir_acquisition_stop();
     queue.tail = queue.head; /* no frames from before a fault escape afterwards */
@@ -97,14 +103,17 @@ static void timer_interrupt(UINT intno)
     {
         acquisition.max_lateness_us = late;
     }
-    if ((late > IR_ACQ_MAX_JITTER_US) || scan.active)
-    {
-        acquisition_fault(IR_ACQ_TIMING);
+    if (late > IR_ACQ_MAX_JITTER_US) {
+        acquisition_fault(IR_ACQ_TIMING, IR_REASON_LAUNCH_LATE, late);
+        return;
+    }
+    if (scan.active) {
+        acquisition_fault(IR_ACQ_TIMING, IR_REASON_SCAN_OVERLAP, now - scan.started_us);
         return;
     }
     if (((in_w(ADC_CS) & ADC_CS_READY) == 0u) || ((in_w(ADC_FCS) & IR_FIFO_EMPTY) == 0u))
     {
-        acquisition_fault(IR_ACQ_ADC);
+        acquisition_fault(IR_ACQ_ADC, IR_REASON_ADC, in_w(ADC_FCS));
         return;
     }
     scan.frame.sampled_ms = scan.deadline_ms;
@@ -124,14 +133,16 @@ static void adc_interrupt(UINT intno)
     if (!acquisition.running || !scan.active ||
         ((fifo_status & (IR_FIFO_EMPTY | IR_FIFO_OVER)) != 0u))
     {
-        acquisition_fault(IR_ACQ_ADC);
+        acquisition_fault(IR_ACQ_ADC, IR_REASON_ADC, in_w(ADC_FCS));
         return;
     }
     uint32_t value = in_w(ADC_FIFO);
     uint32_t elapsed = in_w(TIMER_TIMERAWL) - scan.started_us;
     if (((value & IR_FIFO_ERROR) != 0u) || (elapsed > IR_ACQ_MAX_JITTER_US))
     {
-        acquisition_fault(((value & IR_FIFO_ERROR) != 0u) ? IR_ACQ_ADC : IR_ACQ_TIMING);
+        acquisition_fault(((value & IR_FIFO_ERROR) != 0u) ? IR_ACQ_ADC : IR_ACQ_TIMING,
+                          ((value & IR_FIFO_ERROR) != 0u) ? IR_REASON_ADC : IR_REASON_SCAN_TIMEOUT,
+                          ((value & IR_FIFO_ERROR) != 0u) ? value : elapsed);
         return;
     }
     switch (scan.channel)
@@ -161,7 +172,7 @@ static void adc_interrupt(UINT intno)
     uint8_t next = (queue.head + 1u) & (IR_ACQ_RING_SIZE - 1u);
     if (next == queue.tail)
     {
-        acquisition_fault(IR_ACQ_OVERFLOW);
+        acquisition_fault(IR_ACQ_OVERFLOW, IR_REASON_OVERFLOW, 0);
         return;
     }
     ring[queue.head] = scan.frame;
@@ -237,8 +248,7 @@ ER ir_acquisition_start(ID event)
     }
     if (error < E_OK)
     {
-        acquisition.faults = IR_ACQ_HARDWARE;
-        ir_acquisition_stop();
+        acquisition_fault(IR_ACQ_HARDWARE, IR_REASON_HARDWARE, (uint32_t)error);
         return error;
     }
     uint64_t next_ms = timer_us() / 1000u + 2u;

@@ -22,6 +22,37 @@
  * x4 counts per OUTPUT WHEEL revolution, not pulses per motor revolution.
  * Signs must be +1 or -1; positive logical motion means vehicle forward.
  * No physical test or tuning result is implied by this file. */
+/* Explicit integrated local line trial (2 s, or opt-in 30 s button profile).
+ * Does not grant calibrated
+ * metric odometry or permission for distance/turn/network commands. */
+#ifndef MOTION_LINE_DEMO
+#define MOTION_LINE_DEMO 0
+#endif
+#ifndef MOTION_LINE_CIRCUIT
+#define MOTION_LINE_CIRCUIT 0
+#endif
+#ifndef MOTION_LINE_AUTOSTART
+#define MOTION_LINE_AUTOSTART 0
+#endif
+#ifndef MOTION_LINE_SEARCH
+#define MOTION_LINE_SEARCH 0
+#endif
+#ifndef MOTION_LINE_ADAPTIVE
+#define MOTION_LINE_ADAPTIVE 0
+#endif
+#if MOTION_LINE_ADAPTIVE && (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART || MOTION_LINE_SEARCH)
+#error "Adaptive control requires GP20 circuit mode with legacy search disabled"
+#endif
+#if MOTION_LINE_SEARCH && (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART)
+#error "Bounded search requires the explicit GP20 circuit profile"
+#endif
+#if MOTION_LINE_AUTOSTART && !MOTION_LINE_CIRCUIT
+#error "Autostart requires the bounded battery circuit profile"
+#endif
+#if MOTION_LINE_CIRCUIT && !MOTION_LINE_DEMO
+#error "Circuit profile requires the local line profile"
+#endif
+#define MOTION_LINE_BUTTON_PIN 20u /* Robo Pico active-low programmable button */
 #define MOTION_CALIBRATED 0
 #define MOTION_ENCODERS_VERIFIED 1 /* verified 2026-10-31: both wheels count both ways, 0 invalid edges */
 #define MOTION_LEFT_MOTOR_SIGN -1   /* measured 2026-10-31: +duty spins left wheel backward */
@@ -48,9 +79,16 @@
 #define MOTION_PID_KI_Q10 0u      /* permille per mm/s per second */
 #define MOTION_PID_KD_Q10 0u      /* permille per mm/s/second */
 
-/* Bench pulses are explicit API requests, never automatic startup tests.
- * Match the standalone test; limited to 20% and 500 ms. */
-#define MOTION_BENCH_DUTY_MAX 600     /* INTEGRATION TEST BUILD: 60 % so the console can drive over the hump (was 200) */
-#define MOTION_BENCH_TIME_MAX_MS 4000u /* INTEGRATION TEST BUILD: 4 s drive (was 500) */
+/* Explicit development profile; production keeps conservative pulse limits. */
+#ifndef MOTION_DEVELOPMENT
+#define MOTION_DEVELOPMENT 0
+#endif
+#if MOTION_DEVELOPMENT
+#define MOTION_BENCH_DUTY_MAX 600
+#define MOTION_BENCH_TIME_MAX_MS 4000u
+#else
+#define MOTION_BENCH_DUTY_MAX 200
+#define MOTION_BENCH_TIME_MAX_MS 500u
+#endif
 
 #endif

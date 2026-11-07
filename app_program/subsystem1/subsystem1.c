@@ -6,6 +6,7 @@
  */
 
 #include "subsystem1.h"
+#include "telemetry_transport.h"
 
 EXPORT ID	tid_led;	/* IF-05, see subsystem1.h */
 EXPORT ID	cyc_led;
@@ -13,6 +14,8 @@ EXPORT ID	cyc_led;
 EXPORT ER subsystem1_init(void)
 {
 	T_CCYC	ccyc = {0};
+	ER transport_error = s1_transport_init();
+	if (transport_error < E_OK) return transport_error;
 
 	/* Cyclic handler: once started, the kernel calls led_cyclic_handler
 	   every S1_TICK_MS.  Without TA_STA it is created stopped; it is

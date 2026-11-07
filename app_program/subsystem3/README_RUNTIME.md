@@ -1,9 +1,14 @@
 # Live S3 integration
 
-Implementation candidate, 29 October 2026. Added at the user's request to fill
-the missing Buddy 3 runtime. **Not built, tested or flashed.** Source review is
-not evidence of timing, electrical correctness or successful vehicle motion.
-The user's approval is required before any build, test or flash.
+Status updated 2 November 2026. The runtime has been compiled and exercised
+in approved stationary runs. Before the console correction, acquisition stopped
+after 18,780 frames with a 968 us launch delay. The revised build passed an
+approved three-minute stationary comparison including 24 diagnostic requests:
+178,609 frames at the final diagnostic, no IR fault, maximum launch lateness
+143 us and maximum scan duration 161 us. Calibration and wider stress checks
+remain outstanding; intermittent laptop telemetry delivery was also observed. See
+`testing/integration/STATIONARY_FAULT_INVESTIGATION.md` for evidence and limits.
+Hardware flashing/testing requires the user's approval.
 
 ## Data path and ownership
 
@@ -42,20 +47,22 @@ on core 0 and do not preempt each other's packed state. The same pinned task
 masks local interrupts while copying ring entries; other cores access only
 the runtime's mutex-protected status and command slot.
 
-The ring holds 15 complete frames. Each frame stores three 12-bit values and
+The ring holds 63 complete frames. Each frame stores three 12-bit values and
 the full 32-bit scheduled millisecond timestamp. The timestamp starts from the
 64-bit raw microsecond clock, so the raw low-word wrap at about 71 minutes
 does not become a millisecond discontinuity. No missing frames are synthesized.
 Each frame's launch must occur within `IR_ACQ_MAX_JITTER_US` of its deadline,
 and its full three-channel scan must complete within that bound of launch.
-The default **100 us is a provisional acceptance limit, not a measurement**.
-Thus individual channels can be sampled up to 200 us after the timestamp's
-nominal boundary; the three channels are sequential, not simultaneous.
+The current **800 us is a provisional acceptance limit, not an achieved bound**.
+Launch lateness and scan duration are checked separately; neither permits an
+unfinished scan to overlap the next launch. The channels are sequential, not
+simultaneous, and a scheduled timestamp is not an exact ADC conversion time.
+The console fix does not widen this limit.
 
 Late/overlapping scans, ADC errors, FIFO errors and ring overflow stop
 acquisition and wake the task to assert the IR health fault. A missed alarm
 write forces an interrupt instead of waiting for a 32-bit counter wrap.
-The task rejects frames older than 15 ms. Its separate 20 ms wait timeout
+The task rejects frames older than 63 ms. Its separate 20 ms wait timeout
 detects loss of interrupts; this timeout is rounded by the kernel tick and
 is not a guaranteed 20 ms fault response. B2 also enforces its configured
 line-input maximum age while following.
@@ -64,12 +71,20 @@ line-input maximum age while following.
 white/black endpoints, calibration sample count, failed-channel mask, hardware
 fault bits, observed maximum launch lateness / scan duration, handoff errors,
 motion epoch and status-update time. Hardware counters restart with BEGIN.
-No timing or RAM-size result has been recorded yet; inspect actual compiler
-layout and stack high-water marks after approval.
+First-fault reason, low 32-bit hardware microsecond time, detail and completed
+frame count persist until explicit BEGIN/restart. Reasons: 1 late launch,
+2 overlapping scan, 3 scan timeout, 4 ADC, 5 ring overflow, 6 stale queued frame,
+7 runtime wait failure/watchdog, 8 startup wait, 9 hardware setup. Timing detail
+is microseconds; ADC detail is register bits and hardware detail is the error
+code cast to unsigned. First-fault time wraps at about 71 minutes. Calibration
+contrast and handoff failures retain their separate existing status fields.
+The stationary timing result above does not establish worst-case timing or
+stack high-water bounds under other loads.
 
 ## Operator/controller API
 
-Include `ir_runtime.h`. These are task-context APIs, not serial commands.
+Include `ir_runtime.h` for the task-context APIs. The default local diagnostic
+console maps `i` to status, `c` to BEGIN and `f` to FINISH.
 No calibration or movement request is issued automatically, even in TEST=1.
 No blocking `tm_getchar()` loop is introduced into the sampling path.
 

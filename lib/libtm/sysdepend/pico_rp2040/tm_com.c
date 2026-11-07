@@ -82,6 +82,13 @@ LOCAL void uart_snd_dat(const UB* buf, INT size)
 IMPORT void tm_usb_console_put(const UB *buf, INT size);
 #endif
 
+#if TM_CONSOLE_USB_CDC && TM_CONSOLE_UART
+EXPORT void tm_uart_console_record(const UB *buf, INT size)
+{
+    uart_snd_dat(buf, size);
+}
+#endif
+
 EXPORT	void	tm_snd_dat( const UB* buf, INT size )
 {
 #if TM_CONSOLE_USB_CDC

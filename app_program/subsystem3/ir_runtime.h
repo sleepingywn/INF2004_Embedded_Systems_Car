@@ -23,6 +23,10 @@ typedef struct
     uint32_t epoch;
     uint32_t calibration_samples;
     uint32_t handoff_errors;
+    uint32_t epoch_resyncs; /* rejected old-session data; acquisition kept running */
+    ER last_handoff_error;
+    uint32_t last_handoff_ms;
+    uint8_t last_handoff_stage; /* 0 none, 1 motion status, 2 line/barcode bridge */
     ir_raw_frame_t raw;
     ir_cal_t calibration[IR_NUM_CH];
     ir_acq_status_t acquisition;

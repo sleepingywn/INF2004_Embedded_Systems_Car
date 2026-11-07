@@ -1,4 +1,5 @@
 #include "motion_ir_bridge.h"
+#include "line_observation.h"
 #define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
 #define memcpy __builtin_memcpy
 
@@ -56,7 +57,20 @@ ER motion_ir_bridge_sample(motion_ir_bridge_t *bridge, const uint8_t normalized[
     ER error = E_OK;
     if ((sample_ms - bridge->line_ms >= 10u) || line.fault || completed || changed_epoch)
     {
-        error = motion_publish_line(&line, sample_ms, epoch);
+        error = motion_publish_line_observed(&line,valid ?
+            line_levels_pack(normalized[IR_CH_LINE_A],normalized[IR_CH_LINE_B]):0,
+            sample_ms,epoch);
+        if (error == MOTION_IR_SUPERSEDED)
+        {
+            motion_ir_bridge_init(bridge);
+            /* A real sampling fault must not be masked by an epoch change. */
+            if (line.fault)
+            {
+                (void)motion_set_fault(MOTION_HEALTH_IR, true);
+                return E_IO;
+            }
+            return error;
+        }
         if (error < E_OK)
         {
             bc_init(&bridge->capture);
@@ -74,6 +88,7 @@ ER motion_ir_bridge_sample(motion_ir_bridge_t *bridge, const uint8_t normalized[
     if (completed)
     {
         error = motion_publish_barcode(&barcode, sample_ms, epoch);
+        if (error == MOTION_IR_SUPERSEDED)motion_ir_bridge_init(bridge);
     }
     /* A full mailbox explicitly rejects this barcode; never replay it later. */
     return error;

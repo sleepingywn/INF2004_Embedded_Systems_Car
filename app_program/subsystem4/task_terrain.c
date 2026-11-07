@@ -16,6 +16,7 @@
 #include "subsystem4.h"
 #include "drv_gy511.h"
 #include "imu_logic.h"
+#include "../subsystem2/motion_logic.h"
 #include "../subsystem2/motion.h"	/* IF-09: Buddy 2's wheel encoder counts */
 
 #define FAULT_AFTER	5	/* failed reads in a row -> IMU fault (100 ms) */
@@ -23,7 +24,7 @@
 #define PRINT_EVERY	50	/* status line every 50 x 20 ms = 1 s          */
 
 EXPORT volatile BOOL s4_status_print = TRUE;	/* status line on/off */
-#define MTX_WAIT_MS	2	/* never wait longer than this for the lock     */
+#define MTX_WAIT_MS	2	/* rounded by the kernel tick; not a 2 ms wall-time bound */
 
 EXPORT S4_DIAG	s4_diag;
 
@@ -61,7 +62,7 @@ EXPORT void terrain_cyclic_handler(void *exinf)
 
 EXPORT ER s4_get_terrain(S4_TERRAIN *out)
 {
-	ER er = tk_loc_mtx(mtx_terrain, MTX_WAIT_MS);
+	ER er = tk_loc_mtx(mtx_terrain, TMO_POL);
 	if (er < E_OK) return er;
 	*out = snapshot;
 	tk_unl_mtx(mtx_terrain);
@@ -73,7 +74,7 @@ LOCAL S4_EVENTS		events = { S4_SOURCE_IMU, { { 0, 0, 0 } } };
 
 EXPORT ER s4_get_events(S4_EVENTS *out)
 {
-	ER er = tk_loc_mtx(mtx_terrain, MTX_WAIT_MS);
+	ER er = tk_loc_mtx(mtx_terrain, TMO_POL);
 	if (er < E_OK) return er;
 	*out = events;
 	tk_unl_mtx(mtx_terrain);
@@ -189,6 +190,8 @@ LOCAL float car_forward_accel_g(float dist_mm, float dt)
 
 LOCAL BOOL	wheel_have;		/* previous counts valid              */
 LOCAL UW	wheel_prev_l, wheel_prev_r;
+LOCAL UW wheel_prev_ms, wheel_prev_epoch, wheel_prev_sequence;
+LOCAL float wheel_sample_dt;
 LOCAL float	wheel_speed_mm_s;	/* last forward speed (for printing)  */
 LOCAL float	wheel_turn_dps;		/* last turn rate, + = left (CCW)     */
 LOCAL BOOL	wheel_ok;		/* wheel data available               */
@@ -203,30 +206,47 @@ LOCAL float wheel_travel_mm(float dt)
 	motion_status_t	m;
 	INT		dl, dr;
 	float		left_mm, right_mm;
+
+	if (MOTION_LEFT_COUNTS_REV == 0 || MOTION_RIGHT_COUNTS_REV == 0 ||
+	    MOTION_TRACK_WIDTH_MM == 0 || motion_get_status(&m) != E_OK ||
+        !m.raw_valid || (UW)(motion_now_ms() - m.time_ms) > 100u) {
+        wheel_have = FALSE;
+        wheel_speed_mm_s = wheel_turn_dps = 0.0f;
+		wheel_ok = FALSE;
+		return 0.0f;
+	}
 	const float	mm_per_count_l = (float)MOTION_LEFT_CIRCUMFERENCE_UM * 0.001f
 					/ (float)MOTION_LEFT_COUNTS_REV;
 	const float	mm_per_count_r = (float)MOTION_RIGHT_CIRCUMFERENCE_UM * 0.001f
 					/ (float)MOTION_RIGHT_COUNTS_REV;
 
-	if (MOTION_LEFT_COUNTS_REV == 0 || MOTION_RIGHT_COUNTS_REV == 0 ||
-	    motion_get_status(&m) != E_OK) {
-		wheel_ok = FALSE;
-		return 0.0f;
-	}
-	if (!wheel_have) {			/* first sample: just remember */
+	if (!wheel_have || m.epoch != wheel_prev_epoch ||
+        (UW)(m.time_ms - wheel_prev_ms) > 100u) {			/* first sample: just remember */
 		wheel_prev_l = m.left_count;
 		wheel_prev_r = m.right_count;
 		wheel_have = TRUE;
-		wheel_ok = TRUE;
+        wheel_prev_ms = m.time_ms;
+        wheel_prev_epoch = m.epoch;
+        wheel_prev_sequence = m.sequence;
+        wheel_speed_mm_s = wheel_turn_dps = 0.0f;
+		wheel_ok = FALSE;
 		return 0.0f;
 	}
-	dl = (INT)(m.left_count  - wheel_prev_l);	/* wrap-safe */
-	dr = (INT)(m.right_count - wheel_prev_r);
+	if (m.sequence == wheel_prev_sequence || m.time_ms == wheel_prev_ms) {
+        wheel_ok = FALSE;
+        return 0.0f;
+    }
+    dt = (float)(UW)(m.time_ms - wheel_prev_ms) * 0.001f;
+    wheel_sample_dt = dt;
+    wheel_prev_ms = m.time_ms;
+    wheel_prev_sequence = m.sequence;
+    dl = motion_count_delta(m.left_count, wheel_prev_l);
+    dr = motion_count_delta(m.right_count, wheel_prev_r);
 	wheel_prev_l = m.left_count;
 	wheel_prev_r = m.right_count;
 
-	left_mm  = (float)(dl * MOTION_LEFT_ENCODER_SIGN)  * mm_per_count_l;
-	right_mm = (float)(dr * MOTION_RIGHT_ENCODER_SIGN) * mm_per_count_r;
+	left_mm  = ((float)dl * MOTION_LEFT_ENCODER_SIGN)  * mm_per_count_l;
+	right_mm = ((float)dr * MOTION_RIGHT_ENCODER_SIGN) * mm_per_count_r;
 	if (s4_heading_zero_req) {
 		wheel_heading_deg = heading_at_print = 0.0f;
 		s4_heading_zero_req = FALSE;
@@ -417,9 +437,15 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 
 			/* car's own forward acceleration, from the raw distance */
 			if (wheel_ok && S4_PRETEND_SPEED_MM_S == 0) {
-				acc_g = car_forward_accel_g(dist, dt);
+				acc_g = car_forward_accel_g(dist, wheel_sample_dt);
 			} else {
-				acc_g = car_forward_accel_g(0.0f, dt);
+				/* Missing/rebased encoder samples must not enter the acceleration
+                 * window as measured zero travel. Restart the baseline. */
+                for (unsigned i = 0; i < 2 * S4_ACC_WIN; ++i) {
+                    acc_dist[i] = 0.0f; acc_dt[i] = 0.0f;
+                }
+                acc_i = 0;
+                acc_g = 0.0f;
 			}
 			car_accel_g = acc_g;
 

@@ -75,6 +75,10 @@ static void route_console_drain(void)
                       "4 stall, 3 encoder/control, 18 line lost or stale) phase=%d\n",
                       (INT)route_ch(e.code), (INT)e.v[0], (INT)e.v[1]);
             break;
+        case ROUTE_EV_TIME_LIMIT:
+            tm_printf((UB*)"[route] RUN ENDED: 30 s limit since the last start/turn (phase=%d)\n",
+                      (INT)e.v[0]);
+            break;
         default: break;
         }
     }

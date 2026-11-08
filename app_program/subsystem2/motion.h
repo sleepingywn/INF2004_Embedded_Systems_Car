@@ -252,9 +252,10 @@ ER motion_debug_barcode(bc_msg_t *barcode, uint32_t *sampled_ms, uint32_t *count
 #if MOTION_LINE_ROUTE
 /* Barcode routing log, drained by the console task (single reader).
  * kind: 1 barcode, 2 armed, 3 not armed, 4 junction, 5 exit, 6 leg done,
- *       7 V5 resumed, 8 route failure. */
+ *       7 V5 resumed, 8 route failure, 9 30 s segment limit reached. */
 enum { ROUTE_EV_BARCODE = 1, ROUTE_EV_ARMED, ROUTE_EV_NOT_ARMED, ROUTE_EV_JUNCTION,
-       ROUTE_EV_EXIT, ROUTE_EV_LEG_DONE, ROUTE_EV_RESUMED, ROUTE_EV_FAILED };
+       ROUTE_EV_EXIT, ROUTE_EV_LEG_DONE, ROUTE_EV_RESUMED, ROUTE_EV_FAILED,
+       ROUTE_EV_TIME_LIMIT };
 typedef struct {
     uint32_t ms;
     uint8_t kind;

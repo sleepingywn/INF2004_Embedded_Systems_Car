@@ -248,6 +248,13 @@ static void owner_tests(void)
     assert(has(ROUTE_EV_BARCODE) && has(ROUTE_EV_NOT_ARMED) && !has(ROUTE_EV_ARMED) && !route.armed);
     puts("PASS route owner 7: letter E decoded, not armed");
 
+    /* 8: the 30 s run limit restarts at the handover after a turn. */
+    reset_owner(1, 30600); run();
+    assert(!state.faults && owner_flags.active_valid && !has(ROUTE_EV_TIME_LIMIT));
+    reset_owner(5, 30600); run();
+    assert(!owner_flags.active_valid && has(ROUTE_EV_TIME_LIMIT));
+    puts("PASS route owner 8: 30 s limit restarts after a turn; a run with no turn ends at 30 s (logged)");
+
     /* 6: arc never sees the branch -> stops after 6 s with a timeout fault. */
     reset_owner(6, 9000); run();
     assert(has(ROUTE_EV_FAILED) && state.faults == MOTION_FAULT_TIMEOUT && !out_left && !out_right);

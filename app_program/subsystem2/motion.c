@@ -1075,6 +1075,11 @@ static void route_v5_begin(uint32_t now, bool carry)
     diagnostics.line_step = LINE_STEP_WAIT;
     route.phase = ROUTE_IDLE;
     route.doing = 0;
+    /* Each line segment after a manoeuvre gets its own 30 s run limit, as on
+     * the bench (V5's own 30 s and count limits also restart in
+     * line_follow_begin). Without this the whole GP20 run, turns included,
+     * had to finish inside one 30 s request. */
+    active.issued_ms = now;
 }
 /* Speed-controlled arc / straight / pivot step. */
 static void route_drive(uint32_t now)
@@ -1614,6 +1619,10 @@ void motion_task(INT stacd, void *exinf)
         {
             if (state.state == MOTION_PULSING || active.command==MOTION_LINE_TRACE)
             {
+#if MOTION_LINE_ROUTE
+                if (active.command == MOTION_LINE_TRACE)
+                    route_event(ROUTE_EV_TIME_LIMIT, route.doing, (int)route.phase, 0, 0, 0);
+#endif
                 end_request(MOTION_COMPLETED);
             }
             else if ((state.state == MOTION_TRAVELLING) || (state.state == MOTION_TURNING) ||

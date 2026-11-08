@@ -113,8 +113,7 @@ This runs:
 
 ## Known limits
 
-- **30 s limit:** the whole GP20 run is still bounded to 30 s by the motion
-  request. The bench restarted the 30 s at each handover.
+- **30 s limit:** each segment (start, or V5 after a turn) has its own 30 s limit, as on the bench. A run end is logged as `[route] RUN ENDED`.
 - **Early handover:** the exit rule is Ken's original and can hand over
   early on a crossing. It was seen once on the bench.
 - **Mapping:** Z = left is a test mapping. Letters E–Y arm nothing.

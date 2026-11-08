@@ -249,6 +249,28 @@ ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t
  * first sample. */
 ER motion_debug_line(line_msg_t *line, uint32_t *sampled_ms);
 ER motion_debug_barcode(bc_msg_t *barcode, uint32_t *sampled_ms, uint32_t *count);
+#if MOTION_LINE_ROUTE
+/* Barcode routing log, drained by the console task (single reader).
+ * kind: 1 barcode, 2 armed, 3 not armed, 4 junction, 5 exit, 6 leg done,
+ *       7 V5 resumed, 8 route failure. */
+enum { ROUTE_EV_BARCODE = 1, ROUTE_EV_ARMED, ROUTE_EV_NOT_ARMED, ROUTE_EV_JUNCTION,
+       ROUTE_EV_EXIT, ROUTE_EV_LEG_DONE, ROUTE_EV_RESUMED, ROUTE_EV_FAILED };
+typedef struct {
+    uint32_t ms;
+    uint8_t kind;
+    char code;        /* letter concerned, 0 = none */
+    int16_t v[4];     /* kind-specific values, see line_console.c */
+} motion_route_event_t;
+/* Full widths of the latest 29-element-or-longer capture, for the log. */
+typedef struct {
+    bc_msg_t by_time, by_distance;
+    bool distance_valid;
+    char time_code, distance_code, old_code, chosen;
+    uint32_t sequence;
+} motion_route_barcode_t;
+bool motion_route_next_event(motion_route_event_t *event);
+bool motion_route_barcode(motion_route_barcode_t *out, uint32_t *last_sequence);
+#endif
 ER motion_init(void);
 ER motion_start(void);
 /* Called by app_main only after all subsystem start functions succeed. */

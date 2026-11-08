@@ -10,6 +10,11 @@
 #define IR_TASK_PRIORITY 16
 #define IR_WATCHDOG_MS 20u /* liveness watchdog; not the 1 kHz pacing source */
 #define IR_MAX_QUEUE_AGE_MS (IR_ACQ_RING_SIZE - 1u)
+#if MOTION_LINE_ROUTE
+#define IR_BC_RAW_WHITE_MAX 200u /* Ken's bench values; do not retune here */
+#define IR_BC_RAW_BLACK_MIN 240u
+_Static_assert(IR_BC_RAW_WHITE_MAX < IR_BC_RAW_BLACK_MIN, "raw barcode hysteresis reversed");
+#endif
 
 static ID runtime_mutex;
 
@@ -199,6 +204,18 @@ static void process_frame(const ir_raw_frame_t *frame)
         normalized[ch] = ir_normalise(&owner.calibration[ch], raw[ch]);
         owner.normalized[ch].value = normalized[ch];
     }
+#if MOTION_LINE_ROUTE
+    /* Barcode black/white from fixed raw ADC cutoffs with hysteresis, as in
+     * Ken's working bench (barcode-turning 1bbb41b/4083fb3). The calibrated
+     * 60/35 scale missed blurred narrow bars. Display values stay calibrated;
+     * only the barcode capture input changes. Line sensors are unchanged. */
+    {
+        const uint16_t raw_bc = raw[IR_CH_BARCODE];
+        const bool black = raw_bc >= IR_BC_RAW_BLACK_MIN ||
+                           (bridge.capture.is_bar && raw_bc > IR_BC_RAW_WHITE_MAX);
+        normalized[IR_CH_BARCODE] = black ? 100u : 0u;
+    }
+#endif
     ER error = motion_ir_bridge_sample(&bridge, normalized, true, frame->sampled_ms, owner.epoch);
     if (error == MOTION_IR_SUPERSEDED)
     {

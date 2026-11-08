@@ -1,6 +1,9 @@
 #include "motion.h"
 #include "startup_gate.h"
 #include "line_follow.h"
+#if MOTION_LINE_ROUTE
+#include "motion_route.h"
+#endif
 #if TM_CONSOLE_USB_CDC
 #include <tm/usb_console.h>
 #endif
@@ -196,6 +199,9 @@ static struct
     uint16_t bits : 11;
 } previous_duty[2];
 static uint32_t reverse_until[2];
+#if MOTION_LINE_ROUTE
+static void route_reset(void);
+#endif
 uint32_t motion_now_ms(void)
 {
     /* RP2040 free-running 64-bit microsecond timer. Do not divide a raw 32-bit
@@ -772,6 +778,9 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags,
 #if MOTION_LINE_ADAPTIVE
             last_barcode_ms=now; /* never replay a pre-start route capture */
 #endif
+#if MOTION_LINE_ROUTE
+            route_reset();
+#endif
             line_follow_begin(&line_trial,state.left_count,state.right_count,state.invalid_edges,state.time_ms,now);
             diagnostics.line_active=1;diagnostics.line_step=LINE_STEP_WAIT;
             diagnostics.line_failure_flags=0;
@@ -928,6 +937,321 @@ static void apply_velocity(int16_t left, int16_t right, uint32_t now, uint16_t d
     state.right_duty_bits = (uint16_t)motion_bits_encode(duty[1], 11u);
 }
 
+#if MOTION_LINE_ROUTE
+/* ===== Barcode routing (see motion_route.h) ============================== */
+#define ROUTE_LOG_SIZE 32u
+static route_odometry_t route_odo;
+static struct {
+    route_phase_t phase;
+    char armed;            /* letter for the next junction, 0 = none */
+    char doing;            /* letter of the running manoeuvre */
+    bool junction_candidate, exit_candidate;
+    uint32_t junction_since_ms, exit_since_ms;
+    uint32_t phase_ms;     /* motion_now_ms() when the phase began */
+    uint32_t origin_left, origin_right, origin_invalid; /* forward counts */
+    uint32_t step_ms;      /* encoder time of the last speed step */
+    uint32_t progress_ms[2];
+    int32_t last_total[2];
+    uint32_t goal;
+    speed_control_t speed;
+} route;
+/* Single writer (motion task), single reader (console task). */
+static motion_route_event_t route_log[ROUTE_LOG_SIZE];
+static volatile uint32_t route_log_head, route_log_tail;
+static motion_route_barcode_t route_bc;
+static volatile uint32_t route_bc_sequence;
+static void route_event(uint8_t kind, char code, int a, int b, int c, int d)
+{
+    uint32_t head = route_log_head;
+    if (head - route_log_tail >= ROUTE_LOG_SIZE) return; /* full: drop newest */
+    motion_route_event_t *e = &route_log[head % ROUTE_LOG_SIZE];
+    e->ms = motion_now_ms();
+    e->kind = kind;
+    e->code = code;
+    e->v[0] = (int16_t)a; e->v[1] = (int16_t)b; e->v[2] = (int16_t)c; e->v[3] = (int16_t)d;
+    __sync_synchronize();
+    route_log_head = head + 1u;
+}
+bool motion_route_next_event(motion_route_event_t *event)
+{
+    uint32_t tail = route_log_tail;
+    if (tail == route_log_head || event == NULL) return false;
+    __sync_synchronize();
+    *event = route_log[tail % ROUTE_LOG_SIZE];
+    __sync_synchronize();
+    route_log_tail = tail + 1u;
+    return true;
+}
+bool motion_route_barcode(motion_route_barcode_t *out, uint32_t *last_sequence)
+{
+    /* Snapshot without a lock: copy, then accept only if no new capture was
+     * written meanwhile (the writer bumps the sequence after writing). */
+    uint32_t seq = route_bc_sequence;
+    if (out == NULL || last_sequence == NULL || seq == *last_sequence) return false;
+    __sync_synchronize();
+    *out = route_bc;
+    __sync_synchronize();
+    if (route_bc_sequence != seq) return false;
+    *last_sequence = seq;
+    return true;
+}
+static uint32_t route_fwd_left(void)
+{
+    return MOTION_LEFT_ENCODER_SIGN < 0 ? 0u - state.left_count : state.left_count;
+}
+static uint32_t route_fwd_right(void)
+{
+    return MOTION_RIGHT_ENCODER_SIGN < 0 ? 0u - state.right_count : state.right_count;
+}
+static void route_reset(void)
+{
+    route.phase = ROUTE_IDLE;
+    route.armed = route.doing = 0;
+    route.junction_candidate = route.exit_candidate = false;
+}
+static void route_write(unsigned left_duty, unsigned right_duty, int right_direction)
+{
+    int16_t ld = (int16_t)((int)left_duty * MOTION_LEFT_MOTOR_SIGN);
+    int16_t rd = (int16_t)((int)right_duty * MOTION_RIGHT_MOTOR_SIGN * right_direction);
+    motor_hw_write(ld, rd);
+    state.left_duty_bits = (uint16_t)motion_bits_encode(ld, 11u);
+    state.right_duty_bits = (uint16_t)motion_bits_encode(rd, 11u);
+}
+static void route_motors_off(void)
+{
+    motor_hw_stop();
+    state.left_duty_bits = state.right_duty_bits = 0;
+}
+static void route_fail(int reason, unsigned fault)
+{
+    route_event(ROUTE_EV_FAILED, route.doing, reason, (int)route.phase, 0, 0);
+    route.phase = ROUTE_IDLE;
+    fault_stop(fault);
+}
+/* Bench scan_begin_leg: fresh speed controller with the bench gains. */
+static void route_begin_motion(route_phase_t phase, uint32_t now)
+{
+    speed_control_start(&route.speed);
+    route.speed.left.kp_milli = route.speed.right.kp_milli = 120;
+    route.speed.left.ki_milli = route.speed.right.ki_milli = 480;
+    route.speed.left.minimum = route.speed.right.minimum = 0;
+    route.speed.left.integral_floor_milli = route.speed.right.integral_floor_milli = -200000;
+    route.origin_left = route_fwd_left();
+    route.origin_right = route_fwd_right();
+    route.origin_invalid = state.invalid_edges;
+    route.step_ms = state.time_ms;
+    route.progress_ms[0] = route.progress_ms[1] = now;
+    route.last_total[0] = route.last_total[1] = 0;
+    route.exit_candidate = false;
+    route.phase = phase;
+    route.phase_ms = now;
+    route.goal = phase == ROUTE_STRAIGHT ? ROUTE_STRAIGHT_COUNTS :
+                 phase == ROUTE_PIVOT ? ROUTE_U_TURN_COUNTS : 0u;
+    if (phase == ROUTE_ARC_RIGHT || phase == ROUTE_ARC_LEFT) {
+        /* Bias the inner wheel before the first speed-control update. */
+        wheel_speed_t *inner = phase == ROUTE_ARC_RIGHT ? &route.speed.right : &route.speed.left;
+        inner->duty = START_DUTY * 3u / 4u;
+    }
+    route_write(route.speed.left.duty, route.speed.right.duty, phase == ROUTE_PIVOT ? -1 : 1);
+}
+/* Bench W1: keep the running motor power when V5 takes over a moving car. */
+static void route_carry(wheel_speed_t *to, const wheel_speed_t *from)
+{
+    if (!from->duty) return;
+    to->duty = from->duty;
+    to->filtered_milli_cps = from->filtered_milli_cps;
+    to->integral_milli = from->integral_milli < to->integral_floor_milli ?
+                         to->integral_floor_milli : from->integral_milli;
+}
+static void route_v5_begin(uint32_t now, bool carry)
+{
+    line_follow_begin(&line_trial, state.left_count, state.right_count, state.invalid_edges,
+                      state.time_ms, now);
+    if (carry) {
+        route_carry(&line_trial.speed.left, &route.speed.left);
+        route_carry(&line_trial.speed.right, &route.speed.right);
+    }
+    diagnostics.line_active = 1;
+    diagnostics.line_step = LINE_STEP_WAIT;
+    route.phase = ROUTE_IDLE;
+    route.doing = 0;
+}
+/* Speed-controlled arc / straight / pivot step. */
+static void route_drive(uint32_t now)
+{
+    const bool arc = route.phase == ROUTE_ARC_RIGHT || route.phase == ROUTE_ARC_LEFT;
+    const int right_direction = route.phase == ROUTE_PIVOT ? -1 : 1;
+    uint32_t limit = route.phase == ROUTE_PIVOT ? 2u * ROUTE_TURN_TIMEOUT_MS : ROUTE_TURN_TIMEOUT_MS;
+    if ((uint32_t)(now - route.phase_ms) >= limit) {
+        route_fail(arc ? 16 : 13, MOTION_FAULT_TIMEOUT);
+        return;
+    }
+    if (!state.raw_valid || state.invalid_edges != route.origin_invalid) {
+        route_fail(3, MOTION_FAULT_ENCODER);
+        return;
+    }
+    int32_t total[2] = {motion_count_delta(route_fwd_left(), route.origin_left),
+                        motion_count_delta(route_fwd_right(), route.origin_right) * right_direction};
+    bool reached[2];
+    for (unsigned w = 0; w < 2u; ++w) {
+        reached[w] = route.goal != 0u && total[w] >= (int32_t)route.goal;
+        if (total[w] > route.last_total[w]) {
+            route.last_total[w] = total[w];
+            route.progress_ms[w] = now;
+        }
+        if (!reached[w] && (uint32_t)(now - route.progress_ms[w]) > ROUTE_STALL_MS) {
+            route_fail(4, MOTION_FAULT_STALL);
+            return;
+        }
+    }
+    if (reached[0] && reached[1]) {
+        route_motors_off();
+        route_event(ROUTE_EV_LEG_DONE, route.doing, total[0], total[1], 0, 0);
+        route.phase = ROUTE_SETTLE_AFTER;
+        route.phase_ms = now;
+        return;
+    }
+    uint32_t dt = state.time_ms - route.step_ms;
+    if (dt < CONTROL_MIN_US / 1000u) return; /* keep the current output */
+    int32_t left_target, right_target;
+    if (arc) {
+        const bool right = route.phase == ROUTE_ARC_RIGHT;
+        left_target = right ? ROUTE_ARC_OUTER_CPS : ROUTE_ARC_INNER_CPS;
+        right_target = right ? ROUTE_ARC_INNER_CPS : ROUTE_ARC_OUTER_CPS;
+    } else {
+        int32_t trim_limit = ROUTE_LEG_CPS / 2 < 60 ? ROUTE_LEG_CPS / 2 : 60;
+        int32_t trim = clamp_i64(((int64_t)total[0] - total[1]) * 2, -trim_limit, trim_limit);
+        left_target = reached[0] ? 0 : ROUTE_LEG_CPS - (trim > 0 ? trim : 0);
+        right_target = reached[1] ? 0 : ROUTE_LEG_CPS + (trim < 0 ? trim : 0);
+    }
+    if (!speed_control_targets_step(&route.speed, total[0], total[1], dt * 1000u,
+                                    left_target, right_target)) {
+        route_fail(3, MOTION_FAULT_ENCODER);
+        return;
+    }
+    route.step_ms = state.time_ms;
+    route_write(route.speed.left.duty, route.speed.right.duty, right_direction);
+}
+static bool route_line_fresh(uint32_t now, const line_msg_t *line, uint32_t line_ms,
+                             uint32_t line_epoch, bool have_line)
+{
+    return have_line && line_epoch == state.epoch && fresh(now, line_ms, ROUTE_LINE_FRESH_MS) &&
+           !line->fault && line->state != LINE_FAULT && line->state != LINE_CALIBRATING;
+}
+/* Called first in the LINE_TRACE control step. True: route owns the motors
+ * this step and V5 must not run. */
+static bool route_step(uint32_t now, const line_msg_t *line, uint32_t line_ms,
+                       uint32_t line_epoch, bool have_line, uint16_t levels)
+{
+    const bool line_ok = route_line_fresh(now, line, line_ms, line_epoch, have_line);
+    const unsigned a = line_levels_valid(levels) ? line_level_left(levels) : 0u;
+    const unsigned b = line_levels_valid(levels) ? line_level_right(levels) : 0u;
+    switch (route.phase) {
+    case ROUTE_IDLE:
+        if (!route.armed || !line_ok || line->state != LINE_BOTH_BLACK) {
+            route.junction_candidate = false;
+            return false;
+        }
+        if (!route.junction_candidate) {
+            route.junction_candidate = true;
+            route.junction_since_ms = line_ms;
+            return false;
+        }
+        if ((uint32_t)(line_ms - route.junction_since_ms) < ROUTE_JUNCTION_CONFIRM_MS) return false;
+        route.doing = route.armed;
+        route.armed = 0;
+        route.junction_candidate = false;
+        route_event(ROUTE_EV_JUNCTION, route.doing, (int)a, (int)b, 0, 0);
+        if (route_first_phase(route.doing) == ROUTE_SETTLE_BEFORE) {
+            route_motors_off();
+            route.phase = ROUTE_SETTLE_BEFORE;
+            route.phase_ms = now;
+        } else {
+            route_begin_motion(route_first_phase(route.doing), now);
+        }
+        return true;
+    case ROUTE_ARC_RIGHT:
+    case ROUTE_ARC_LEFT: {
+        if (!line_ok) {
+            if (!have_line || (uint32_t)(now - line_ms) > ROUTE_LINE_FRESH_MS || line->fault) {
+                route_fail(18, MOTION_FAULT_IR);
+                return true;
+            }
+        } else {
+            const bool right = route.phase == ROUTE_ARC_RIGHT;
+            int32_t left_total = motion_count_delta(route_fwd_left(), route.origin_left);
+            int32_t right_total = motion_count_delta(route_fwd_right(), route.origin_right);
+            bool sighting = line_levels_valid(levels) &&
+                route_exit_sighting(right, left_total, right_total, a, b, line->state == LINE_BOTH_BLACK);
+            if (!sighting) {
+                route.exit_candidate = false;
+            } else if (!route.exit_candidate) {
+                route.exit_candidate = true;
+                route.exit_since_ms = line_ms;
+            } else if ((uint32_t)(line_ms - route.exit_since_ms) >= ROUTE_EXIT_CONFIRM_MS) {
+                char doing = route.doing;
+                route_v5_begin(now, true);
+                route_event(ROUTE_EV_EXIT, doing, (int)a, (int)b, (int)line->err, right ? 1 : 0);
+                return true;
+            }
+        }
+        route_drive(now);
+        return true;
+    }
+    case ROUTE_STRAIGHT:
+    case ROUTE_PIVOT:
+        route_drive(now);
+        return true;
+    case ROUTE_SETTLE_BEFORE:
+        route_motors_off();
+        if ((uint32_t)(now - route.phase_ms) >= ROUTE_SETTLE_MS)
+            route_begin_motion(route.doing == 'C' ? ROUTE_STRAIGHT : ROUTE_PIVOT, now);
+        return true;
+    case ROUTE_SETTLE_AFTER:
+        route_motors_off();
+        if ((uint32_t)(now - route.phase_ms) >= ROUTE_SETTLE_MS) {
+            char doing = route.doing;
+            route_v5_begin(now, false);
+            route_event(ROUTE_EV_RESUMED, doing, 0, 0, 0, 0);
+        }
+        return true;
+    }
+    return false;
+}
+/* A capture arrived from S3 (any length). Decode, log, and arm when V5 is
+ * running and nothing else is in progress. */
+static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool usable)
+{
+    if (barcode->hdr.count < 9u) return; /* blips: crossing tape, paper edges */
+    char by_time = route_code39_decode(barcode);
+    bc_msg_t by_distance;
+    bool have_distance = route_distance_widths(&route_odo, barcode, barcode_ms, &by_distance);
+    char by_dist = have_distance ? route_code39_decode(&by_distance) : '\0';
+    char chosen = route_choose(by_dist, by_time);
+    route_bc.by_time = *barcode;
+    route_bc.by_distance = have_distance ? by_distance : (bc_msg_t){0};
+    route_bc.distance_valid = have_distance;
+    route_bc.time_code = by_time;
+    route_bc.distance_code = by_dist;
+    route_bc.old_code = motion_code39_decode(barcode);
+    route_bc.chosen = chosen;
+    __sync_synchronize();
+    route_bc.sequence = route_bc_sequence + 1u;
+    route_bc_sequence = route_bc.sequence;
+    route_event(ROUTE_EV_BARCODE, chosen, barcode->hdr.count, by_dist, by_time, usable ? 1 : 0);
+    if (!usable) { ++state.rejected_barcodes; return; }
+    if (!chosen) return;
+    if (route.phase != ROUTE_IDLE || !route_letter_armable(chosen)) {
+        route_event(ROUTE_EV_NOT_ARMED, chosen, route.phase != ROUTE_IDLE ? 1 : 2, 0, 0, 0);
+        return;
+    }
+    route.armed = chosen;
+    route.junction_candidate = false;
+    if (chosen >= 'A' && chosen <= 'D') state.barcode = (unsigned)(chosen - 'A' + 1);
+    route_event(ROUTE_EV_ARMED, chosen, 0, 0, 0, 0);
+}
+#endif
+
 static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint32_t line_ms,
                          uint32_t line_epoch, bool have_line,uint16_t levels)
 {
@@ -944,6 +1268,9 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
     }
     output_rest_until = 0;
     if(active.command==MOTION_LINE_TRACE) {
+#if MOTION_LINE_ROUTE
+        if(route_step(now,line,line_ms,line_epoch,have_line,levels))return;
+#endif
         line_trial.observed_levels=levels; /* also record input if encoder snapshot is missing */
         unsigned prior_pause_mask=line_pause_eligible(&line_trial);
         line_step_t result=state.raw_valid ? line_follow_step_observed(&line_trial,
@@ -1339,7 +1666,14 @@ void motion_task(INT stacd, void *exinf)
             }
             else
             {
+#if MOTION_LINE_ROUTE
+                if (update_odometry(now) || state.raw_valid)
+                    route_odo_add(&route_odo, state.time_ms,
+                                  (MOTION_LEFT_ENCODER_SIGN < 0 ? 0u - state.left_count : state.left_count) +
+                                  (MOTION_RIGHT_ENCODER_SIGN < 0 ? 0u - state.right_count : state.right_count));
+#else
                 (void)update_odometry(now);
+#endif
             }
             last_update = now;
         }
@@ -1370,6 +1704,16 @@ void motion_task(INT stacd, void *exinf)
          * because its standalone capture has a plausible pattern. */
         if (have_barcode)
         {
+#if MOTION_LINE_ROUTE
+            {
+                bool usable = owner_flags.active_valid && active.command==MOTION_LINE_TRACE &&
+                    fresh(now, barcode_ms, LINE_FOLLOW_INPUT_AGE_MS) && barcode_epoch == state.epoch &&
+                    (uint32_t)(barcode_ms - last_barcode_ms) > 0u &&
+                    (uint32_t)(barcode_ms - last_barcode_ms) < 0x80000000u;
+                if (usable) last_barcode_ms = barcode_ms;
+                route_on_barcode(&barcode, barcode_ms, usable);
+            }
+#else
             char decoded = motion_barcode_decode(&barcode);
             uint32_t capture_age=(MOTION_LINE_ADAPTIVE && active.command==MOTION_LINE_TRACE) ?
                 LINE_FOLLOW_INPUT_AGE_MS:MOTION_INPUT_MAX_AGE_MS;
@@ -1411,6 +1755,7 @@ void motion_task(INT stacd, void *exinf)
             {
                 ++state.rejected_barcodes;
             }
+#endif
         }
         if ((dt >= MOTION_PERIOD_MS) && (dt <= 100u) && (state.faults == 0u))
         {

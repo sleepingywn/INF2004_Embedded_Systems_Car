@@ -14,6 +14,72 @@
 #include <tm/usb_console.h>
 #endif
 
+#if MOTION_LINE_ROUTE
+/* Barcode-routing log from the motion task. Drained here (console task),
+ * never printed from the motor loop. */
+static uint32_t route_bc_seen;
+static char route_ch(char c) { return c ? c : '?'; }
+static void route_print_widths(const char *label, const bc_msg_t *m)
+{
+    tm_printf((UB*)"[route] %s:", (UB*)label);
+    for (unsigned i = 0; i < m->hdr.count && i < BC_MAX_ELEMS; ++i)
+        tm_printf((UB*)" %s%u", (UB*)((i & 1u) ? "S" : "B"), (UINT)m->widths[i]);
+    tm_printf((UB*)"\n");
+}
+static void route_console_drain(void)
+{
+    motion_route_event_t e;
+    for (unsigned n = 0; n < 8u && motion_route_next_event(&e); ++n) {
+        switch (e.kind) {
+        case ROUTE_EV_BARCODE: {
+            tm_printf((UB*)"[route] SCAN elements=%d decode: distance=%c time=%c -> %c%s\n",
+                      (INT)e.v[0], (INT)route_ch((char)e.v[1]), (INT)route_ch((char)e.v[2]),
+                      (INT)route_ch(e.code), (UB*)(e.v[3] ? "" : " (not during a V5 run: ignored)"));
+            motion_route_barcode_t bc;
+            if (motion_route_barcode(&bc, &route_bc_seen)) {
+                route_print_widths("widths_ms", &bc.by_time);
+                if (bc.distance_valid) route_print_widths("widths_counts", &bc.by_distance);
+                else tm_printf((UB*)"[route] widths_counts: unavailable (odometry history)\n");
+                tm_printf((UB*)"[route] old rank-of-9 decoder: %c\n", (INT)route_ch(bc.old_code));
+            }
+            break;
+        }
+        case ROUTE_EV_ARMED:
+            tm_printf((UB*)"[route] ROUTE: %c armed for the next junction (%s)\n", (INT)e.code,
+                      (UB*)(e.code == 'A' ? "right" : (e.code == 'B' || e.code == 'Z') ? "left" :
+                            e.code == 'C' ? "straight" : "U-turn"));
+            break;
+        case ROUTE_EV_NOT_ARMED:
+            tm_printf((UB*)"[route] ROUTE: %c not armed (%s)\n", (INT)e.code,
+                      (UB*)(e.v[0] == 1 ? "a turn is in progress" : "letter has no manoeuvre"));
+            break;
+        case ROUTE_EV_JUNCTION:
+            tm_printf((UB*)"[route] JUNCTION: %c -> %s (A=%d B=%d)\n", (INT)e.code,
+                      (UB*)(e.code == 'A' ? "right arc" : (e.code == 'B' || e.code == 'Z') ? "left arc" :
+                            e.code == 'C' ? "straight 100 mm" : "180 deg pivot"),
+                      (INT)e.v[0], (INT)e.v[1]);
+            break;
+        case ROUTE_EV_EXIT:
+            tm_printf((UB*)"[route] %s EXIT: line acquired; V5 line following (A=%d B=%d err=%d)\n",
+                      (UB*)(e.v[3] ? "RIGHT" : "LEFT"), (INT)e.v[0], (INT)e.v[1], (INT)e.v[2]);
+            break;
+        case ROUTE_EV_LEG_DONE:
+            tm_printf((UB*)"[route] %c leg complete (L=%d R=%d counts)\n", (INT)e.code,
+                      (INT)e.v[0], (INT)e.v[1]);
+            break;
+        case ROUTE_EV_RESUMED:
+            tm_printf((UB*)"[route] V5 line following resumed after %c\n", (INT)e.code);
+            break;
+        case ROUTE_EV_FAILED:
+            tm_printf((UB*)"[route] FAILED during %c: reason=%d (16 exit not found, 13 leg timeout, "
+                      "4 stall, 3 encoder/control, 18 line lost or stale) phase=%d\n",
+                      (INT)route_ch(e.code), (INT)e.v[0], (INT)e.v[1]);
+            break;
+        default: break;
+        }
+    }
+}
+#endif
 #if MOTION_LINE_DEMO
 static bool line_armed;
 /* Explicit, paged readout after a run; never flood USB from the motor loop. */
@@ -319,6 +385,9 @@ static bool line_console_key(int key)
 }
 bool motion_line_console_key(int key)
 {
+#if MOTION_LINE_ROUTE
+    route_console_drain();
+#endif
     bool handled=line_console_key(key);
 #if MOTION_LINE_CIRCUIT && !MOTION_LINE_AUTOSTART
     motion_status_t m;
@@ -338,7 +407,11 @@ void motion_line_console_help(void)
     tm_printf((UB*)"[line] ADAPTIVE v5: v2 steering baseline, bounded straight crossing, bounded pause settling; no tight-curve deadline. GP20 only, 30s bound.\n");
     tm_printf((UB*)"[line] adaptive modes: 0 track, 1 uncertain, 2 search, 3 mark, 4 route required, 5 recovery exhausted, 6 invalid, 7 crossing, 8 crossing exhausted.\n");
     tm_printf((UB*)"[line] reason: 0 none, 1 recovery time, 2 recovery distance, 3 sweep exhausted, 4 mark time, 5 mark distance, 6 crossing time, 7 crossing distance, 8 route command, 9 invalid pair.\n");
+#if MOTION_LINE_ROUTE
+    tm_printf((UB*)"[line] ROUTE profile: barcode arms the next junction: A right, B/Z left, C straight 100 mm, D U-turn. Unarmed junctions: V5 crosses straight.\n");
+#else
     tm_printf((UB*)"[line] Crossing policy: try straight within 400 mark / 900 total counts, 1800 / 3500ms; reacquire or stop. Barcode A/B/D stops for route handling (step 15).\n");
+#endif
 #endif
     tm_printf((UB*)"[line] t read next 8 stopped-run history samples; repeats after final page. RAM only; reset/new run clears.\n");
 #if MOTION_LINE_SEARCH

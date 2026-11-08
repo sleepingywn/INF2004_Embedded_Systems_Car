@@ -167,6 +167,20 @@ endif
 LINE_SUFFIX := _line30_button_adaptive
 endif
 
+# Barcode routing on top of V5: a decoded barcode arms one junction turn
+# (A right, B/Z left, C straight 100 mm, D U-turn). Also switches the
+# barcode capture to 16-bit widths and a 1.5 s quiet time.
+LINE_ROUTE ?= 0
+ifneq ($(filter $(LINE_ROUTE),0 1),$(LINE_ROUTE))
+$(error Unknown LINE_ROUTE '$(LINE_ROUTE)'; use 0 or 1)
+endif
+ifeq ($(LINE_ROUTE),1)
+ifneq ($(LINE_ADAPTIVE),1)
+$(error LINE_ROUTE=1 requires LINE_ADAPTIVE=1)
+endif
+LINE_SUFFIX := _line30_button_adaptive_route
+endif
+
 #
 # Images are named after the profile they were built with.  Every image is
 # flashed by hand from a downloads folder, so identically-named artifacts are
@@ -236,6 +250,10 @@ endif
 CFLAGS  += -DAPP_TEST=$(TEST) -DMOTION_LINE_DEMO=$(LINE_DEMO) -DMOTION_LINE_CIRCUIT=$(LINE_CIRCUIT) -DMOTION_LINE_AUTOSTART=$(LINE_AUTOSTART)
 CFLAGS  += -DMOTION_LINE_SEARCH=$(LINE_SEARCH)
 CFLAGS  += -DMOTION_LINE_ADAPTIVE=$(LINE_ADAPTIVE)
+CFLAGS  += -DMOTION_LINE_ROUTE=$(LINE_ROUTE)
+ifeq ($(LINE_ROUTE),1)
+CFLAGS  += -DBARCODE_SLOW_SCAN=1 -DBARCODE_WIDE=1
+endif
 CFLAGS  += -DTM_CONSOLE_UART=$(CRASH_REPORT)
 ifeq ($(CRASH_REPORT),0)
 CFLAGS  += -DBOARD_UART0_FREE=1
@@ -269,7 +287,7 @@ endif
 ################################################################################
 
 PROFILE_ID := smp$(SMP)-$(CONSOLE)-wifi$(WIFI)-net$(NET)-mqtt$(MQTT)-crash$(CRASH_REPORT)-test$(TEST)-line$(LINE_DEMO)-circuit$(LINE_CIRCUIT)-auto$(LINE_AUTOSTART)-search$(LINE_SEARCH)
-PROFILE_ID := $(PROFILE_ID)-adaptive$(LINE_ADAPTIVE)
+PROFILE_ID := $(PROFILE_ID)-adaptive$(LINE_ADAPTIVE)-route$(LINE_ROUTE)
 PROFILE_FILE := .build_profile
 
 ifneq ($(strip $(shell cat $(PROFILE_FILE) 2>/dev/null)),$(PROFILE_ID))

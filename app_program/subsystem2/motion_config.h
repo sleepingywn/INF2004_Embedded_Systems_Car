@@ -40,6 +40,12 @@
 #ifndef MOTION_LINE_ADAPTIVE
 #define MOTION_LINE_ADAPTIVE 0
 #endif
+#ifndef MOTION_LINE_ROUTE
+#define MOTION_LINE_ROUTE 0
+#endif
+#if MOTION_LINE_ROUTE && !MOTION_LINE_ADAPTIVE
+#error "Barcode routing requires MOTION_LINE_ADAPTIVE=1"
+#endif
 #if MOTION_LINE_ADAPTIVE && (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART || MOTION_LINE_SEARCH)
 #error "Adaptive control requires GP20 circuit mode with legacy search disabled"
 #endif

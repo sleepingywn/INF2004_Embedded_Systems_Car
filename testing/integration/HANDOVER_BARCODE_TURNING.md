@@ -195,7 +195,7 @@ junction, fault stop) and barcode_terminal tests pass; bench UF2 builds with
 - **Thresholds:** Andy asked that NO thresholds be changed (junction 75, V5,
   raw barcode cutoffs, Ken's exit rule).
 
-**Kernel port: built and host-tested, not yet tested on the car.** Branch
+**Kernel port: works on the car (tested 9 Nov, KR2 image: A right, Z left, V5 follows after each turn).** Branch
 `local/kernel-v5-barcode-route` (`1ad88c4`, `0ecefa4`) on Joel's V5
 `d3a939a`. See `testing/integration/LINE_ROUTE_KERNEL.md` on that branch.
 - **Build:** profile `LINE_ROUTE=1`, built in the same profile as the K1 V5

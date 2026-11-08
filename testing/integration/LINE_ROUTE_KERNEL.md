@@ -3,7 +3,8 @@
 Branch `local/kernel-v5-barcode-route`, based on Joel's V5 (`d3a939a`).
 Kernel port of the standalone bench build that worked on the track on
 8 Nov 2026 (`testing/subsystem3/ir_line_bench`, branch
-`local/v5-barcode-turning`, W3). Not yet tested on the car.
+`local/v5-barcode-turning`, W3). Tested on the car on 9 Nov 2026 (KR2 image):
+barcode A, right turn, V5 follows; barcode Z, left turn, V5 follows.
 
 ## What it does
 

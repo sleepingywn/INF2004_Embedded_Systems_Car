@@ -1,6 +1,9 @@
 #include "motion_logic.h"
 #include <limits.h>
 #include <stddef.h>
+#if defined(BARCODE_RELAXED_WIDTHS) && !defined(BARCODE_TERMINAL)
+#error "Relaxed barcode widths are standalone-test only"
+#endif
 
 void motion_pid_reset(motion_pid_t *pid)
 {
@@ -101,14 +104,14 @@ bool motion_line_targets(int8_t error, uint16_t cruise, uint16_t maximum, uint16
     return true;
 }
 
-static uint16_t barcode_pattern(const uint8_t *widths)
+uint16_t motion_code39_pattern(const bc_width_t *widths)
 {
-    uint8_t sorted[9];
+    bc_width_t sorted[9];
     uint16_t pattern = 0;
     uint32_t narrow_sum = 0;
     for (unsigned i = 0; i < 9u; ++i)
     {
-        if ((widths[i] == 0u) || (widths[i] == 255u))
+        if ((widths[i] == 0u) || (widths[i] == BC_WIDTH_SAT))
         {
             return 0;
         }
@@ -116,7 +119,7 @@ static uint16_t barcode_pattern(const uint8_t *widths)
     }
     for (unsigned i = 1; i < 9u; ++i)
     {
-        uint8_t value = sorted[i];
+        bc_width_t value = sorted[i];
         unsigned j = i;
         while ((j > 0u) && (sorted[j - 1u] > value))
         {
@@ -127,11 +130,17 @@ static uint16_t barcode_pattern(const uint8_t *widths)
     }
     /* Code39: three wide, six narrow. Reject ambiguous/noisy clusters.
      * Engineering tolerances (1.5..3.5 ratio) need real-track validation. */
+#ifdef BARCODE_RELAXED_WIDTHS
+    /* Rank only: preserve a unique split into six short and three long.
+     * Equal widths at the boundary cannot identify exactly three wide. */
+    if (sorted[5] == sorted[6]) return 0;
+#else
     if ((2u * sorted[6] < 3u * sorted[5]) || (2u * sorted[8] > 7u * sorted[0]) ||
         (sorted[5] > 2u * sorted[0]) || (2u * sorted[8] > 3u * sorted[6]))
     {
         return 0;
     }
+#endif
     for (unsigned i = 0; i < 6u; ++i)
     {
         narrow_sum += sorted[i];
@@ -147,21 +156,23 @@ static uint16_t barcode_pattern(const uint8_t *widths)
     return pattern;
 }
 
-static char decode_forward(const uint8_t widths[29])
+static char decode_forward(const bc_width_t widths[29])
 {
     /* Standard Code39 wide-element masks; see README_MOTION.md sources.
      * * = 010010100, A = 100001001, B = 001001001,
-     * C = 101001000, D = 000011001. */
-    static const uint16_t letters[4] = {0x109u, 0x049u, 0x148u, 0x019u};
+     * C = 101001000, D = 000011001, Z = 011010000. */
+    static const uint16_t patterns[5] = {0x109u, 0x049u, 0x148u, 0x019u, 0x0D0u};
+    static const char letters[5] = {'A', 'B', 'C', 'D', 'Z'};
     uint16_t middle;
-    if ((barcode_pattern(widths) != 0x094u) || (barcode_pattern(widths + 20) != 0x094u))
+    if ((motion_code39_pattern(widths) != 0x094u) || (motion_code39_pattern(widths + 20) != 0x094u))
     {
         return '\0';
     }
+#ifndef BARCODE_RELAXED_WIDTHS
     /* Inter-character spaces must be narrow, not another wide element. */
     for (unsigned offset = 0; offset <= 10u; offset += 10u)
     {
-        uint8_t minimum = widths[offset];
+        bc_width_t minimum = widths[offset];
         for (unsigned i = 1; i < 9u; ++i)
         {
             if (widths[offset + i] < minimum)
@@ -174,20 +185,21 @@ static char decode_forward(const uint8_t widths[29])
             return '\0';
         }
     }
-    middle = barcode_pattern(widths + 10);
-    for (unsigned i = 0; i < 4u; ++i)
+#endif
+    middle = motion_code39_pattern(widths + 10);
+    for (unsigned i = 0; i < 5u; ++i)
     {
-        if (middle == letters[i])
+        if (middle == patterns[i])
         {
-            return (char)('A' + i);
+            return letters[i];
         }
     }
     return '\0';
 }
 
-char motion_barcode_decode(const bc_msg_t *message)
+char motion_code39_decode(const bc_msg_t *message)
 {
-    uint8_t reversed[29];
+    bc_width_t reversed[29];
     char command;
     if ((message == NULL) || (message->hdr.count != 29u) || (message->hdr.overflow != 0u) ||
         (message->hdr.reserved != 0u))
@@ -196,7 +208,7 @@ char motion_barcode_decode(const bc_msg_t *message)
     }
     for (unsigned i = 0; i < 29u; ++i)
     {
-        if ((message->widths[i] == 0u) || (message->widths[i] == 255u))
+        if ((message->widths[i] == 0u) || (message->widths[i] == BC_WIDTH_SAT))
         {
             return '\0';
         }
@@ -211,4 +223,12 @@ char motion_barcode_decode(const bc_msg_t *message)
         reversed[i] = message->widths[28u - i];
     }
     return decode_forward(reversed);
+}
+
+/* Route ABI remains A-D only. Recognising a printed ID must not implicitly
+ * turn Z into command 26 (or truncate it into the packed command field). */
+char motion_barcode_decode(const bc_msg_t *message)
+{
+    char decoded = motion_code39_decode(message);
+    return (decoded >= 'A' && decoded <= 'D') ? decoded : '\0';
 }

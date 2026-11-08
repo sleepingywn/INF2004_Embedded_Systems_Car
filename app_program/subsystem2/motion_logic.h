@@ -22,4 +22,10 @@ bool motion_line_targets(int8_t error, uint16_t cruise, uint16_t maximum, uint16
 /* Decode exactly *A*, *B*, *C* or *D*, in either scan direction. Zero invalid.
  * No allocation; widths in sample units, no assumption about vehicle speed. */
 char motion_barcode_decode(const bc_msg_t *message);
+/* Printed barcode identity for diagnostics: A-D or Z, zero if invalid.
+ * This character is not a packed navigation command. */
+char motion_code39_decode(const bc_msg_t *message);
+/* Nine measured elements -> wide-element mask, zero if widths are invalid.
+ * Used by the decoder and standalone diagnostic output. */
+uint16_t motion_code39_pattern(const bc_width_t *widths);
 #endif

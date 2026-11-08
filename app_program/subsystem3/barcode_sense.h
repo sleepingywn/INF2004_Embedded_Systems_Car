@@ -19,9 +19,9 @@
 #include "ir_types.h"
 
 typedef struct {
-	uint8_t		widths[BC_MAX_ELEMS];
+	bc_width_t	widths[BC_MAX_ELEMS];
 	uint8_t		count;		/* elements stored                   */
-	uint8_t		run;		/* current run length, saturating    */
+	bc_width_t	run;		/* current run length, saturating    */
 	uint8_t		seq;		/* next message sequence number      */
 	bool		active;		/* capture in progress               */
 	bool		is_bar;		/* current run is a bar              */

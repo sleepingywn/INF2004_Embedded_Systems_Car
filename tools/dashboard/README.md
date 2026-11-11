@@ -1,6 +1,24 @@
 # RoboCar local telemetry
 
+**Taking over this dashboard? Read [TAKEOVER.md](TAKEOVER.md)** for setup, the source map, telemetry behaviour, validation evidence and remaining hardware checks.
+
 The laptop hosts an authenticated Mosquitto instance on port **1884**, separate from the installer-created Windows service on 1883. Node-RED runs on localhost:1880 with its editor disabled. Tailscale Serve exposes the dashboard privately to authorised tailnet devices. No remote driving commands are implemented.
+
+## Live 3D Overview
+
+The Overview replaces the old readings table at the same `/dashboard/robot` URL. It retains the existing MQTT decoder, duplicate filtering, event handling and telemetry log. The model, Three.js bundle and styles are served locally at `/robocar/`; no CDN or internet connection is needed to render the car. `npm start` builds the browser assets and copies `overview-template.vue` into the flow before starting Node-RED. Run `npm run build` after editing the UI while managing the runtime yourself, then restart Node-RED and refresh the browser.
+
+- Wheel rotation comes from each wheel's signed, wrap-safe encoder count difference. Left raw counts decrease in forward travel; right counts increase. Count rates use the source acquisition interval, not network arrival spacing. Calibrated mm/s is still unavailable while `MOTION_CALIBRATED=0`.
+- Relative heading comes from differential wheel travel using the firmware's provisional **2774 counts/revolution, 204.2 mm circumference and 125 mm track width**. It is an estimate, not an IMU yaw or surveyed course position. It starts at zero on a new boot/motion epoch or new browser session. The model is kept centered so its orientation can be inspected.
+- Pitch follows S4's positive-nose-up convention. S4's positive left-side roll maps to negative model Z rotation (the model's positive Z raises its right side). Confirm mounting/signs with a physical tilt check before relying on the direction of tilt. Invalid attitude holds the last pose and clears the numeric readout.
+- Transitions interpolate for at most 150 ms to received poses; motion is never extrapolated. A 2-second receipt timeout freezes the model and clears live numbers. Invalid encoder samples, source gaps over 1 second, receipt gaps over 2 seconds and implausible count jumps establish a new baseline without inventing travel. The heading estimate is labeled interrupted after a gap. Boot/epoch changes reset the baseline and relative heading.
+- Perspective, top, front and side views, drag-to-orbit, scroll-to-zoom, camera rotation buttons and Reset view are local display controls. Reduced-motion preference removes pose interpolation.
+- Start/Stop are deliberately disabled and direct the operator to GP20: the existing MQTT account is read-only and firmware has no remote command handler. No model/view interaction sends motor commands.
+- Line error, terrain/hump values, readiness and faults show actual decoded fields. Individual IR darkness, barcode and route state are absent from this 80-byte protocol and are not fabricated. Diagnostic details retain the last packet, including calibrated speeds and source timestamps.
+
+Editable UI sources are `web/`, `pose.js` and `overview-template.vue`. `build-overview.js` produces `public/robocar/overview.js` and updates the flow template. The photo-based model and asset notes are in `public/robocar/`; its mesh dimensions are not used as calibration. Keep `THREE-LICENSE.txt` and the emitted `overview.js.LEGAL.txt` with the bundle. The SE08 identity and headings use locally bundled Chakra Petch; telemetry numbers use IBM Plex Mono. The build copies their pinned Latin WOFF2 files and font licenses into `public/robocar/fonts/` for offline use.
+
+Run `npm test` for decoder, receiver, pose handling and frame-bridge checks. Software validation on 10 November 2026 included a separate loopback MQTT broker/Node-RED receiver (1885/1881), actual binary-frame delivery to the browser, unequal wheel rates producing a visible turn, IMU pose, camera views, and stale freezing. The adapter also processed 14,247 accepted records from the local historical telemetry log without non-finite poses. This does not establish a new physical driving or tilt-sign test.
 
 ## Running
 

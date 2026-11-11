@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>RoboCar live overview</title><link rel="stylesheet" href="overview.css"></head>
+<body><main id="robo-overview">
+ <header class="header"><div class="brand" aria-label="SE08 RoboCar"><span class="brand-id" aria-hidden="true">SE<span>08</span></span><div class="brand-name">ROBOCAR<small>INF2004 / VEHICLE TELEMETRY</small></div></div><div class="connection"><span class="pill" id="connection">Waiting for telemetry</span><span id="age">No data received</span></div></header>
+ <div class="title-row"><div><span class="section-id">CAR 01 <span aria-hidden="true">/</span> OVERVIEW</span><h1>Vehicle overview</h1><p>Motion, attitude and line tracking</p></div><span class="hardware-label">PICO W <span aria-hidden="true">·</span> SE08</span></div>
+ <div class="overview-grid">
+  <div class="stack">
+   <section class="card speed-card"><h2>Wheel speed <small>Mean magnitude</small></h2><div class="speed-ring"><svg viewBox="0 0 180 180" role="img" aria-label="Mean wheel speed; gauge range zero to 800 counts per second"><circle cx="90" cy="90" r="76"/><circle class="track" cx="90" cy="90" r="65"/><circle id="speed-gauge" cx="90" cy="90" r="65"/></svg><div><strong id="mean">—</strong><span>counts / s</span></div></div><p class="hint">Measured encoder count rate</p></section>
+   <section class="card"><h2>Body attitude <small>IMU</small></h2><div class="pair"><div><span>Pitch</span><strong id="pitch">—</strong></div><div><span>Roll</span><strong id="roll">—</strong></div></div><div class="level"><span id="level-marker"></span></div><p class="hint" id="attitude-status">Awaiting valid IMU data</p></section>
+  </div>
+  <section class="card vehicle-card"><h2>Your RoboCar <small>Live 3D pose</small></h2>
+   <div class="view-controls"><label>View <select id="camera-view"><option value="perspective">Perspective</option><option value="top">Top</option><option value="front">Front</option><option value="side">Side</option><option value="free" disabled>Free orbit</option></select></label><button id="orbit-left" aria-label="Rotate camera left">↶</button><button id="orbit-right" aria-label="Rotate camera right">↷</button><button id="reset-camera">Reset view</button></div>
+   <div id="car-stage" role="img" aria-label="Live robot model with wheel movement and body attitude. Drag to orbit and scroll to zoom."><span id="model-status">Loading robot model…</span></div>
+   <div class="pose-caption"><span>Drag to orbit · scroll to zoom</span><span id="heading">Heading unavailable</span></div>
+   <p class="hint" id="pose-quality">Heading is estimated from wheel counts.</p>
+   <div class="state-row"><span class="state" id="state" role="status">Waiting for telemetry</span><span class="hint" id="motion-status">No encoder samples</span></div>
+   <div class="wheel-row"><div><span>Left wheel</span><strong id="left-speed">—</strong><small>counts/s</small><div class="meter"><i id="left-meter"></i></div></div><div><span>Right wheel</span><strong id="right-speed">—</strong><small>counts/s</small><div class="meter"><i id="right-meter"></i></div></div></div>
+  </section>
+  <div class="stack">
+   <section class="card line-card"><h2>Line tracking <small>IR</small></h2><span class="metric-label">Position error</span><strong class="big-number" id="line-error">—</strong><div class="error-scale"><span id="error-marker"></span></div><div class="scale-labels"><span>Right</span><span>Centered</span><span>Left</span></div><p class="hint">Individual sensor darkness is not transmitted.</p></section>
+   <section class="card"><h2>Terrain <small>IMU</small></h2><div class="terrain-metrics"><div><span>Humps crossed</span><strong id="hump-count">—</strong></div><div><span>Highest hump</span><strong id="hump-height">—</strong></div></div><div class="route-note"><span>Next manoeuvre</span><strong>Unavailable</strong><p class="hint">Barcode and route state are not in the current telemetry frame.</p></div></section>
+  </div>
+ </div>
+ <section class="control-bar" aria-label="Vehicle controls"><div><div class="buttons"><button class="start" disabled>▶ Start</button><button class="stop" disabled>■ Stop</button></div><p>Use GP20 on the car. Remote commands are not supported by this firmware.</p></div><div class="health"><span>Faults <strong id="faults">—</strong></span><span>Ready <strong id="ready">—</strong></span></div></section>
+ <footer><span id="freshness-note">Waiting for the first live packet.</span><span>Wheel-based heading · provisional calibration</span></footer>
+ <details><summary>Diagnostic details</summary><div class="diagnostics"><p>Heading is relative to the first valid encoder sample in this motion epoch. Gaps rebaseline the estimate; no position or compass heading is claimed. IMU mounting signs still require a physical tilt check.</p><p id="metric-speeds">Calibrated speed: unavailable</p><pre id="diagnostics">No telemetry received.</pre></div></details>
+</main><script src="overview.js" defer></script></body></html>

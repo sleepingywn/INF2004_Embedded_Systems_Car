@@ -1,0 +1,75 @@
+SE08 RoboCar 3D asset
+Created 9 November 2026 from the five photos in Group Project/robot images.
+
+OPEN AND USE
+
+Open robocar-preview.html in a browser. It includes the model and its viewer,
+works offline, and supports orbit, zoom, camera views, pitch, roll and wheel
+rotation. All preview controls are manual demonstrations.
+
+Load robocar.glb using Three.js GLTFLoader for future dashboard integration.
+The GLB is self-contained, with no external textures, scripts or network URLs.
+robocar.blend provides an editable model and a studio preview scene.
+build_model.py regenerates the model using Blender 4.3.2.
+preview.js contains the preview's loading and animation examples.
+
+MODEL STRUCTURE
+
+Robot is the shared parent for the body, wheels and attachment points.
+Wheel_Left and Wheel_Right are independent wheel pivots at their axle centres.
+Each wheel spins about its local X axis. Apply rotation to the pivot object.
+The wheels have geometry and pivots ready for runtime animation.
+The GLB contains no baked animation clips.
+
+Named attachment points
+  IMU_Mount
+  Sensor_Line_Left
+  Sensor_Line_Right
+  Sensor_Barcode
+
+Model coordinates in the GLB
+  Units are metres, with estimated physical scale.
+  +X points to the robot's right.
+  +Y points upward.
+  -Z points forward toward the three IR sensors.
+  The ground is Y = 0.
+  The origin is beneath the chassis centre.
+  Wheel radius is nominally 0.033 m. Wheel centre separation is 0.142 m.
+
+For attitude display, create an outer pose group at axle height Y = 0.033 m,
+and put the imported model inside it at Y = -0.033 m. The preview demonstrates
+this. Positive rotation about world X raises the nose. Positive rotation
+about world Z raises the robot's right side. Match these to the actual IMU
+mounting and firmware sign convention before connecting live telemetry.
+
+For wheel animation, rotate the pivots around local X. A negative angle spins
+the wheels for forward travel in this model. Use each wheel's own measured
+motion and handle invalid, stale or reset telemetry explicitly.
+
+REFERENCE AND APPROXIMATION
+
+Modelled features include the turquoise folded chassis, black treaded tyres,
+white perforated wheels, black power pack, purple carrier board, green Pico W,
+raised clear IMU bracket, three blue IR modules and coloured wire bundles.
+
+Dimensions were estimated from photographs. The model is intended for visual
+telemetry and presentation. It has not been dimensionally surveyed. Hidden
+parts, including the front support caster, were inferred. Wire routing and
+small electronics were simplified. A short USB connector/tail is represented.
+Geometry values here must not be used as measured robot calibration.
+
+VALIDATION
+
+Khronos glTF Validator reported zero errors and zero warnings.
+The file contains 73,831 triangles, 21 materials and 26 draw calls.
+Informational messages cover unused UV coordinates and named empty anchors.
+The offline preview was checked in Chromium for loading, camera selection,
+wheel animation, pitch/roll inputs, reset, download and a narrow-screen layout.
+
+VIEWER SOURCE
+
+The offline HTML bundles Three.js 0.170.0 and its OrbitControls, GLTFLoader and
+RoomEnvironment helpers. Third-party licence text is included alongside it.
+To rebuild the viewer, bundle preview.js with esbuild, place viewer.bundle.js
+in %TEMP%/robocar-3d-viewer, and run make_preview.py. The model itself can be
+used independently of the supplied preview.

@@ -99,7 +99,7 @@
     "includeClientData": false,
     "acceptsClientConfig": [],
     "showPathInSidebar": false,
-    "navigationStyle": "default",
+    "navigationStyle": "none",
     "titleBarStyle": "default",
     "showReconnectNotification": true
   },
@@ -108,11 +108,11 @@
     "type": "ui-theme",
     "name": "RoboCar",
     "colors": {
-      "surface": "#ffffff",
-      "primary": "#176b67",
-      "bgPage": "#eef3f3",
-      "groupBg": "#ffffff",
-      "groupOutline": "#d6e2e2"
+      "surface": "#101411",
+      "primary": "#9ac18a",
+      "bgPage": "#101411",
+      "groupBg": "#101411",
+      "groupOutline": "#101411"
     },
     "sizes": {
       "density": "default",
@@ -125,7 +125,7 @@
   {
     "id": "page",
     "type": "ui-page",
-    "name": "Robot status",
+    "name": "RoboCar Overview",
     "ui": "base",
     "path": "/robot",
     "icon": "directions_car",
@@ -170,11 +170,11 @@
     "type": "ui-template",
     "z": "robot",
     "group": "group",
-    "name": "Live robot readings",
+    "name": "Live 3D Overview",
     "order": 1,
     "width": 12,
     "height": 0,
-    "format": "<template><section style=\"padding:24px\"><h1>SE08 \u00b7 RoboCar</h1><p role=\"status\">{{ age > 2000 ? 'Waiting for fresh telemetry' : 'Receiving telemetry' }} \u00b7 {{ ageText }}</p><div v-if=\"msg && msg.payload\"><table style=\"width:100%;text-align:left\"><tbody><tr v-for=\"row in readings\" :key=\"row[0]\"><th style=\"padding:8px\">{{ row[0] }}</th><td>{{ row[1] }}</td></tr></tbody></table><details style=\"margin-top:20px\"><summary>Diagnostic details</summary><pre style=\"white-space:pre-wrap\">{{ msg.payload }}</pre></details></div><p v-else>No robot data received yet.</p><small>Read-only telemetry. Older readings remain visible for diagnosis.</small></section></template>\n<script>export default {data(){return {now:Date.now(),timer:null}},computed:{age(){return this.msg?.payload?.receivedAt ? Math.max(0,this.now-this.msg.payload.receivedAt):Infinity},ageText(){return Number.isFinite(this.age)?(this.age/1000).toFixed(1)+' s since receipt':'No data'},readings(){const d=this.msg?.payload||{};const unit=(v,u)=>v==null?'Unavailable':v+' '+u;return [['Left wheel speed',unit(d.leftSpeed,'mm/s')],['Right wheel speed',unit(d.rightSpeed,'mm/s')],['Line position error',unit(d.lineError,'')],['Pitch',unit(d.pitch,'\u00b0')],['Roll',unit(d.roll,'\u00b0')],['Current hump',unit(d.currentPeakMm,'mm')],['Highest hump',unit(d.highestPeakMm,'mm')],['Humps counted',d.humpCount??'Unavailable'],['Motor state',d.state==null?'Unavailable':(['Idle','Driving','Travelling','Turning','Following line','Reacquiring line','Fault','Bench pulse'][d.state]??'Unknown')],['Fault flags',d.faults==null?'Unavailable':d.faults===0?'None reported':d.faults],['Application ready',d.ready?'Yes':'No'],['Events missed',d.droppedEvents]]}},mounted(){this.timer=setInterval(()=>{this.now=Date.now()},250)},unmounted(){clearInterval(this.timer)}}</script>",
+    "format": "<template>\n  <iframe ref=\"overview\" src=\"/robocar/index.html\" title=\"RoboCar live overview\"\n    @load=\"deliver\" :style=\"{width:'100%',height:height+'px',border:0,display:'block'}\"></iframe>\n</template>\n<script>\nexport default {\n  data() { return {height:980, receiveOverview:null}; },\n  watch: {msg: {deep:true, handler() { this.deliver(); }}},\n  methods: {\n    deliver() {\n      if (this.msg?.payload) this.$refs.overview?.contentWindow?.postMessage(\n        {type:'robocar-telemetry',payload:JSON.parse(JSON.stringify(this.msg.payload))},window.location.origin);\n    }\n  },\n  mounted() {\n    this.receiveOverview = event => {\n      if(event.origin!==window.location.origin || event.source!==this.$refs.overview?.contentWindow) return;\n      if(event.data?.type==='robocar-ready') this.deliver();\n      if(event.data?.type==='robocar-resize' && Number.isFinite(event.data.height))\n        this.height=Math.max(500,Math.min(4000,event.data.height));\n    };\n    window.addEventListener('message',this.receiveOverview);\n    this.deliver();\n  },\n  unmounted() { window.removeEventListener('message',this.receiveOverview); }\n}\n</script>\n",
     "storeOutMessages": true,
     "passthru": false,
     "resendOnRefresh": true,

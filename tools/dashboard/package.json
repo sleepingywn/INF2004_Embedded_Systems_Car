@@ -3,10 +3,19 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "start": "node-red --userDir . --settings settings.js flows.json"
+    "start": "node-red --userDir . --settings settings.js flows.json",
+    "build": "node build-overview.js",
+    "prestart": "npm run build",
+    "test": "node --test decode.test.js receiver.test.js pose.test.js overview.test.js"
   },
   "dependencies": {
+    "@flowfuse/node-red-dashboard": "1.34.1",
+    "@fontsource/chakra-petch": "5.3.0",
+    "@fontsource/ibm-plex-mono": "5.3.0",
     "node-red": "5.0.9",
-    "@flowfuse/node-red-dashboard": "1.34.1"
+    "three": "0.170.0"
+  },
+  "devDependencies": {
+    "esbuild": "0.25.12"
   }
 }

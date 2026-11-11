@@ -4,6 +4,7 @@ module.exports = {
     uiHost: "127.0.0.1",
     uiPort: 1880,
     httpAdminRoot: false,
+    httpStatic: [{path: require('node:path').join(__dirname, 'public'), root: '/'}],
     flowFile: "flows.json",
     credentialSecret: process.env.ROBOCAR_CREDENTIAL_SECRET,
     functionGlobalContext: { robocar: require("./decode") },

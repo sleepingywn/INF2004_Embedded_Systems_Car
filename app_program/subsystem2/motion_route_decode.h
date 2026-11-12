@@ -68,7 +68,13 @@ static inline char route_code39_decode(const bc_msg_t *m)
         !code39_pick(m->widths, 20, 5, 2, BARS_RATIO_NUM, BARS_RATIO_DEN, &g3) ||
         !code39_pick(m->widths, 10, 5, 2, BARS_RATIO_NUM, BARS_RATIO_DEN, &data) ||
         !code39_pick(m->widths, 11, 4, 1, SPACE_RATIO_NUM, SPACE_RATIO_DEN, &data)) return 0;
+#if IR_BARCODE_DIGITAL
+    if (!code39_pick(m->widths, 1, 4, 1, SPACE_RATIO_NUM, SPACE_RATIO_DEN, &g1) ||
+        !code39_pick(m->widths, 21, 4, 1, SPACE_RATIO_NUM, SPACE_RATIO_DEN, &g3)) return 0;
+    const uint16_t star = code39_mask(CODE39_STAR);
+#else
     const uint16_t star = code39_mask(CODE39_STAR) & CODE39_BAR_BITS;
+#endif
     bool forward = g1 == star && g3 == star;
     bool backward = g1 == code39_reverse(star) && g3 == code39_reverse(star);
     if (!forward && !backward) return 0;

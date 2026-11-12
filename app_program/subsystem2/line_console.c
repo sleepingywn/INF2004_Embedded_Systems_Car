@@ -41,6 +41,11 @@ static void route_console_drain(void)
                       (INT)route_ch(e.code), (UB*)(e.v[3] ? "" : " (not during a V5 run: ignored)"));
             motion_route_barcode_t bc;
             if (motion_route_barcode(&bc, &route_bc_seen)) {
+#if IR_BARCODE_DIGITAL
+                tm_printf((UB*)"[barcode] edges: glitches=%u dropped=%u reject=%u overflow=%u (1=lost edges 2=black stall 3=incomplete; no letter with 29=width/marker disagreement)\n",
+                    bc.by_time.glitches, bc.by_time.dropped, (unsigned)bc.by_time.hdr.reserved,
+                    (unsigned)bc.by_time.hdr.overflow);
+#endif
                 route_print_widths("widths_ms", &bc.by_time);
                 if (bc.distance_valid) route_print_widths("widths_counts", &bc.by_distance);
                 else tm_printf((UB*)"[route] widths_counts: unavailable (odometry history)\n");
@@ -610,7 +615,7 @@ void motion_line_console_help(void)
     tm_printf((UB*)"[line] reason: 0 none, 1 recovery time, 2 recovery distance, 3 sweep exhausted, 4 mark time, 5 mark distance, 6 crossing time, 7 crossing distance, 8 route command, 9 invalid pair.\n");
 #if MOTION_LINE_ROUTE
 #if IR_BARCODE_DIGITAL
-    tm_printf((UB*)"[barcode] DIGITAL D0 -> GP26, black level=%u, 1 kHz; GP27/28 analogue.\n", (UINT)IR_BARCODE_BLACK_LEVEL);
+    tm_printf((UB*)"[barcode] DIGITAL IRQ/filter D0 -> GP26, black level=%u, 1 kHz; GP27/28 analogue.\n", (UINT)IR_BARCODE_BLACK_LEVEL);
 #else
     tm_printf((UB*)"[barcode] ANALOGUE A0 -> GP26, ADC thresholds; GP27/28 analogue.\n");
 #endif

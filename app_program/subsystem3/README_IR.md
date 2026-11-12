@@ -89,3 +89,48 @@ make -C build_make -j8 PICO_SDK_PATH=C:/Users/joell/.pico-sdk/sdk/2.3.1 SMP=1 CO
 Latest flashed UF2 SHA256:
 `E34E6EA7C8A55B5C92E6BE446FA7C5D68D58F32CC2589220196AD577DD65BD96`.
 Build products and credentials stay local and are not part of the Git snapshot.
+
+
+## Digital interrupt capture update (12 November 2026)
+
+Local branch `feature/digital-barcode` now captures GP26 D0 edges through the
+existing B2 GPIO ISR, rather than using 1 kHz samples for barcode widths. The
+1 kHz ADC acquisition of GP27/28 is unchanged. The analogue rollback remains at
+`feature/robocar-telemetry-line-follow-autostart`, commit `2b9fc38`.
+
+- ISR records raw microsecond time, signed-corrected summed wheel position and
+  encoder-error counter into a 128-entry single-producer/single-consumer ring.
+  Both-edge ambiguity and ring overflow reject the capture. No decode, printing
+  or kernel calls run in the barcode ISR path.
+- S3 drains at most 128 edges per sample. A transition must survive 2 ms; the
+  accepted transition retains its original timestamp and position. Pulses
+  shorter than 2 ms are removed. This threshold requires real-sensor tuning.
+- Widths use actual encoder counts at accepted edges, with no invented sub-count
+  precision. Every element must have at least two forward counts and no encoder
+  errors for distance decoding; otherwise timing is available for hand swipes
+  and insufficient wheel movement. Timing widths are rounded to milliseconds.
+- Completion requires trailing white. With usable distance, quiet travel must
+  exceed both 80 summed wheel counts and ten times the narrowest captured element.
+  These are count thresholds, NOT calibrated millimetres. Otherwise white for
+  1.5 s finishes the capture. Three seconds without edges or wheel movement ends
+  a stalled capture; a black stall is rejected. Reaching 29 alone does not finish.
+- Digital decoding validates both bars AND spaces in both `*` markers. Existing
+  A-Z mapping and time/distance agreement rules remain. Failed scans cannot arm
+  a junction. Epoch changes or invalid/gapped IR frames discard pending edges.
+- Existing dashboard letter and X/29 telemetry remain wire-compatible. USB route
+  logs additionally show removed glitches, dropped edges, rejection reason,
+  time widths and distance widths. Rejection codes: 1 lost/ambiguous edges,
+  2 stalled on black, 3 incomplete capture. A 29-element scan without a letter
+  indicates invalid widths/markers or conflicting decodes. These detailed
+  rejection fields are USB-only; the dashboard still shows 'Not decoded'.
+
+Build with the digital command above (`BARCODE_DIGITAL=1 BARCODE_BLACK_LEVEL=1`).
+Run `python testing/subsystem2/run_digital_edges_tests.py` with GCC on PATH.
+The tests cover both scan directions, changing speed, hand swipes, timer wrap,
+chatter, delayed quiet-zone completion, overflow, ambiguous IRQ edges, stalls,
+partial captures, reset fencing and the actual owner/telemetry snapshot path.
+
+This update is software-tested only. The robot still has the analogue image
+flashed earlier today. Before a digital flash, move the barcode output from A0
+to D0 on GP26 and verify black polarity; GP27/28 stay on A0. A clean stationary
+white/black test and repeat scans are needed before claiming improved reliability.

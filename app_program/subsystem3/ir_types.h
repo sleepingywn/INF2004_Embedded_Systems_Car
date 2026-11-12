@@ -160,6 +160,11 @@ typedef struct {
 typedef struct {
 	bc_hdr_t	hdr;
 	bc_width_t	widths[BC_MAX_ELEMS];	/* samples per element; BC_WIDTH_SAT = saturated */
+#if IR_BARCODE_DIGITAL
+    bc_width_t distance[BC_MAX_ELEMS]; /* actual edge-stamped summed wheel counts */
+    uint32_t glitches, dropped;
+    uint8_t distance_valid;
+#endif
 } bc_msg_t;
 
 /* Calibration for one channel: two 12-bit ADC values packed in 24 bits. */

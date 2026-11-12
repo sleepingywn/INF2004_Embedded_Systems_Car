@@ -8,6 +8,9 @@ void motion_ir_bridge_init(motion_ir_bridge_t *bridge)
     memset(bridge, 0, sizeof(*bridge));
     line_init(&bridge->tracker);
     bc_init(&bridge->capture);
+#if IR_BARCODE_DIGITAL
+    bc_edges_reset(&bridge->edges);
+#endif
 }
 
 ER motion_ir_bridge_sample(motion_ir_bridge_t *bridge, const uint8_t normalized[3], bool valid,
@@ -42,6 +45,9 @@ ER motion_ir_bridge_sample(motion_ir_bridge_t *bridge, const uint8_t normalized[
     if (!valid || gap)
     {
         bc_init(&bridge->capture);
+#if IR_BARCODE_DIGITAL
+        bc_edges_reset(&bridge->edges);
+#endif
         line_init(&bridge->tracker);
         line.fault = 1;
         line.state = LINE_FAULT;
@@ -51,8 +57,14 @@ ER motion_ir_bridge_sample(motion_ir_bridge_t *bridge, const uint8_t normalized[
         line.err = line_update(&bridge->tracker, normalized[IR_CH_LINE_A], normalized[IR_CH_LINE_B],
                                1u, &line_state);
         line.state = line_state;
+#if IR_BARCODE_DIGITAL
+        completed = bc_edges_poll(&bridge->edges, sample_ms * 1000u,
+                                  normalized[IR_CH_BARCODE] != 0, &barcode);
+        line.bc_active = bridge->edges.active;
+#else
         completed = bc_feed(&bridge->capture, normalized[IR_CH_BARCODE], &barcode);
         line.bc_active = bc_active(&bridge->capture);
+#endif
     }
     ER error = E_OK;
     if ((sample_ms - bridge->line_ms >= 10u) || line.fault || completed || changed_epoch)
@@ -74,6 +86,9 @@ ER motion_ir_bridge_sample(motion_ir_bridge_t *bridge, const uint8_t normalized[
         if (error < E_OK)
         {
             bc_init(&bridge->capture);
+#if IR_BARCODE_DIGITAL
+            bc_edges_reset(&bridge->edges);
+#endif
             (void)motion_set_fault(MOTION_HEALTH_IR, true);
             return error;
         }

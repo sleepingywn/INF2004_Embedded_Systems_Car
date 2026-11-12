@@ -1266,10 +1266,16 @@ static bool route_step(uint32_t now, const line_msg_t *line, uint32_t line_ms,
  * running and nothing else is in progress. */
 static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool usable)
 {
-    if (barcode->hdr.count < BC_MIN_ELEMS) return; /* below capture noise floor */
+    if (barcode->hdr.count < BC_MIN_ELEMS && !barcode->hdr.overflow) return; /* below capture noise floor */
     char by_time = route_code39_decode(barcode);
     bc_msg_t by_distance;
+#if IR_BARCODE_DIGITAL
+    bool have_distance = barcode->distance_valid && !barcode->hdr.overflow;
+    by_distance = *barcode;
+    for (unsigned i = 0; i < barcode->hdr.count; ++i) by_distance.widths[i] = barcode->distance[i];
+#else
     bool have_distance = route_distance_widths(&route_odo, barcode, barcode_ms, &by_distance);
+#endif
     char by_dist = have_distance ? route_code39_decode(&by_distance) : '\0';
     char chosen = route_choose(by_dist, by_time);
     ++barcode_status.sequence;

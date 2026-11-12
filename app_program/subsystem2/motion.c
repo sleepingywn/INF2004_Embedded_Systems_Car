@@ -1,8 +1,10 @@
 #include "motion.h"
 #include "startup_gate.h"
+#include "../subsystem1/control_wire.h"
 #include "line_follow.h"
 #if MOTION_LINE_ROUTE
 #include "motion_route.h"
+#include "route_settings.h"
 #endif
 #if TM_CONSOLE_USB_CDC
 #include <tm/usb_console.h>
@@ -29,6 +31,10 @@
 static ID mailbox_mutex;
 static ID status_mutex;
 static motion_status_t observer_status;
+#if MOTION_LINE_ROUTE
+/* Writer: motor owner. Observer copy protected by status_mutex. */
+static motion_barcode_status_t barcode_status, observer_barcode_status;
+#endif
 static motion_diagnostics_t diagnostics, observer_diagnostics;
 
 /* INTEGRATION TEST: copies of the latest line sample and barcode capture
@@ -96,6 +102,7 @@ static struct
     uint32_t barcode_ms;
     uint32_t barcode_epoch;
     uint32_t rejected_requests;
+    uint32_t remote_epoch,remote_id,remote_renewed,remote_started;
     bool pending : 1;
     bool processing : 1;
     bool renewal : 1;
@@ -253,6 +260,9 @@ static void publish_observer_status(void)
 {
     if (status_mutex > 0 && tk_loc_mtx(status_mutex, TMO_POL) == E_OK) {
         observer_status = state;
+#if MOTION_LINE_ROUTE
+        observer_barcode_status = barcode_status;
+#endif
         observer_diagnostics = diagnostics;
         observer_line_history_available=!owner_flags.active_valid;
         if(observer_line_history_available && line_history_dirty) {
@@ -263,6 +273,14 @@ static void publish_observer_status(void)
     }
 }
 
+#if MOTION_LINE_ROUTE
+ER motion_get_barcode_status(motion_barcode_status_t *out)
+{
+    if(!out || status_mutex<=0)return E_OBJ;
+    ER e=tk_loc_mtx(status_mutex,TMO_POL);if(e<E_OK)return e;
+    *out=observer_barcode_status;tk_unl_mtx(status_mutex);return E_OK;
+}
+#endif
 ER motion_get_line_trace(unsigned index,motion_line_trace_entry_t *out)
 {
     if(!out)return E_PAR;
@@ -388,11 +406,11 @@ static bool valid_request(const motion_request_t *request)
         return MOTION_LINE_DEMO && MOTION_ENCODERS_VERIFIED &&
                MOTION_LEFT_ENCODER_SIGN==-1 && MOTION_RIGHT_ENCODER_SIGN==1 &&
                MOTION_LEFT_MOTOR_SIGN==-1 && MOTION_RIGHT_MOTOR_SIGN==1 &&
-               request->source==MOTION_LOCAL && motion_request_value(request)==0 &&
+               (request->source==MOTION_LOCAL || (MOTION_LINE_REMOTE && request->source==MOTION_NETWORK)) && motion_request_value(request)==0 &&
                left==0 && right==0 && request->ttl_ms>=2*MOTION_PERIOD_MS &&
                request->ttl_ms<=LINE_FOLLOW_MAX_MS;
     }
-    /* Network transport is not movement authority. Buddy1 can publish status
+    /* Other network commands remain disabled. Buddy1 can publish status
      * and assert faults; an agreed local controller admits mission requests. */
     if (!calibrated() || (request->source == MOTION_TERRAIN) || (request->source == MOTION_NETWORK))
     {
@@ -481,11 +499,32 @@ ER motion_submit(const motion_request_t *request)
         tk_unl_mtx(mailbox_mutex);
         return E_OBJ;
     }
+#if MOTION_LINE_REMOTE
+    if(request->source==MOTION_NETWORK &&
+       (request->command!=MOTION_LINE_TRACE || shared.remote_epoch!=request->epoch ||
+        shared.remote_id!=request->id || control_expired(motion_now_ms(),shared.remote_renewed,shared.remote_started))) {
+        tk_unl_mtx(mailbox_mutex);return E_OBJ;
+    }
+#endif
     shared.request = *request;
     shared.pending = true;
     shared.renewal = false;
     tk_unl_mtx(mailbox_mutex);
     return tk_set_flg(events, WAKE_BIT);
+}
+
+ER motion_remote_watch(uint32_t epoch,uint32_t id,uint32_t renewed_ms,uint32_t started_ms)
+{
+#if MOTION_LINE_REMOTE
+    if(!id || mailbox_mutex<=0)return E_OBJ;
+    ER e=lock_mailbox();if(e<E_OK)return e;
+    if(shared.status.epoch!=epoch){tk_unl_mtx(mailbox_mutex);return E_OBJ;}
+    shared.remote_epoch=epoch;shared.remote_id=id;
+    shared.remote_renewed=renewed_ms;shared.remote_started=started_ms;
+    tk_unl_mtx(mailbox_mutex);return E_OK;
+#else
+    (void)epoch;(void)id;(void)renewed_ms;(void)started_ms;return E_OBJ;
+#endif
 }
 
 ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source, uint32_t issued_ms,
@@ -1227,12 +1266,16 @@ static bool route_step(uint32_t now, const line_msg_t *line, uint32_t line_ms,
  * running and nothing else is in progress. */
 static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool usable)
 {
-    if (barcode->hdr.count < 9u) return; /* blips: crossing tape, paper edges */
+    if (barcode->hdr.count < BC_MIN_ELEMS) return; /* below capture noise floor */
     char by_time = route_code39_decode(barcode);
     bc_msg_t by_distance;
     bool have_distance = route_distance_widths(&route_odo, barcode, barcode_ms, &by_distance);
     char by_dist = have_distance ? route_code39_decode(&by_distance) : '\0';
     char chosen = route_choose(by_dist, by_time);
+    ++barcode_status.sequence;
+    barcode_status.sampled_ms=barcode_ms;barcode_status.epoch=state.epoch;
+    barcode_status.code=(uint8_t)chosen;barcode_status.elements=(uint8_t)barcode->hdr.count;
+    barcode_status.seen=1;
     route_bc.by_time = *barcode;
     route_bc.by_distance = have_distance ? by_distance : (bc_msg_t){0};
     route_bc.distance_valid = have_distance;
@@ -1246,6 +1289,7 @@ static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool 
     route_event(ROUTE_EV_BARCODE, chosen, barcode->hdr.count, by_dist, by_time, usable ? 1 : 0);
     if (!usable) { ++state.rejected_barcodes; return; }
     if (!chosen) return;
+    chosen = route_mapping_code(chosen); /* retain original letter in barcode telemetry */
     if (route.phase != ROUTE_IDLE || !route_letter_armable(chosen)) {
         route_event(ROUTE_EV_NOT_ARMED, chosen, route.phase != ROUTE_IDLE ? 1 : 2, 0, 0, 0);
         return;
@@ -1615,7 +1659,8 @@ void motion_task(INT stacd, void *exinf)
                 state.state = MOTION_ERROR;
             }
         }
-        if (owner_flags.active_valid && ((uint32_t)(now - active.issued_ms) >= active.ttl_ms))
+        if (owner_flags.active_valid && !(MOTION_LINE_UNLIMITED && active.command==MOTION_LINE_TRACE) &&
+            ((uint32_t)(now - active.issued_ms) >= active.ttl_ms))
         {
             if (state.state == MOTION_PULSING || active.command==MOTION_LINE_TRACE)
             {
@@ -1648,6 +1693,10 @@ void motion_task(INT stacd, void *exinf)
         motion_request_t request = shared.request;
         bool pending = shared.pending;
         bool renewal = shared.renewal;
+#if MOTION_LINE_REMOTE
+        uint32_t remote_epoch=shared.remote_epoch,remote_id=shared.remote_id;
+        uint32_t remote_renewed=shared.remote_renewed,remote_started=shared.remote_started;
+#endif
         if (pending)
         {
             shared.processing = true;
@@ -1709,6 +1758,12 @@ void motion_task(INT stacd, void *exinf)
                 ++owner_rejections;
             }
         }
+#if MOTION_LINE_REMOTE
+        if(owner_flags.active_valid && active.source==MOTION_NETWORK &&
+           (active.epoch!=remote_epoch || active.id!=remote_id || control_expired(now,remote_renewed,remote_started))) {
+            end_request(MOTION_EXPIRED);++state.epoch;
+        }
+#endif
         /* Do not admit a barcode from a failed/late line producer merely
          * because its standalone capture has a plausible pattern. */
         if (have_barcode)

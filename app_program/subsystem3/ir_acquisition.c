@@ -118,11 +118,18 @@ static void timer_interrupt(UINT intno)
     }
     scan.frame.sampled_ms = scan.deadline_ms;
     scan.started_us = now;
-    scan.channel = 0;
+    #if IR_BARCODE_DIGITAL
+    /* Sample D0 once at the same 1 kHz deadline as the analogue line pair.
+     * Store synthetic white/black endpoints, not an ADC measurement. */
+    scan.frame.barcode = (((in_w(GPIO_IN) >> 26) & 1u) == IR_BARCODE_BLACK_LEVEL) ? 4095u : 0u;
+    scan.channel = IR_CH_LINE_A;
+#else
+    scan.channel = IR_CH_BARCODE;
+#endif
     scan.active = true;
     scan.deadline_us += IR_ACQ_PERIOD_US;
     ++scan.deadline_ms; /* full millisecond clock, independent of raw-us wrap */
-    out_w(ADC_CS, ADC_CS_EN | ADC_CS_STRAT_ONCE);
+    out_w(ADC_CS, ADC_CS_EN | ADC_CS_STRAT_ONCE | ((uint32_t)scan.channel << ADC_CS_AINSEL_POS));
     arm_deadline();
 }
 
@@ -199,7 +206,13 @@ static ER prepare_adc(void)
     {
         return E_SYS;
     }
-    for (unsigned pin = 26u; pin <= 28u; ++pin)
+    #if IR_BARCODE_DIGITAL
+    out_w(GPIO_OE_CLR, 1u << 26); /* input only; never drive the sensor */
+    out_w(GPIO_CTRL(26), GPIO_CTRL_FUNCSEL_SIO);
+    clr_w(GPIO(26), GPIO_PUE | GPIO_PDE);
+    set_w(GPIO(26), GPIO_IE);
+#endif
+    for (unsigned pin = IR_BARCODE_DIGITAL ? 27u : 26u; pin <= 28u; ++pin)
     {
         out_w(GPIO_CTRL(pin), GPIO_CTRL_FUNCSEL_NULL);
         clr_w(GPIO(pin), GPIO_IE | GPIO_PUE | GPIO_PDE);

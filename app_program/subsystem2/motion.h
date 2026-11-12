@@ -171,6 +171,7 @@ ER motion_submit(const motion_request_t *request);
 ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source, uint32_t issued_ms,
                 uint16_t ttl_ms);
 ER motion_stop(void);
+ER motion_remote_watch(uint32_t epoch,uint32_t id,uint32_t renewed_ms,uint32_t started_ms);
 ER motion_set_fault(motion_fault_source_t source, bool asserted);
 typedef struct {
     uint32_t raw_left,raw_right,previous_left,previous_right,origin_left,origin_right;
@@ -250,6 +251,13 @@ ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t
 ER motion_debug_line(line_msg_t *line, uint32_t *sampled_ms);
 ER motion_debug_barcode(bc_msg_t *barcode, uint32_t *sampled_ms, uint32_t *count);
 #if MOTION_LINE_ROUTE
+/* Last scan since boot, independent of the single-reader console event FIFO.
+ * A zero code after a seen scan means decoding failed, not "no scan". */
+typedef struct {
+    uint32_t sequence, sampled_ms, epoch;
+    uint8_t code, elements, seen;
+} motion_barcode_status_t;
+ER motion_get_barcode_status(motion_barcode_status_t *out);
 /* Barcode routing log, drained by the console task (single reader).
  * kind: 1 barcode, 2 armed, 3 not armed, 4 junction, 5 exit, 6 leg done,
  *       7 V5 resumed, 8 route failure, 9 30 s segment limit reached. */

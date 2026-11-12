@@ -1,7 +1,7 @@
 ENTRY(Reset_Handler)
 
 MEMORY {
-	ROM (rx)	: ORIGIN = 0x10000000, LENGTH = 2048K
+	ROM (rx)	: ORIGIN = 0x10000000, LENGTH = 2040K
 	RAM (xrw)	: ORIGIN = 0x20000000, LENGTH = 256K
 }
 
@@ -55,9 +55,12 @@ SECTIONS {
 		__data_start = .;
 		*(.data)
 		*(.data.*)
+		*(.time_critical.route_settings*)
 		. = ALIGN(4);
 		__data_end = .;
 	} >RAM
+	ASSERT(__data_org + SIZEOF(.data) <= ORIGIN(ROM) + LENGTH(ROM),
+		"Firmware overlaps reserved route settings flash")
 	.bss ALIGN(4) (NOLOAD) : {
 		__bss_start = .;
 		PROVIDE (__noinit_start = .);

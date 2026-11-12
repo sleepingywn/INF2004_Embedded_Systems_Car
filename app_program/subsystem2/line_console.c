@@ -1,8 +1,12 @@
 #include "motion.h"
 #include "line_follow.h"
 #include "line_console.h"
+#include "route_settings.h"
 #include "line_button.h"
 #include "line_autostart.h"
+#if MOTION_LINE_REMOTE
+#include "../subsystem1/telemetry_transport.h"
+#endif
 #include "../subsystem3/ir_runtime.h"
 #if MOTION_LINE_CIRCUIT && !MOTION_LINE_AUTOSTART
 #include "line_indicator.h"
@@ -125,6 +129,8 @@ static uint32_t boot_requested_ms,boot_previous_epoch;
 static line_button_t button;
 static line_indicator_t indicator;
 static bool button_boot_pending=true,button_reset_pending;
+static bool button_retry_allowed,button_retry_gesture,button_restart_pending,button_retry_waiting;
+static uint32_t button_retry_since;
 static uint32_t button_reset_ms,button_reset_id,button_reset_epoch;
 #else
 static line_auto_t autostart;
@@ -141,6 +147,10 @@ static bool button_pressed(void)
     }
     return gpio_get_val(MOTION_LINE_BUTTON_PIN)==0u;
 }
+#endif
+#if MOTION_LINE_REMOTE
+static motion_request_t last_local_request;
+static bool remote_submitting;
 #endif
 static ER local_request(motion_command_t command)
 {
@@ -163,12 +173,23 @@ static ER local_request(motion_command_t command)
     if(command==MOTION_LINE_TRACE && (m.faults || m.state!=MOTION_IDLE))return E_OBJ;
     uint32_t id=m.request_id+1u;
     if(!id)id=1;
-    error=motion_request_init(&request,command,MOTION_LOCAL,m.epoch,id,
+    motion_source_t source=MOTION_LOCAL;
+#if MOTION_LINE_REMOTE
+    if(remote_submitting && command==MOTION_LINE_TRACE)source=MOTION_NETWORK;
+#endif
+    error=motion_request_init(&request,command,source,m.epoch,id,
                              command==MOTION_RESET ? 1000u : LINE_FOLLOW_MAX_MS,0,0,0);
+#if MOTION_LINE_REMOTE
+    if(error==E_OK && remote_submitting && command==MOTION_LINE_TRACE)
+        error=motion_remote_watch(request.epoch,request.id,now,now);
+#endif
     ER submitted=error<E_OK ? error : motion_submit(&request);
+#if MOTION_LINE_REMOTE
+    if(submitted==E_OK)last_local_request=request;
+#endif
 #if MOTION_LINE_CIRCUIT && !MOTION_LINE_AUTOSTART
     if(submitted==E_OK && command==MOTION_LINE_TRACE)
-        line_indicator_queue(&indicator,request.epoch,request.id,now);
+        {line_indicator_queue(&indicator,request.epoch,request.id,now);button_retry_allowed=true;}
 #endif
     return submitted;
 }
@@ -180,6 +201,11 @@ static ER button_queue_reset(void)
     motion_status_t m;
     ER e=motion_get_ir_status(&m);
     if(e<E_OK)return e;
+    if(button_restart_pending &&
+       ((m.state!=MOTION_IDLE && m.state!=MOTION_ERROR) ||
+        motion_left_duty(&m) || motion_right_duty(&m) ||
+        (uint32_t)(motion_now_ms()-m.updated_ms)>LINE_FOLLOW_INPUT_AGE_MS ||
+        (m.faults & ~(MOTION_FAULT_IR|MOTION_FAULT_TIMEOUT|MOTION_FAULT_RANGE))))return E_OBJ;
     e=local_request(MOTION_RESET);
     if(e==E_OK) {
         button_reset_epoch=m.epoch+1u;
@@ -195,7 +221,7 @@ static void button_prepare(void)
     if(!button_boot_pending && !button_reset_pending)return;
     uint32_t now=motion_now_ms();
     if(button_reset_pending && (uint32_t)(now-button_reset_ms)>=1000u) {
-        button_reset_pending=false;line_indicator_fail(&indicator);return;
+        button_reset_pending=false;button_restart_pending=false;line_indicator_fail(&indicator);return;
     }
     if(motion_get_ir_status(&m)<E_OK || ir_runtime_get_status(&ir)<E_OK)return;
     now=motion_now_ms();
@@ -213,9 +239,18 @@ static void button_prepare(void)
     } else if(healthy && m.state==MOTION_IDLE && !m.faults &&
               m.result==MOTION_COMPLETED && m.epoch==button_reset_epoch &&
               m.request_id==button_reset_id) {
-        button_reset_pending=false;line_armed=true;
+        button_reset_pending=false;
+        if(button_restart_pending) {
+            button_restart_pending=false;button_retry_gesture=false;
+            ER result=local_request(MOTION_LINE_TRACE);
+            button=(line_button_t){.started=result==E_OK};line_armed=false;
+            if(result<E_OK)line_indicator_fail(&indicator);
+            tm_printf((UB*)"[line] GP20 RESTART queued=%d\n",(INT)result);
+            return;
+        }
+        line_armed=true;
         line_button_arm(&button,now,button_pressed());
-        tm_printf((UB*)"[line] GP20 ready: press and release for one 30s run\n");
+        tm_printf((UB*)"[line] GP20 ready: press and release for a line-follow run\n");
     }
 }
 #endif
@@ -313,6 +348,7 @@ static bool line_console_key(int key)
         button=(line_button_t){0};
         line_indicator_clear(&indicator);
         button_boot_pending=button_reset_pending=false;
+        button_restart_pending=false;button_retry_gesture=false;button_retry_waiting=false;
 #endif
         line_armed=false;
         tm_printf((UB*)"[line] STOP result=%d\n",(INT)motion_stop());return true;
@@ -330,8 +366,10 @@ static bool line_console_key(int key)
     /* Called every diagnostic-task iteration, including when no USB input.
      * Calibration commands cancel button permission before processing edges. */
     if(key=='c' || key=='f' || key=='r') {
+        button_retry_allowed=false;
         line_indicator_clear(&indicator);
         button_boot_pending=button_reset_pending=false;
+        button_restart_pending=false;button_retry_gesture=false;button_retry_waiting=false;
         bool stopping=false;
         if(button.started) {
             motion_status_t m;
@@ -344,6 +382,11 @@ static bool line_console_key(int key)
             return true;
         }
     }
+    if(button_restart_pending && button_pressed()) {
+        button_restart_pending=button_reset_pending=false;
+        button=(line_button_t){0};line_armed=false;
+        (void)motion_stop();return true;
+    }
     button_prepare();
     line_button_event_t event=line_button_step(&button,motion_now_ms(),button_pressed());
     if(event==LINE_BUTTON_STOP) {
@@ -352,9 +395,13 @@ static bool line_console_key(int key)
         tm_printf((UB*)"[line] GP20 STOP result=%d\n",(INT)motion_stop());
     } else if(event==LINE_BUTTON_START) {
         line_armed=false;
-        ER result=local_request(MOTION_LINE_TRACE);
+        ER result;
+        if(button_retry_gesture) {
+            button_retry_gesture=false;button=(line_button_t){0};
+            button_restart_pending=true;result=button_queue_reset();button_restart_pending=result==E_OK;
+        } else result=local_request(MOTION_LINE_TRACE);
         if(result<E_OK){button=(line_button_t){0};line_indicator_fail(&indicator);}
-        tm_printf((UB*)"[line] GP20 TRACE 30000ms queued=%d\n",(INT)result);
+        tm_printf((UB*)"[line] GP20 TRACE queued=%d\n",(INT)result);
     }
     if(key=='g') {
         tm_printf((UB*)"[line] Circuit profile: g disabled; use GP20 when ready\n");
@@ -387,13 +434,160 @@ static bool line_console_key(int key)
 #endif
     return false;
 }
+#if MOTION_LINE_REMOTE
+/* Only the diagnostic/GP20 owner calls this. WiFi only stages bounded frames.
+ * Lease enforcement ALSO runs in the motor owner; a blocked console cannot
+ * keep a remote run alive. No remote reset or fault-clear is provided. */
+static struct {
+    uint32_t session,last_id,sequence,owner,epoch,request_id,started,renewed,keep_issued;
+    uint32_t ack_id,pending_ms,stop_epoch;
+    uint8_t ack,op,stage,stop_result;
+} remote;
+static bool mapping_pending;
+static uint8_t pending_mapping[26];
+static void remote_stop(uint8_t result,uint32_t now,uint32_t epoch)
+{
+    (void)line_console_key('x');
+    remote.stage=3;remote.pending_ms=now;remote.stop_epoch=epoch;
+    remote.stop_result=result;remote.ack=CONTROL_QUEUED;
+}
+static void remote_poll(void)
+{
+    uint32_t boot,session;int connected;
+    if(!s1_control_context(&boot,&session,&connected))return;
+    motion_status_t m={0};uint32_t now=motion_now_ms();
+    bool fresh=motion_get_ir_status(&m)==E_OK;
+    now=motion_now_ms();fresh=fresh && (uint32_t)(now-m.updated_ms)<=200u;
+    if(remote.session!=session) {
+        if(remote.stage==1 || remote.stage==2)remote_stop(CONTROL_LINK_LOST,now,remote.epoch);
+        remote.session=session;remote.last_id=0;
+    }
+    if(remote.stage==1 || remote.stage==2) {
+        if(!connected || control_expired(now,remote.renewed,remote.started))
+            remote_stop(CONTROL_LINK_LOST,now,remote.epoch);
+        else if(!button.started || (fresh && m.epoch!=remote.epoch)) {
+            remote_stop(CONTROL_FINISHED,now,remote.epoch);
+        } else if(fresh && m.request_epoch==remote.epoch && m.request_id==remote.request_id) {
+            if(m.state==MOTION_TRACING && m.result==MOTION_ACCEPTED) {
+                remote.stage=2;if(remote.ack_id==remote.owner)remote.ack=CONTROL_RUNNING;
+            } else if(m.result!=MOTION_ACCEPTED) {
+                remote_stop(m.result==MOTION_COMPLETED ? CONTROL_FINISHED : CONTROL_REJECTED,now,m.epoch);
+            }
+        }
+        if(remote.stage==1 && (uint32_t)(now-remote.pending_ms)>=1000u)
+            remote_stop(CONTROL_TIMED_OUT,now,remote.epoch);
+    }
+    if(remote.stage==3) {
+        if(fresh && (int32_t)(m.updated_ms-remote.pending_ms)>=0 && m.epoch!=remote.stop_epoch &&
+           (m.state==MOTION_IDLE || m.state==MOTION_ERROR) &&
+           !motion_left_duty(&m) && !motion_right_duty(&m)) {
+            remote.stage=0;remote.owner=0;remote.ack=remote.stop_result;
+            if(mapping_pending){mapping_pending=false;route_settings_reboot(pending_mapping);}
+        } else if((uint32_t)(now-remote.pending_ms)>=1000u) {
+            /* Retain the stop guard and retry; do not claim a stopped motor. */
+            remote.ack=CONTROL_TIMED_OUT;(void)motion_stop();
+        }
+    }
+    bool can_start=!button_retry_gesture && !button_restart_pending && connected && boot && fresh && m.ready && m.raw_valid && !m.faults &&
+        m.state==MOTION_IDLE && button.armed && button.ready && !button.pressed_once &&
+        !button_pressed() && !button_boot_pending && !button_reset_pending && !boot_pending && remote.stage==0;
+    control_command_t c;
+    if(s1_control_take(&c) && connected &&
+       control_fresh(&c,boot,session,c.op==CONTROL_STOP ? c.epoch : m.epoch,now) &&
+       (c.op==CONTROL_STOP || fresh)) {
+        if(c.op==CONTROL_KEEP) {
+            if((remote.stage==1 || remote.stage==2) && c.id==remote.owner &&
+               control_newer(c.issued,remote.keep_issued)) {
+                if(motion_remote_watch(remote.epoch,remote.request_id,now,remote.started)==E_OK) {
+                    remote.renewed=now;remote.keep_issued=c.issued;
+                }
+            }
+        } else if(control_newer(c.id,remote.last_id)) {
+            remote.last_id=c.id;remote.ack_id=c.id;remote.op=c.op;
+            if(c.op==CONTROL_STOP){mapping_pending=false;remote_stop(CONTROL_STOPPED,now,fresh ? m.epoch : c.epoch);}
+            else if(c.op==CONTROL_MAPPING) {
+                if(fresh && m.ready && !m.faults && m.state==MOTION_IDLE && remote.stage==0 &&
+                   !motion_left_duty(&m) && !motion_right_duty(&m) && !button_pressed() &&
+                   !button.started && !button_reset_pending && !button_boot_pending && !boot_pending &&
+                   c.revision==route_mapping_revision && route_settings_valid(c.mapping)) {
+                    for(unsigned i=0;i<26;++i)pending_mapping[i]=c.mapping[i];
+                    mapping_pending=true;remote_stop(CONTROL_STOPPED,now,m.epoch);
+                } else remote.ack=CONTROL_REJECTED;
+            }
+            else if(can_start) {
+                remote_submitting=true;ER e=local_request(MOTION_LINE_TRACE);remote_submitting=false;
+                /* Every accepted Start consumes the same one-shot permission as GP20. */
+                if(e==E_OK) {
+                    button=(line_button_t){.started=true};line_armed=false;
+                    remote.owner=c.id;remote.epoch=last_local_request.epoch;remote.request_id=last_local_request.id;
+                    remote.started=remote.renewed=remote.pending_ms=now;remote.keep_issued=c.issued;
+                    remote.stage=1;remote.ack=CONTROL_QUEUED;
+                } else remote.ack=CONTROL_REJECTED;
+            } else remote.ack=CONTROL_REJECTED;
+        }
+    }
+    uint8_t b[CONTROL_STATUS_SIZE]={ 'R','S',2,CONTROL_SUPPORTED };
+    if(can_start && remote.stage==0)b[3]|=CONTROL_ARMED;
+    if(remote.stage==1 || remote.stage==2)b[3]|=CONTROL_ACTIVE;
+    if(fresh)b[3]|=CONTROL_MOTION_FRESH;
+    if(connected)b[3]|=CONTROL_CONNECTED;
+    control_put(b+4,boot);control_put(b+8,session);control_put(b+12,++remote.sequence);
+    control_put(b+16,now);control_put(b+20,m.epoch);control_put(b+24,remote.ack_id);
+    b[28]=remote.ack;b[29]=(uint8_t)m.state;b[30]=(uint8_t)m.faults;b[31]=remote.op;
+    control_put(b+32,remote.owner);control_put(b+36,route_mapping_revision);
+    for(unsigned i=0;i<26;++i)b[40+i]=route_mapping[i];
+    b[66]=route_mapping_persisted ? 1 : 0;
+    b[67]=mapping_pending ? 1 : 0;
+    (void)s1_control_status_offer(b);
+}
+#endif
+#if MOTION_LINE_CIRCUIT && !MOTION_LINE_AUTOSTART
+/* Prepare only a new physical gesture. Never reset/drive automatically, and
+ * retain stopped-run history until that gesture explicitly requests RESET. */
+static void button_retry_poll(void)
+{
+    motion_status_t m;ir_runtime_status_t ir;
+    bool blocked=!button_retry_allowed || button.armed || button_boot_pending ||
+        button_reset_pending || button_restart_pending;
+#if TM_CONSOLE_USB_CDC
+    blocked=blocked || boot_pending;
+#endif
+#if MOTION_LINE_REMOTE
+    blocked=blocked || remote.stage!=0 || mapping_pending;
+#endif
+    if(blocked){button_retry_waiting=false;return;}
+    if(motion_get_ir_status(&m)<E_OK || ir_runtime_get_status(&ir)<E_OK){button_retry_waiting=false;return;}
+    uint32_t now=motion_now_ms();
+    const unsigned recoverable=MOTION_FAULT_IR|MOTION_FAULT_TIMEOUT|MOTION_FAULT_RANGE;
+    bool stopped=(m.state==MOTION_IDLE || m.state==MOTION_ERROR) && !motion_left_duty(&m) && !motion_right_duty(&m);
+    bool healthy=m.ready && m.raw_valid && !(m.faults & ~recoverable) &&
+        (uint32_t)(now-m.updated_ms)<=LINE_FOLLOW_INPUT_AGE_MS &&
+        ir.state==IR_RUNTIME_READY && ir.healthy && !ir.command_pending &&
+        (uint32_t)(now-ir.updated_ms)<=LINE_FOLLOW_INPUT_AGE_MS &&
+        (uint32_t)(now-ir.raw.sampled_ms)<=LINE_FOLLOW_INPUT_AGE_MS;
+    /* A queued command is not a completed run. Wait for its result. */
+    bool queued=indicator.tracking && m.epoch==indicator.epoch &&
+        (m.request_epoch!=indicator.epoch || m.request_id!=indicator.id);
+    if(!stopped || !healthy || queued){button_retry_waiting=false;return;}
+    if(!button_retry_waiting){button_retry_waiting=true;button_retry_since=now;return;}
+    if((uint32_t)(now-button_retry_since)<600u)return;
+    line_indicator_clear(&indicator);
+    line_button_arm(&button,now,button_pressed());
+    button_retry_gesture=true;button_retry_waiting=false;line_armed=false;
+    tm_printf((UB*)"[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.\n");
+}
+#endif
 bool motion_line_console_key(int key)
 {
 #if MOTION_LINE_ROUTE
     route_console_drain();
 #endif
     bool handled=line_console_key(key);
+#if MOTION_LINE_REMOTE
+    remote_poll();
+#endif
 #if MOTION_LINE_CIRCUIT && !MOTION_LINE_AUTOSTART
+    button_retry_poll();
     motion_status_t m;
     bool sampled=motion_get_status(&m)==E_OK;
     uint32_t now=motion_now_ms();
@@ -406,12 +600,20 @@ bool motion_line_console_key(int key)
 }
 void motion_line_console_help(void)
 {
+#if MOTION_LINE_REMOTE
+    tm_printf((UB*)"[line] REMOTE v1: armed Start/Stop, 1500ms connection lease; GP20 stops. No remote reset.\n");
+#endif
 #if MOTION_LINE_DEMO
 #if MOTION_LINE_ADAPTIVE
-    tm_printf((UB*)"[line] ADAPTIVE v5: v2 steering baseline, bounded straight crossing, bounded pause settling; no tight-curve deadline. GP20 only, 30s bound.\n");
+    tm_printf((UB*)"[line] ADAPTIVE v5: v2 steering baseline, bounded straight crossing, bounded pause settling; no tight-curve deadline. GP20 Start/Stop.\n");
     tm_printf((UB*)"[line] adaptive modes: 0 track, 1 uncertain, 2 search, 3 mark, 4 route required, 5 recovery exhausted, 6 invalid, 7 crossing, 8 crossing exhausted.\n");
     tm_printf((UB*)"[line] reason: 0 none, 1 recovery time, 2 recovery distance, 3 sweep exhausted, 4 mark time, 5 mark distance, 6 crossing time, 7 crossing distance, 8 route command, 9 invalid pair.\n");
 #if MOTION_LINE_ROUTE
+#if IR_BARCODE_DIGITAL
+    tm_printf((UB*)"[barcode] DIGITAL D0 -> GP26, black level=%u, 1 kHz; GP27/28 analogue.\n", (UINT)IR_BARCODE_BLACK_LEVEL);
+#else
+    tm_printf((UB*)"[barcode] ANALOGUE A0 -> GP26, ADC thresholds; GP27/28 analogue.\n");
+#endif
     tm_printf((UB*)"[line] ROUTE profile: barcode arms the next junction: A right, B/Z left, C straight 100 mm, D U-turn. Unarmed junctions: V5 crosses straight.\n");
 #else
     tm_printf((UB*)"[line] Crossing policy: try straight within 400 mark / 900 total counts, 1800 / 3500ms; reacquire or stop. Barcode A/B/D stops for route handling (step 15).\n");
@@ -429,10 +631,15 @@ void motion_line_console_help(void)
     tm_printf((UB*)"[line] b stop/disarm then enter USB BOOTSEL for flashing (no button needed)\n");
 #endif
 #if MOTION_LINE_AUTOSTART
-    tm_printf((UB*)"[line] AUTO CIRCUIT: one 30s run after 5s boot delay, max 20%% duty. Saved IR references. GP20 or x/SPACE stops/cancels. No repeat until power-cycle.\n");
+    tm_printf((UB*)"[line] AUTO CIRCUIT: a line-follow run after 5s boot delay, max 20%% duty. Saved IR references. GP20 or x/SPACE stops/cancels. No repeat until power-cycle.\n");
 #elif MOTION_LINE_CIRCUIT
     tm_printf((UB*)"[line] Pico W green LED: slow blink=armed, double pulse=queued, solid=run accepted, fast blink=rejected/fault, off=finished/disarmed.\n");
-    tm_printf((UB*)"[line] CIRCUIT PROFILE: saved IR references; waits for GP20 press-release after healthy startup. One run, 30s maximum, 20%% duty. GP20 press or x/SPACE stops. Battery/USB disconnect allowed. Power-cycle or USB r to prepare again; no automatic movement.\n");
+#if MOTION_LINE_UNLIMITED
+    tm_printf((UB*)"[line] RUN TIME: no automatic time cutoff; Stop, sensor/encoder faults, distance guards and remote heartbeat still apply.\n");
+#else
+    tm_printf((UB*)"[line] RUN TIME: 30s segment limit; remote total limit 30s.\n");
+#endif
+    tm_printf((UB*)"[line] CIRCUIT PROFILE: saved IR references; waits for GP20 press-release after healthy startup. 20%% duty. GP20 press or x/SPACE stops. Battery/USB disconnect allowed. After stopping, wait for slow blink then a NEW GP20 press-release to retry; no automatic movement.\n");
 #else
     tm_printf((UB*)"[line] LOCAL LINE PROFILE: r reset/arm after healthy IR; g one 2s trace; x/SPACE stop. Reset/arm each run. Max 20%%. No IR bypass or automatic start.\n");
 #endif

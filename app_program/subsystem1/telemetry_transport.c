@@ -74,3 +74,48 @@ uint32_t s1_transport_dropped(void)
     tk_unl_mtx(transport_mutex);
     return value;
 }
+
+static uint32_t control_boot,control_session;
+static int control_connected,control_pending,control_have_status;
+static control_command_t control_slot;
+static uint8_t control_status[CONTROL_STATUS_SIZE];
+void s1_control_boot(uint32_t boot) {
+ if(!lock())return;
+ control_boot=boot;tk_unl_mtx(transport_mutex);
+}
+int s1_control_link(uint32_t session,int connected) {
+ if(!lock())return 0;
+ if(control_session!=session || !connected)control_pending=0;
+ control_session=session;control_connected=connected;
+ tk_unl_mtx(transport_mutex);return 1;
+}
+int s1_control_context(uint32_t *boot,uint32_t *session,int *connected) {
+ if(!lock())return 0;
+ *boot=control_boot;*session=control_session;*connected=control_connected;
+ tk_unl_mtx(transport_mutex);return 1;
+}
+int s1_control_offer(const uint8_t *frame,unsigned length) {
+ control_command_t c;
+ if(!control_decode(frame,length,&c) || !lock())return 0;
+ int accepted=control_connected && c.boot==control_boot && c.session==control_session &&
+              (!control_pending || c.op==CONTROL_STOP);
+ if(accepted){control_slot=c;control_pending=1;}
+ tk_unl_mtx(transport_mutex);return accepted;
+}
+int s1_control_take(control_command_t *command) {
+ if(!lock())return 0;
+ int found=control_pending;
+ if(found){*command=control_slot;control_pending=0;}
+ tk_unl_mtx(transport_mutex);return found;
+}
+int s1_control_status_offer(const uint8_t *frame) {
+ if(!lock())return 0;
+ for(unsigned i=0;i<CONTROL_STATUS_SIZE;++i)control_status[i]=frame[i];
+ control_have_status=1;tk_unl_mtx(transport_mutex);return 1;
+}
+int s1_control_status_peek(uint8_t *frame) {
+ if(!lock())return 0;
+ int found=control_have_status;
+ if(found)for(unsigned i=0;i<CONTROL_STATUS_SIZE;++i)frame[i]=control_status[i];
+ tk_unl_mtx(transport_mutex);return found;
+}

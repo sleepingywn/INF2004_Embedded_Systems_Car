@@ -31,4 +31,6 @@ void s1_encode_frame(uint8_t out[S1_FRAME_SIZE], const s1_wire_values_t *v)
     out[64] = v->event_type; out[65] = v->event_source;
     put32(out+68, v->event_ms); put32(out+72, v->event_count);
     put32(out+76, (uint32_t)v->event_value);
+    out[80]=v->barcode_code;out[81]=v->barcode_elements;out[82]=v->barcode_flags;
+    put32(out+84,v->barcode_sequence);put32(out+88,v->barcode_ms);put32(out+92,v->barcode_epoch);
 }

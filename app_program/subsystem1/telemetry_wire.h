@@ -1,14 +1,14 @@
 #ifndef TELEMETRY_WIRE_H
 #define TELEMETRY_WIRE_H
 #include <stdint.h>
-/* Version 1: explicit little-endian fields; never transmit C struct layout.
+/* Version 2 (96 bytes; v1 prefix/offsets preserved): explicit little-endian fields; never transmit C struct layout.
  * Validity bits: 0 motion snapshot, 1 physical calibration, 2 IR, 3 terrain.
  * Bits 4/5: fresh motion status / application ready.
  * Event types: 0 snapshot, 1 motor transition, 16..20 S4 event indices.
  * A cleared bit means unavailable, even when the associated bytes are zero.
  */
-#define S1_FRAME_SIZE 80u
-#define S1_WIRE_VERSION 1u
+#define S1_FRAME_SIZE 96u
+#define S1_WIRE_VERSION 2u
 typedef struct {
     uint32_t boot_id, sequence, published_ms;
     uint32_t motion_ms, motion_epoch, motion_sequence;
@@ -22,6 +22,10 @@ typedef struct {
     uint8_t event_type, event_source;
     uint32_t event_ms, event_count;
     int32_t event_value;
+    /* Extension: ASCII code (0 failed/no scan), element count, flags, reserved.
+     * Flags: 1 route support, 2 snapshot available, 4 scan seen since boot. */
+    uint8_t barcode_code, barcode_elements, barcode_flags;
+    uint32_t barcode_sequence, barcode_ms, barcode_epoch;
 } s1_wire_values_t;
 void s1_encode_frame(uint8_t out[S1_FRAME_SIZE], const s1_wire_values_t *v);
 #endif

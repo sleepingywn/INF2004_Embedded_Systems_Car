@@ -8,6 +8,11 @@
 #include <string.h>
 #include <setjmp.h>
 #include "motion_host_shim.h"
+#define ROUTE_SETTINGS_HOST 1
+#include "../../app_program/subsystem2/route_settings.c"
+static unsigned settings_reboots;
+void route_settings_reboot(const uint8_t map[26]) { (void)map; ++settings_reboots; }
+void route_settings_boot(void) {}
 #include "../../app_program/subsystem2/motion.c"
 #undef memset
 #undef memcpy
@@ -98,6 +103,7 @@ static uint32_t clock_ms, flag_bits, stop_at_ms;
 static int out_left, out_right; /* electrical duty as written */
 static encoder_raw_t fake_raw;
 static int scenario;
+static void (*owner_hook)(void);
 static bool sent;
 static int max_phase_seen;
 static unsigned carried_handovers;
@@ -192,6 +198,7 @@ ER tk_wai_flg(ID a, UINT b, UINT c, UINT *d, int e)
         shared.barcode = bc; shared.have_barcode = true;
         shared.barcode_ms = clock_ms; shared.barcode_epoch = state.epoch;
     }
+    if(owner_hook)owner_hook();
     *d = flag_bits;
     return E_OK;
 }

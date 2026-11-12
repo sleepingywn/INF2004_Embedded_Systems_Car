@@ -4,7 +4,7 @@
     "type": "tab",
     "label": "RoboCar receiver",
     "disabled": false,
-    "info": "Read-only binary telemetry receiver"
+    "info": "Binary telemetry receiver with opt-in acknowledged Start/Stop"
   },
   {
     "id": "broker",
@@ -99,7 +99,7 @@
     "includeClientData": false,
     "acceptsClientConfig": [],
     "showPathInSidebar": false,
-    "navigationStyle": "default",
+    "navigationStyle": "none",
     "titleBarStyle": "default",
     "showReconnectNotification": true
   },
@@ -108,11 +108,11 @@
     "type": "ui-theme",
     "name": "RoboCar",
     "colors": {
-      "surface": "#ffffff",
-      "primary": "#176b67",
-      "bgPage": "#eef3f3",
-      "groupBg": "#ffffff",
-      "groupOutline": "#d6e2e2"
+      "surface": "#101411",
+      "primary": "#9ac18a",
+      "bgPage": "#101411",
+      "groupBg": "#101411",
+      "groupOutline": "#101411"
     },
     "sizes": {
       "density": "default",
@@ -125,7 +125,7 @@
   {
     "id": "page",
     "type": "ui-page",
-    "name": "Robot status",
+    "name": "RoboCar Overview",
     "ui": "base",
     "path": "/robot",
     "icon": "directions_car",
@@ -170,11 +170,11 @@
     "type": "ui-template",
     "z": "robot",
     "group": "group",
-    "name": "Live robot readings",
+    "name": "Live 3D Overview",
     "order": 1,
     "width": 12,
     "height": 0,
-    "format": "<template><section style=\"padding:24px\"><h1>SE08 \u00b7 RoboCar</h1><p role=\"status\">{{ age > 2000 ? 'Waiting for fresh telemetry' : 'Receiving telemetry' }} \u00b7 {{ ageText }}</p><div v-if=\"msg && msg.payload\"><table style=\"width:100%;text-align:left\"><tbody><tr v-for=\"row in readings\" :key=\"row[0]\"><th style=\"padding:8px\">{{ row[0] }}</th><td>{{ row[1] }}</td></tr></tbody></table><details style=\"margin-top:20px\"><summary>Diagnostic details</summary><pre style=\"white-space:pre-wrap\">{{ msg.payload }}</pre></details></div><p v-else>No robot data received yet.</p><small>Read-only telemetry. Older readings remain visible for diagnosis.</small></section></template>\n<script>export default {data(){return {now:Date.now(),timer:null}},computed:{age(){return this.msg?.payload?.receivedAt ? Math.max(0,this.now-this.msg.payload.receivedAt):Infinity},ageText(){return Number.isFinite(this.age)?(this.age/1000).toFixed(1)+' s since receipt':'No data'},readings(){const d=this.msg?.payload||{};const unit=(v,u)=>v==null?'Unavailable':v+' '+u;return [['Left wheel speed',unit(d.leftSpeed,'mm/s')],['Right wheel speed',unit(d.rightSpeed,'mm/s')],['Line position error',unit(d.lineError,'')],['Pitch',unit(d.pitch,'\u00b0')],['Roll',unit(d.roll,'\u00b0')],['Current hump',unit(d.currentPeakMm,'mm')],['Highest hump',unit(d.highestPeakMm,'mm')],['Humps counted',d.humpCount??'Unavailable'],['Motor state',d.state==null?'Unavailable':(['Idle','Driving','Travelling','Turning','Following line','Reacquiring line','Fault','Bench pulse'][d.state]??'Unknown')],['Fault flags',d.faults==null?'Unavailable':d.faults===0?'None reported':d.faults],['Application ready',d.ready?'Yes':'No'],['Events missed',d.droppedEvents]]}},mounted(){this.timer=setInterval(()=>{this.now=Date.now()},250)},unmounted(){clearInterval(this.timer)}}</script>",
+    "format": "<template>\r\n  <iframe ref=\"overview\" src=\"/robocar/index.html\" title=\"RoboCar live overview\"\r\n    @load=\"deliver\" :style=\"{width:'100%',height:height+'px',border:0,display:'block'}\"></iframe>\r\n</template>\r\n<script>\r\nexport default {\r\n  data() { return {height:980, receiveOverview:null, lastTelemetry:null, lastControl:null}; },\r\n  watch: {msg: {deep:true, handler() { this.deliver(); }}},\r\n  methods: {\r\n    deliver() {\r\n      const p=this.msg?.payload;\r\n      if(p?.kind==='controlStatus')this.lastControl=p;\r\n      else if(p && !p.kind)this.lastTelemetry=p;\r\n      const send=(type,payload)=>{if(payload)this.$refs.overview?.contentWindow?.postMessage(\r\n        {type,payload:JSON.parse(JSON.stringify(payload))},window.location.origin);};\r\n      send('robocar-telemetry',this.lastTelemetry);\r\n      send('robocar-control',this.lastControl);\r\n      if(p?.kind==='controlFeedback')send('robocar-control-feedback',p);\r\n    }\r\n  },\r\n  mounted() {\r\n    this.receiveOverview = event => {\r\n      if(event.origin!==window.location.origin || event.source!==this.$refs.overview?.contentWindow) return;\r\n      if(event.data?.type==='robocar-ready') this.deliver();\r\n      if(event.data?.type==='robocar-command') {\r\n        const p=event.data.payload;\r\n        if(p && ['start','stop','keep','mapping'].includes(p.action) && typeof p.viewer==='string')\r\n          this.send({payload:{kind:'controlRequest',action:p.action,viewer:p.viewer,mappings:p.mappings,revision:p.revision}});\r\n      }\r\n      if(event.data?.type==='robocar-resize' && Number.isFinite(event.data.height))\r\n        this.height=Math.max(500,Math.min(4000,event.data.height));\r\n    };\r\n    window.addEventListener('message',this.receiveOverview);\r\n    this.deliver();\r\n  },\r\n  unmounted() { window.removeEventListener('message',this.receiveOverview); }\r\n}\r\n</script>\r\n",
     "storeOutMessages": true,
     "passthru": false,
     "resendOnRefresh": true,
@@ -183,7 +183,73 @@
     "x": 700,
     "y": 100,
     "wires": [
-      []
+      [
+        "control-command"
+      ]
     ]
+  },
+  {
+    "id": "control-input",
+    "type": "mqtt in",
+    "z": "robot",
+    "name": "Robot control status",
+    "topic": "inf2004/se08/car01/v1/control/status",
+    "qos": "0",
+    "datatype": "buffer",
+    "broker": "broker",
+    "inputs": 0,
+    "x": 180,
+    "y": 280,
+    "wires": [
+      [
+        "control-status"
+      ]
+    ]
+  },
+  {
+    "id": "control-status",
+    "type": "function",
+    "z": "robot",
+    "name": "Validate control status",
+    "func": "try { const s=global.get('control').accept(msg.payload,msg.retain===true); if(!s)return null; return {payload:s}; } catch(e) {node.warn(e.message);return null;}",
+    "outputs": 1,
+    "x": 420,
+    "y": 280,
+    "wires": [
+      [
+        "view"
+      ]
+    ]
+  },
+  {
+    "id": "control-command",
+    "type": "function",
+    "z": "robot",
+    "name": "Validate dashboard command",
+    "func": "if(msg.payload?.kind!=='controlRequest')return null; try {const c=global.get('control').issue(msg.payload);return [c,c.feedback?{payload:c.feedback}:null];} catch(e){if(msg.payload.action==='keep')return null;return [null,{payload:{kind:'controlFeedback',viewer:msg.payload.viewer,action:msg.payload.action,error:true,message:e.message}}];}",
+    "outputs": 2,
+    "x": 420,
+    "y": 340,
+    "wires": [
+      [
+        "control-output"
+      ],
+      [
+        "view"
+      ]
+    ]
+  },
+  {
+    "id": "control-output",
+    "type": "mqtt out",
+    "z": "robot",
+    "name": "Non-retained Start/Stop/lease",
+    "topic": "",
+    "qos": "1",
+    "retain": "false",
+    "broker": "broker",
+    "x": 700,
+    "y": 340,
+    "wires": []
   }
 ]

@@ -1,5 +1,11 @@
 #ifndef MOTION_CONFIG_H
 #define MOTION_CONFIG_H
+#ifndef MOTION_LINE_UNLIMITED
+#define MOTION_LINE_UNLIMITED 0
+#endif
+#if MOTION_LINE_UNLIMITED && !MOTION_LINE_CIRCUIT
+#error "Unlimited line timing requires the circuit profile"
+#endif
 
 /* User-confirmed motor mapping. GPIO numbers, not header pin numbers. */
 #define MOTION_LEFT_A 8u
@@ -57,6 +63,12 @@
 #endif
 #if MOTION_LINE_CIRCUIT && !MOTION_LINE_DEMO
 #error "Circuit profile requires the local line profile"
+#endif
+#ifndef MOTION_LINE_REMOTE
+#define MOTION_LINE_REMOTE 0
+#endif
+#if MOTION_LINE_REMOTE && (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART)
+#error "Remote control requires GP20 circuit mode, without autostart"
 #endif
 #define MOTION_LINE_BUTTON_PIN 20u /* Robo Pico active-low programmable button */
 #define MOTION_CALIBRATED 0

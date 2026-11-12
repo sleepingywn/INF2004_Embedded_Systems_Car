@@ -38,6 +38,7 @@ void s1_collect(void)
     v.published_ms = now;
     if (!boot_id) boot_id = boot_tag();
     v.boot_id = boot_id;
+    s1_control_boot(boot_id);
     if (motion_get_status(&m) == E_OK) {
         motion_available = 1;
         if ((uint32_t)(now - m.updated_ms) <= 100u) v.valid |= 16u;
@@ -71,6 +72,22 @@ void s1_collect(void)
         v.current_peak_mm = t.cur_peak_mm; v.highest_peak_mm = t.high_peak_mm;
         v.hump_count = t.hump_count; v.motion_class = t.motion_class;
     }
+#if MOTION_LINE_ROUTE
+    /* This is scan history, not a live control input. Retain the last coherent
+     * snapshot through a busy observer lock; never consume the console FIFO. */
+    static motion_barcode_status_t last_barcode;
+    static int barcode_available;
+    motion_barcode_status_t barcode;
+    if(motion_get_barcode_status(&barcode)==E_OK){last_barcode=barcode;barcode_available=1;}
+    v.barcode_flags=1u;
+    if(barcode_available) {
+        v.barcode_flags|=2u;
+        if(last_barcode.seen)v.barcode_flags|=4u;
+        v.barcode_code=last_barcode.code;v.barcode_elements=last_barcode.elements;
+        v.barcode_sequence=last_barcode.sequence;v.barcode_ms=last_barcode.sampled_ms;
+        v.barcode_epoch=last_barcode.epoch;
+    }
+#endif
     v.dropped_events = lost_events;
     s1_encode_frame(frame, &v);
     (void)s1_transport_offer(frame, 0);

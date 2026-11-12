@@ -25,6 +25,17 @@
  *  LINE_A must be the LEFT-hand line sensor, otherwise the sign of the
  *  line error flips.
  * --------------------------------------------------------------------- */
+/* Digital barcode mode: D0 -> GP26, GP27/28 remain analogue A0.
+ * Select polarity explicitly for the sensor module; high=black by default. */
+#ifndef IR_BARCODE_DIGITAL
+#define IR_BARCODE_DIGITAL 0
+#endif
+#ifndef IR_BARCODE_BLACK_LEVEL
+#define IR_BARCODE_BLACK_LEVEL 1
+#endif
+#if (IR_BARCODE_DIGITAL != 0 && IR_BARCODE_DIGITAL != 1) || (IR_BARCODE_BLACK_LEVEL != 0 && IR_BARCODE_BLACK_LEVEL != 1)
+#error "Barcode digital mode and black level must be 0 or 1"
+#endif
 #define IR_NUM_CH		3u
 #define IR_CH_BARCODE		0u	/* IR Left   - GP26 / ADC0 */
 #define IR_CH_LINE_A		1u	/* IR Centre - GP27 / ADC1 (left-hand)  */

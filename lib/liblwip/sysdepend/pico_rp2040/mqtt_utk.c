@@ -47,6 +47,17 @@ static UB		rx_data[MQTT_UTK_RX_DATA_MAX];
 static u16_t		rx_len;
 static u8_t		rx_truncated;
 
+static uint32_t control_session;
+static void control_timeout(void *arg)
+{
+    (void)arg;
+    int connected=mqtt_client_is_connected(client)!=0;
+    (void)s1_control_link(control_session,connected);
+    uint8_t b[CONTROL_STATUS_SIZE];
+    if(connected && s1_control_status_peek(b) && control_u32(b+8)==control_session)
+        (void)mqtt_publish(client,MQTT_TOPIC_BASE "/control/status",b,sizeof(b),0,0,NULL,NULL);
+    sys_timeout(250,control_timeout,NULL);
+}
 static u8_t telemetry_busy;
 static int telemetry_event;
 static uint32_t telemetry_ticket;
@@ -91,7 +102,7 @@ static void incoming_publish_cb(void *arg, const char *topic, u32_t tot_len)
 	u32_t	i;
 
 	(void)arg;
-	(void)tot_len;
+
 
 	for(i = 0; i < (MQTT_UTK_RX_TOPIC_MAX - 1) && topic[i] != '\0'; i++) {
 		rx_topic[i] = topic[i];
@@ -99,7 +110,7 @@ static void incoming_publish_cb(void *arg, const char *topic, u32_t tot_len)
 	rx_topic[i] = '\0';
 
 	rx_len = 0;
-	rx_truncated = 0;
+	rx_truncated = (tot_len > MQTT_UTK_RX_DATA_MAX || topic[i]!='\0');
 }
 
 static void incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags)
@@ -109,20 +120,17 @@ static void incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags)
 	(void)arg;
 
 	for(i = 0; i < len; i++) {
-		if(rx_len < (MQTT_UTK_RX_DATA_MAX - 1)) {
-			/* The console is a terminal -- keep raw bytes from a
-			 * payload this demo did not publish from scrambling it. */
-			UB c = data[i];
-			rx_data[rx_len++] = (c >= 0x20 && c < 0x7f)? c: '.';
+		if(rx_len < MQTT_UTK_RX_DATA_MAX) {
+			rx_data[rx_len++] = data[i];
 		} else {
 			rx_truncated = 1;
 		}
 	}
 
 	if((flags & MQTT_DATA_FLAG_LAST) != 0) {
-		rx_data[rx_len] = '\0';
-		tm_printf((UB*)"mqtt: RX [%s] \"%s\"%s\n", rx_topic, rx_data,
-			  rx_truncated? " (truncated)": "");
+        /* Binary commands are never interpreted as console text. */
+        if(!rx_truncated && __builtin_strcmp(rx_topic,MQTT_TOPIC_BASE "/control/command")==0)
+            (void)s1_control_offer(rx_data,rx_len);
 	}
 }
 
@@ -130,7 +138,7 @@ static void subscribe_done_cb(void *arg, err_t result)
 {
 	(void)arg;
 	if(result == ERR_OK) {
-		tm_printf((UB*)"mqtt: subscribed to " MQTT_TOPIC "\n");
+		tm_printf((UB*)"mqtt: subscription acknowledged\n");
 	} else {
 		tm_printf((UB*)"mqtt: subscribe failed, err=%d\n", (int)result);
 	}
@@ -185,6 +193,9 @@ static void connection_cb(mqtt_client_t *c, void *arg, mqtt_connection_status_t 
 		 * connection later drops, the poll loop's mqtt_utk_start() call
 		 * is allowed to reconnect. Leaving it set would wedge the client
 		 * permanently after the first disconnect. */
+        ++control_session;if(!control_session)++control_session;
+        (void)s1_control_link(control_session,1);
+        sys_untimeout(control_timeout,NULL);sys_timeout(250,control_timeout,NULL);
 		connecting = 0;
 		sys_untimeout(retry_timeout, NULL);
         telemetry_busy = 0;
@@ -202,6 +213,7 @@ static void connection_cb(mqtt_client_t *c, void *arg, mqtt_connection_status_t 
 		mqtt_set_inpub_callback(client, incoming_publish_cb,
 					incoming_data_cb, NULL);
 
+        (void)mqtt_subscribe(client,MQTT_TOPIC_BASE "/control/command",1,subscribe_done_cb,NULL);
 		err = mqtt_subscribe(client, MQTT_TOPIC, 0 /* qos */,
 				     subscribe_done_cb, NULL);
 		if(err != ERR_OK) {
@@ -223,6 +235,7 @@ static void connection_cb(mqtt_client_t *c, void *arg, mqtt_connection_status_t 
 		 * into a tight reconnect loop. */
 		tm_printf((UB*)"mqtt: connection status %d, retrying in %ds\n",
 			  (int)status, MQTT_UTK_RETRY_MS / 1000);
+        (void)s1_control_link(control_session,0);
 		sys_untimeout(heartbeat_timeout, NULL);
         sys_untimeout(telemetry_timeout, NULL);
         /* lwIP clears pending request callbacks before reporting disconnect. */

@@ -16,6 +16,7 @@
  *	micro T-Kernel Startup / Finalization
  */
 #include "kernel.h"
+#include "../../app_program/subsystem2/route_settings.h"
 #include <tm/tmonitor.h>
 
 /*
@@ -34,6 +35,7 @@ EXPORT INT main( void )
 	ER	ercd;
 
 	DISABLE_INTERRUPT;
+	route_settings_boot();
 
 #if USE_TMONITOR
 	/* Initialize T-Monitor Compatible Library */

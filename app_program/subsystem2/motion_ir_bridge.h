@@ -3,7 +3,6 @@
 #include "motion.h"
 #include "../subsystem3/sensor_line.h"
 #include "../subsystem3/barcode_sense.h"
-#include "../subsystem3/barcode_edges.h"
 
 /* Owned by ONE S3 sampling task. Reuses Buddy3's algorithms unchanged.
  * Not an ADC driver. Call with calibrated normalized values at 1 kHz from a
@@ -12,9 +11,6 @@ typedef struct
 {
     line_tracker_t tracker;
     bc_capture_t capture;
-#if IR_BARCODE_DIGITAL
-    bc_edges_t edges;
-#endif
     uint32_t previous_ms;
     uint32_t epoch;
     uint32_t line_ms;

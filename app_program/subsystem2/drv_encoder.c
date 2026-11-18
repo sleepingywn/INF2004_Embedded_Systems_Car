@@ -1,7 +1,6 @@
 #include "drv_encoder.h"
 #include "motion_config.h"
 #include "motion_logic.h"
-#include "../subsystem3/barcode_edges.h"
 
 #define ENCODER_IRQ 13u
 #define GPIO_INTR0 (IO_BANK0_BASE + 0xf0u)
@@ -67,20 +66,6 @@ static void encoder_interrupt(UINT intno)
                                previous.left, &counts.left);
     previous.right = count_pair(gpio, edges, MOTION_ENCODER_RIGHT_A, MOTION_ENCODER_RIGHT_B,
                                 previous.right, &counts.right);
-#if IR_BARCODE_DIGITAL
-    uint32_t position = (MOTION_LEFT_ENCODER_SIGN < 0 ? 0u-counts.left : counts.left) +
-                        (MOTION_RIGHT_ENCODER_SIGN < 0 ? 0u-counts.right : counts.right);
-    bc_edge_position(position);
-    /* GP26 is in GPIO interrupt bank 3; do not clear encoder/other GPIO bits. */
-    uint32_t barcode_edges = in_w(GPIO_INTR0 + 12u) & (12u << 8);
-    if (barcode_edges) {
-        uint32_t us = in_w(TIMER_TIMERAWL);
-        out_w(GPIO_INTR0 + 12u, barcode_edges);
-        bc_edge_irq(us, position, counts.invalid,
-                    ((gpio >> 26) & 1u) == IR_BARCODE_BLACK_LEVEL,
-                    barcode_edges == (12u << 8));
-    }
-#endif
     (void)intno;
 }
 
@@ -114,20 +99,6 @@ ER encoder_hw_init(void)
     set_w(GPIO_PROC1_INTE0, ALL_EDGES); /* motion task pinned to core 1 */
 #else
     set_w(GPIO_PROC0_INTE0, ALL_EDGES);
-#endif
-#if IR_BARCODE_DIGITAL
-    out_w(GPIO_OE_CLR, 1u << 26);
-    out_w(GPIO_CTRL(26), GPIO_CTRL_FUNCSEL_SIO);
-    clr_w(GPIO(26), GPIO_PUE | GPIO_PDE);
-    set_w(GPIO(26), GPIO_IE);
-    clr_w(GPIO_PROC0_INTE0 + 12u, 12u << 8);
-    clr_w(GPIO_PROC1_INTE0 + 12u, 12u << 8);
-    out_w(GPIO_INTR0 + 12u, 12u << 8);
-#if TK_SUPPORT_SMP
-    set_w(GPIO_PROC1_INTE0 + 12u, 12u << 8);
-#else
-    set_w(GPIO_PROC0_INTE0 + 12u, 12u << 8);
-#endif
 #endif
     ClearInt(ENCODER_IRQ);
     EnableInt(ENCODER_IRQ, 2);

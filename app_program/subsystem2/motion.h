@@ -267,6 +267,7 @@ typedef struct {
     bc_msg_t by_time, by_distance;
     bool distance_valid;
     char time_code, distance_code, old_code, chosen;
+    bool one_marker;   /* chosen by the one-marker decode (time and distance agree) */
     uint32_t sequence;
 } motion_route_barcode_t;
 bool motion_route_next_event(motion_route_event_t *event);

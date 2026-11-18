@@ -157,6 +157,24 @@ int main(void)
         for (int k = 0; k < 30; k++) { bar = bc_level_black(&s, bar, 800); assert(bar); }
         for (int k = 0; k < 167; k++) { bar = bc_level_black(&s, bar, 1300); assert(bar); }
     }
-    puts("PASS barcode_level: white noise, textured wide bar, narrow bar, blurred gap, noisy Z traces, 6 ms flicker, 30 ms shallow sag");
+    /* KR2e track scan 1, 18 Nov: in the gap after a strong bar the reading
+       went 1808 -> 385 -> 450 -> 176 -> 1573; the 450 bump made a fake bar. */
+    {
+        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
+        bool bar = bc_level_black(&s, false, 175);
+        bar = bc_level_black(&s, bar, 1808); assert(bar);
+        for (int k = 0; k < 200; k++) bar = bc_level_black(&s, bar, 1808);
+        for (int k = 0; k < 20; k++) bar = bc_level_black(&s, bar, 385);
+        assert(!bar);
+        for (int k = 0; k < 15; k++) { bar = bc_level_black(&s, bar, 450); assert(!bar); }
+        for (int k = 0; k < 100; k++) { bar = bc_level_black(&s, bar, 176); assert(!bar); }
+        bar = bc_level_black(&s, bar, 1573); assert(bar);
+        /* and a narrow bar after a gap that did reach white still counts */
+        for (int k = 0; k < 20; k++) bar = bc_level_black(&s, bar, 1573);
+        for (int k = 0; k < 60; k++) bar = bc_level_black(&s, bar, 176);
+        assert(!bar);
+        bar = bc_level_black(&s, bar, 269); assert(bar);
+    }
+    puts("PASS barcode_level: white noise, textured wide bar, narrow bar, blurred gap, noisy Z traces, 6 ms flicker, 30 ms shallow sag, gap bump");
     return 0;
 }

@@ -35,6 +35,12 @@ def main():
                         "-o", exe, "-lm"], cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
         print("PASS barcode level rule (noisy Z traces, narrow bar, blurred gap)")
+        # Every 29-element scan logged on the car: never a wrong letter.
+        exe = str(Path(temp) / "replay.exe")
+        subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem3/barcode_replay_test.c", "-o", exe],
+                       cwd=ROOT, check=True)
+        subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+        print("PASS barcode replay (all logged track scans, no wrong letter)")
         # LINE_ROUTE requires LINE_ADAPTIVE.
         result = subprocess.run(["gcc", "-std=c11", "-DMOTION_LINE_ROUTE=1", "-I.", "-x", "c", "-fsyntax-only", "-"],
                                 cwd=ROOT, input='#include "app_program/subsystem2/motion_config.h"\n',
@@ -44,7 +50,7 @@ def main():
         subprocess.run([sys.executable, str(ROOT / "testing/subsystem2" / suite)], cwd=ROOT, check=True,
                        stdout=subprocess.DEVNULL)
         print("PASS", suite)
-    print("PASS: route logic + owner scenarios, route-profile handoff, barcode level, profile guard, V5 adaptive and regression suites")
+    print("PASS: route logic + owner scenarios, route-profile handoff, barcode level, track replay, profile guard, V5 adaptive and regression suites")
 
 
 if __name__ == "__main__":

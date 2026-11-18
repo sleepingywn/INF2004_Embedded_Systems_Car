@@ -54,7 +54,15 @@ static inline bool bc_level_black(bc_level_t *s, bool is_bar, uint16_t raw)
 {
     if (!is_bar) {
         if (raw < s->valley) s->valley = raw;
-        if (raw >= BC_LVL_BLACK_MIN && raw >= (uint32_t)s->valley + BC_LVL_RISE) {
+        /* Gap not yet back near white (still falling from a strong bar):
+           a new bar needs a rise of a quarter of that bar's height.  Track
+           18 Nov: 1808 -> 385 -> 450 -> 176 made a fake 15 ms bar. */
+        uint32_t need = (uint32_t)s->valley + BC_LVL_RISE;
+        if (s->valley > (uint32_t)s->ref + BC_LVL_RISE && s->peak > s->ref) {
+            uint32_t q = (uint32_t)(s->peak - s->ref) / 4u;
+            if (q > BC_LVL_RISE) need = (uint32_t)s->valley + q;
+        }
+        if (raw >= BC_LVL_BLACK_MIN && raw >= need) {
             s->ref = s->valley < BC_LVL_REF_CAP ? s->valley : BC_LVL_REF_CAP;
             s->peak = raw;
             s->below = 0u;

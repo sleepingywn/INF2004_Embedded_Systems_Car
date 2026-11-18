@@ -13,7 +13,7 @@
 #if MOTION_LINE_ROUTE
 #include "barcode_level.h"   /* fixed cutoffs 200/240 + relative bar end (18 Nov 2026) */
 _Static_assert(BC_LVL_WHITE_MAX < BC_LVL_BLACK_MIN, "raw barcode hysteresis reversed");
-static bc_level_t bc_level = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX};
+static bc_level_t bc_level = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
 #endif
 
 static ID runtime_mutex;

@@ -25,6 +25,10 @@
 #define BC_LVL_BLACK_MIN 240u
 #define BC_LVL_RISE      60u    /* min step between a gap and a bar   */
 #define BC_LVL_REF_CAP   300u   /* white reference never above this   */
+#ifndef BC_LVL_HOLD
+#define BC_LVL_HOLD      8u     /* half-way dip must last 8 ms: track A had a 6 ms flicker
+                                   inside a narrow bar; real gaps were >= 14 ms */
+#endif
 #ifndef BC_LVL_END_NUM          /* bar ends below ref + (peak - ref) x NUM/DEN */
 #define BC_LVL_END_NUM   1u
 #define BC_LVL_END_DEN   2u
@@ -34,6 +38,7 @@ typedef struct {
     uint16_t valley;   /* lowest raw in the current white run */
     uint16_t peak;     /* highest raw in the current bar      */
     uint16_t ref;      /* white level for the current bar     */
+    uint16_t below;    /* samples in a row under the half-way level */
 } bc_level_t;
 
 static inline void bc_level_init(bc_level_t *s)
@@ -41,6 +46,7 @@ static inline void bc_level_init(bc_level_t *s)
     s->valley = BC_LVL_WHITE_MAX;
     s->peak = 0u;
     s->ref = BC_LVL_WHITE_MAX;
+    s->below = 0u;
 }
 
 /* is_bar: the capture's current colour (true = in a bar). Returns black. */
@@ -51,6 +57,7 @@ static inline bool bc_level_black(bc_level_t *s, bool is_bar, uint16_t raw)
         if (raw >= BC_LVL_BLACK_MIN && raw >= (uint32_t)s->valley + BC_LVL_RISE) {
             s->ref = s->valley < BC_LVL_REF_CAP ? s->valley : BC_LVL_REF_CAP;
             s->peak = raw;
+            s->below = 0u;
             return true;
         }
         return false;
@@ -58,8 +65,9 @@ static inline bool bc_level_black(bc_level_t *s, bool is_bar, uint16_t raw)
     if (raw > s->peak) s->peak = raw;
     {
         uint32_t half = s->peak > s->ref ? s->ref + (uint32_t)(s->peak - s->ref) * BC_LVL_END_NUM / BC_LVL_END_DEN : s->ref;
-        bool white = raw <= BC_LVL_WHITE_MAX ||
-                     (raw <= half && (uint32_t)raw + BC_LVL_RISE <= s->peak);
+        bool dip = raw <= half && (uint32_t)raw + BC_LVL_RISE <= s->peak;
+        s->below = dip ? (uint16_t)(s->below + 1u) : 0u;
+        bool white = raw <= BC_LVL_WHITE_MAX || s->below >= BC_LVL_HOLD;
         if (white) {
             s->valley = raw;
             return false;

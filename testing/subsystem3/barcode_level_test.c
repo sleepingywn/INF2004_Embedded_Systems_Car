@@ -43,7 +43,7 @@ static int trace(const unsigned *w, double spot_scale, double noise, unsigned *r
 /* Capture: elements from black/white changes; decode like the car. */
 static char run(const unsigned *raw, int n, int relative, unsigned *count_out)
 {
-    bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX};
+    bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
     bc_msg_t m = {0};
     bool is_bar = false, started = false;
     unsigned len = 0, count = 0;
@@ -96,7 +96,7 @@ int main(void)
 
     /* Plain white with noise: never a bar. */
     {
-        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX};
+        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
         srand(3);
         for (int t = 0; t < 5000; t++) {
             unsigned r = 177 + (unsigned)(rand() % 40);
@@ -105,7 +105,7 @@ int main(void)
     }
     /* Wide bar with +-100 texture noise around 1300: stays one bar. */
     {
-        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX};
+        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
         bool bar = bc_level_black(&s, false, 1300);
         assert(bar);
         srand(4);
@@ -117,22 +117,34 @@ int main(void)
     }
     /* Narrow bar 307 over white 177: detected and ends cleanly. */
     {
-        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX};
+        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
         bool bar = false;
         bar = bc_level_black(&s, bar, 177); assert(!bar);
         bar = bc_level_black(&s, bar, 307); assert(bar);
         bar = bc_level_black(&s, bar, 250); assert(bar);   /* above half way (242) */
-        bar = bc_level_black(&s, bar, 235); assert(!bar);  /* below half way: gap */
+        for (unsigned k = 1; k < BC_LVL_HOLD; k++) { bar = bc_level_black(&s, bar, 235); assert(bar); }
+        bar = bc_level_black(&s, bar, 235); assert(!bar);  /* below half way for HOLD ms: gap */
         bar = bc_level_black(&s, bar, 260); assert(!bar);  /* needs +60 over the gap */
         bar = bc_level_black(&s, bar, 300); assert(bar);
     }
     /* Blurred gap between wide bars: 1300 -> 600 -> 1300 gives two bars. */
     {
-        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX};
+        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
         bool bar = bc_level_black(&s, false, 1300);
-        bar = bc_level_black(&s, bar, 600); assert(!bar);
+        for (unsigned k = 0; k < BC_LVL_HOLD; k++) bar = bc_level_black(&s, bar, 600);
+        assert(!bar);
         bar = bc_level_black(&s, bar, 1300); assert(bar);
     }
-    puts("PASS barcode_level: white noise, textured wide bar, narrow bar, blurred gap, noisy Z traces");
+    /* Track A scan, 18 Nov: a narrow bar split by a 6 ms flicker
+       ("B24 S6 B59").  A 6 ms dip half way down must not end the bar. */
+    {
+        bc_level_t s = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
+        bool bar = bc_level_black(&s, false, 177);
+        bar = bc_level_black(&s, bar, 520); assert(bar);
+        for (int k = 0; k < 24; k++) { bar = bc_level_black(&s, bar, 520); assert(bar); }
+        for (int k = 0; k < 6; k++) { bar = bc_level_black(&s, bar, 330); assert(bar); }
+        for (int k = 0; k < 59; k++) { bar = bc_level_black(&s, bar, 520); assert(bar); }
+    }
+    puts("PASS barcode_level: white noise, textured wide bar, narrow bar, blurred gap, noisy Z traces, 6 ms flicker");
     return 0;
 }

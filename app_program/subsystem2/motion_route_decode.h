@@ -77,4 +77,33 @@ static inline char route_code39_decode(const bc_msg_t *m)
         if (code39_mask(code39_table[i].p) == data) return code39_table[i].code;
     return 0;
 }
+/* One-marker decode (18 Nov 2026, displaced barcode sensor): the data
+ * character must decode and at least ONE start/stop marker must be valid,
+ * the other must not point the opposite way.  On its own it gave wrong
+ * letters on the track (G, 4, 0 for real Z scans), so motion.c accepts it
+ * only when the time and distance widths both give the same letter. */
+static inline char route_code39_decode_one_star(const bc_msg_t *m)
+{
+    if (m->hdr.count != 29u || m->hdr.overflow) return 0;
+    uint16_t g1 = 0, g3 = 0, data = 0;
+    bool ok1 = code39_pick(m->widths, 0, 5, 2, BARS_RATIO_NUM, BARS_RATIO_DEN, &g1);
+    bool ok3 = code39_pick(m->widths, 20, 5, 2, BARS_RATIO_NUM, BARS_RATIO_DEN, &g3);
+    if (!code39_pick(m->widths, 10, 5, 2, BARS_RATIO_NUM, BARS_RATIO_DEN, &data) ||
+        !code39_pick(m->widths, 11, 4, 1, SPACE_RATIO_NUM, SPACE_RATIO_DEN, &data)) return 0;
+    const uint16_t star = code39_mask(CODE39_STAR) & CODE39_BAR_BITS;
+    const uint16_t rstar = code39_reverse(star);
+    unsigned fwd = (ok1 && g1 == star) + (ok3 && g3 == star);
+    unsigned bwd = (ok1 && g1 == rstar) + (ok3 && g3 == rstar);
+    if ((fwd && bwd) || (!fwd && !bwd)) return 0;
+    if (bwd) data = code39_reverse(data);
+    for (unsigned i = 0; i < sizeof code39_table / sizeof code39_table[0]; ++i)
+        if (code39_mask(code39_table[i].p) == data) return code39_table[i].code;
+    return 0;
+}
+/* Both widths (time and distance) must give the same letter. */
+static inline char route_one_marker_agreed(const bc_msg_t *by_time, const bc_msg_t *by_distance)
+{
+    char t = route_code39_decode_one_star(by_time);
+    return (t && t == route_code39_decode_one_star(by_distance)) ? t : 0;
+}
 #endif

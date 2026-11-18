@@ -48,5 +48,8 @@ ER ir_runtime_start(void);
  * Neither command resets the latched B2 fault or starts the motors. */
 ER ir_runtime_calibration(ir_runtime_command_t command);
 ER ir_runtime_get_status(ir_runtime_status_t *status);
+/* LINE_ROUTE diagnostics: darkest raw ADC of each bar / lightest of each gap
+ * of the last barcode capture (bar first). Returns the element count. */
+unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq);
 
 #endif

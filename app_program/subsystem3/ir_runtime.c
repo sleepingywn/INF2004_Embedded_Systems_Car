@@ -10,10 +10,10 @@
 #define IR_TASK_PRIORITY 16
 #define IR_WATCHDOG_MS 20u /* liveness watchdog; not the 1 kHz pacing source */
 #define IR_MAX_QUEUE_AGE_MS (IR_ACQ_RING_SIZE - 1u)
-#if MOTION_LINE_ROUTE
-#define IR_BC_RAW_WHITE_MAX 200u /* Ken's bench values; do not retune here */
-#define IR_BC_RAW_BLACK_MIN 240u
-_Static_assert(IR_BC_RAW_WHITE_MAX < IR_BC_RAW_BLACK_MIN, "raw barcode hysteresis reversed");
+#if MOTION_LINE_ROUTE && !IR_BARCODE_DIGITAL
+#include "barcode_level.h"   /* fixed cutoffs 200/240 + relative bar end (18 Nov 2026) */
+_Static_assert(BC_LVL_WHITE_MAX < BC_LVL_BLACK_MIN, "raw barcode hysteresis reversed");
+static bc_level_t bc_level = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
 #endif
 
 static ID runtime_mutex;
@@ -50,6 +50,46 @@ static struct
     bool health_asserted : 1;
 } runtime_flags;
 static uint32_t epoch_floor_ms;
+#if MOTION_LINE_ROUTE
+/* Diagnostics: darkest raw of each bar / lightest raw of each gap of the
+ * last barcode capture, printed by the route console after the widths. */
+static uint16_t bc_ext_cur[BC_MAX_ELEMS];
+static uint8_t bc_ext_n;
+static bool bc_ext_was_active;
+static uint16_t bc_ext_last[BC_MAX_ELEMS];
+static volatile uint8_t bc_ext_last_n;
+static volatile uint32_t bc_ext_last_seq;
+static void bc_ext_sample(uint16_t raw)
+{
+    if (bridge.capture.active) {
+        unsigned i = bridge.capture.count;
+        if (i < BC_MAX_ELEMS) {
+            if (i >= bc_ext_n) { bc_ext_cur[i] = raw; bc_ext_n = (uint8_t)(i + 1u); }
+            else if ((i & 1u) == 0u ? raw > bc_ext_cur[i] : raw < bc_ext_cur[i]) bc_ext_cur[i] = raw;
+        }
+    } else if (bc_ext_was_active) {
+        for (unsigned i = 0; i < bc_ext_n; ++i) bc_ext_last[i] = bc_ext_cur[i];
+        bc_ext_last_n = bc_ext_n;
+        ++bc_ext_last_seq;
+        bc_ext_n = 0u;
+    }
+    bc_ext_was_active = bridge.capture.active;
+}
+unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq)
+{
+    unsigned n = bc_ext_last_n < max ? bc_ext_last_n : max;
+    for (unsigned i = 0; i < n; ++i) out[i] = bc_ext_last[i];
+    if (seq) *seq = bc_ext_last_seq;
+    return n;
+}
+#else
+unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq)
+{
+    (void)out; (void)max;
+    if (seq) *seq = 0u;
+    return 0u;
+}
+#endif
 
 static void set_health(bool healthy)
 {
@@ -217,13 +257,14 @@ static void process_frame(const ir_raw_frame_t *frame)
      * 60/35 scale missed blurred narrow bars. Display values stay calibrated;
      * only the barcode capture input changes. Line sensors are unchanged. */
     {
-        const uint16_t raw_bc = raw[IR_CH_BARCODE];
-        const bool black = raw_bc >= IR_BC_RAW_BLACK_MIN ||
-                           (bridge.capture.is_bar && raw_bc > IR_BC_RAW_WHITE_MAX);
+        const bool black = bc_level_black(&bc_level, bridge.capture.is_bar, raw[IR_CH_BARCODE]);
         normalized[IR_CH_BARCODE] = black ? 100u : 0u;
     }
 #endif
     ER error = motion_ir_bridge_sample(&bridge, normalized, true, frame->sampled_ms, owner.epoch);
+#if MOTION_LINE_ROUTE
+    bc_ext_sample(raw[IR_CH_BARCODE]);
+#endif
     if (error == MOTION_IR_SUPERSEDED)
     {
         /* STOP/reset raced the earlier status read. Reject old data, including

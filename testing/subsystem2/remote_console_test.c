@@ -24,6 +24,14 @@ static uint8_t latest_control[CONTROL_STATUS_SIZE];
 int s1_control_context(uint32_t *b,uint32_t *s,int *c){*b=123;*s=connection;*c=link;return 1;}
 int s1_control_take(control_command_t *c){if(!available)return 0;*c=queued;available=false;return 1;}
 int s1_control_status_offer(const uint8_t *b){memcpy(latest_control,b,sizeof latest_control);return 1;}
+/* This control fixture does not generate barcode sensor samples. */
+unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq)
+{
+    (void)out;
+    (void)max;
+    if (seq) *seq = 0;
+    return 0;
+}
 ER ir_runtime_get_status(ir_runtime_status_t *ir){*ir=(ir_runtime_status_t){0};ir->state=IR_RUNTIME_READY;ir->healthy=healthy;ir->updated_ms=ir->raw.sampled_ms=clock_ms;return E_OK;}
 static void test_poll(void){observer_status=shared.status;remote_poll();}
 static void setup(void){

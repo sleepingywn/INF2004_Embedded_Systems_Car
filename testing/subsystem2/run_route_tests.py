@@ -29,6 +29,18 @@ def main():
                         "app_program/subsystem3/barcode_sense.c", "-DROUTE_SETTINGS_HOST=1", "app_program/subsystem2/route_settings.c", "-o", exe], cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
         print("PASS route-profile IR handoff (16-bit barcode widths)")
+        # Barcode black/white from the raw ADC (fixed cutoffs + relative bar end).
+        exe = str(Path(temp) / "level.exe")
+        subprocess.run(["gcc", *FLAGS, "-Iapp_program/subsystem3", "testing/subsystem3/barcode_level_test.c",
+                        "-o", exe, "-lm"], cwd=ROOT, check=True)
+        subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+        print("PASS barcode level rule (noisy Z traces, narrow bar, blurred gap)")
+        # Every 29-element scan logged on the car: never a wrong letter.
+        exe = str(Path(temp) / "replay.exe")
+        subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem3/barcode_replay_test.c", "-o", exe],
+                       cwd=ROOT, check=True)
+        subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+        print("PASS barcode replay (all logged track scans, no wrong letter)")
         # LINE_ROUTE requires LINE_ADAPTIVE.
         result = subprocess.run(["gcc", "-std=c11", "-DMOTION_LINE_ROUTE=1", "-I.", "-x", "c", "-fsyntax-only", "-"],
                                 cwd=ROOT, input='#include "app_program/subsystem2/motion_config.h"\n',
@@ -38,7 +50,7 @@ def main():
         subprocess.run([sys.executable, str(ROOT / "testing/subsystem2" / suite)], cwd=ROOT, check=True,
                        stdout=subprocess.DEVNULL)
         print("PASS", suite)
-    print("PASS: route logic + owner scenarios, route-profile handoff, profile guard, V5 adaptive and regression suites")
+    print("PASS: route logic + owner scenarios, route-profile handoff, barcode level, track replay, profile guard, V5 adaptive and regression suites")
 
 
 if __name__ == "__main__":

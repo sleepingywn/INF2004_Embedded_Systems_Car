@@ -1272,6 +1272,11 @@ static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool 
     bool have_distance = route_distance_widths(&route_odo, barcode, barcode_ms, &by_distance);
     char by_dist = have_distance ? route_code39_decode(&by_distance) : '\0';
     char chosen = route_choose(by_dist, by_time);
+    bool one_marker = false;
+    if (!chosen && have_distance) {
+        char agreed = route_one_marker_agreed(barcode, &by_distance);
+        if (agreed) { chosen = by_time = by_dist = agreed; one_marker = true; }
+    }
     ++barcode_status.sequence;
     barcode_status.sampled_ms=barcode_ms;barcode_status.epoch=state.epoch;
     barcode_status.code=(uint8_t)chosen;barcode_status.elements=(uint8_t)barcode->hdr.count;
@@ -1283,6 +1288,7 @@ static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool 
     route_bc.distance_code = by_dist;
     route_bc.old_code = motion_code39_decode(barcode);
     route_bc.chosen = chosen;
+    route_bc.one_marker = one_marker;
     __sync_synchronize();
     route_bc.sequence = route_bc_sequence + 1u;
     route_bc_sequence = route_bc.sequence;

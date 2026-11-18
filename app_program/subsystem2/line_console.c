@@ -41,6 +41,14 @@ static void route_console_drain(void)
                 if (bc.distance_valid) route_print_widths("widths_counts", &bc.by_distance);
                 else tm_printf((UB*)"[route] widths_counts: unavailable (odometry history)\n");
                 tm_printf((UB*)"[route] old rank-of-9 decoder: %c\n", (INT)route_ch(bc.old_code));
+                {   /* raw ADC: darkest of each bar, lightest of each gap */
+                    uint16_t lv[BC_MAX_ELEMS];
+                    unsigned n = ir_runtime_barcode_levels(lv, BC_MAX_ELEMS, NULL);
+                    tm_printf((UB*)"[route] levels_raw:");
+                    for (unsigned i = 0; i < n; ++i)
+                        tm_printf((UB*)" %s%u", (UB*)((i & 1u) ? "S" : "B"), (UINT)lv[i]);
+                    tm_printf((UB*)"\n");
+                }
             }
             break;
         }

@@ -50,6 +50,46 @@ static struct
     bool health_asserted : 1;
 } runtime_flags;
 static uint32_t epoch_floor_ms;
+#if MOTION_LINE_ROUTE
+/* Diagnostics: darkest raw of each bar / lightest raw of each gap of the
+ * last barcode capture, printed by the route console after the widths. */
+static uint16_t bc_ext_cur[BC_MAX_ELEMS];
+static uint8_t bc_ext_n;
+static bool bc_ext_was_active;
+static uint16_t bc_ext_last[BC_MAX_ELEMS];
+static volatile uint8_t bc_ext_last_n;
+static volatile uint32_t bc_ext_last_seq;
+static void bc_ext_sample(uint16_t raw)
+{
+    if (bridge.capture.active) {
+        unsigned i = bridge.capture.count;
+        if (i < BC_MAX_ELEMS) {
+            if (i >= bc_ext_n) { bc_ext_cur[i] = raw; bc_ext_n = (uint8_t)(i + 1u); }
+            else if ((i & 1u) == 0u ? raw > bc_ext_cur[i] : raw < bc_ext_cur[i]) bc_ext_cur[i] = raw;
+        }
+    } else if (bc_ext_was_active) {
+        for (unsigned i = 0; i < bc_ext_n; ++i) bc_ext_last[i] = bc_ext_cur[i];
+        bc_ext_last_n = bc_ext_n;
+        ++bc_ext_last_seq;
+        bc_ext_n = 0u;
+    }
+    bc_ext_was_active = bridge.capture.active;
+}
+unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq)
+{
+    unsigned n = bc_ext_last_n < max ? bc_ext_last_n : max;
+    for (unsigned i = 0; i < n; ++i) out[i] = bc_ext_last[i];
+    if (seq) *seq = bc_ext_last_seq;
+    return n;
+}
+#else
+unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq)
+{
+    (void)out; (void)max;
+    if (seq) *seq = 0u;
+    return 0u;
+}
+#endif
 
 static void set_health(bool healthy)
 {
@@ -215,6 +255,9 @@ static void process_frame(const ir_raw_frame_t *frame)
     }
 #endif
     ER error = motion_ir_bridge_sample(&bridge, normalized, true, frame->sampled_ms, owner.epoch);
+#if MOTION_LINE_ROUTE
+    bc_ext_sample(raw[IR_CH_BARCODE]);
+#endif
     if (error == MOTION_IR_SUPERSEDED)
     {
         /* STOP/reset raced the earlier status read. Reject old data, including

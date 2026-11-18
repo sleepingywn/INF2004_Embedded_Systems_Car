@@ -9,10 +9,10 @@
  *
  * Rule (fixed cutoffs kept, plus a relative one):
  *   - bar starts : raw >= BC_LVL_BLACK_MIN and raw >= lowest white so far + BC_LVL_RISE
- *   - bar ends   : raw <= BC_LVL_WHITE_MAX, or raw has fallen half way from the
- *                  bar's peak back to the white level (and >= BC_LVL_RISE below
- *                  the peak).  Narrow bar (peak ~307): ends below ~242.
- *                  Wide bar (peak ~1300): ends below ~740, so blurred gaps count.
+ *   - bar ends   : raw <= BC_LVL_WHITE_MAX, or raw has fallen 3/4 of the way from
+ *                  the bar's peak back to the white level (>= BC_LVL_RISE below the
+ *                  peak) for BC_LVL_HOLD ms.  Narrow bar (peak ~307): below ~209.
+ *                  Wide bar (peak ~1300): below ~460, so blurred gaps still count.
  * The white level used for "half way" is the gap before the bar, capped at
  * BC_LVL_REF_CAP, so a bar after a blurred gap is still judged against white.
  */
@@ -30,8 +30,10 @@
                                    inside a narrow bar; real gaps were >= 14 ms */
 #endif
 #ifndef BC_LVL_END_NUM          /* bar ends below ref + (peak - ref) x NUM/DEN */
-#define BC_LVL_END_NUM   1u
-#define BC_LVL_END_DEN   2u
+#define BC_LVL_END_NUM   1u   /* a quarter of the way: track Z after the hump had a  */
+#define BC_LVL_END_DEN   4u   /* 30 ms sag inside a wide bar (sensor moved at the    */
+                              /* hump peak); half way split it. Wide bar (~1300) now */
+                              /* ends below ~460, narrow bar (~307) below ~209.      */
 #endif
 
 typedef struct {

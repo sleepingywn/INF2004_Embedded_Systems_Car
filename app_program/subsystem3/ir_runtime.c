@@ -11,9 +11,9 @@
 #define IR_WATCHDOG_MS 20u /* liveness watchdog; not the 1 kHz pacing source */
 #define IR_MAX_QUEUE_AGE_MS (IR_ACQ_RING_SIZE - 1u)
 #if MOTION_LINE_ROUTE
-#define IR_BC_RAW_WHITE_MAX 200u /* Ken's bench values; do not retune here */
-#define IR_BC_RAW_BLACK_MIN 240u
-_Static_assert(IR_BC_RAW_WHITE_MAX < IR_BC_RAW_BLACK_MIN, "raw barcode hysteresis reversed");
+#include "barcode_level.h"   /* fixed cutoffs 200/240 + relative bar end (18 Nov 2026) */
+_Static_assert(BC_LVL_WHITE_MAX < BC_LVL_BLACK_MIN, "raw barcode hysteresis reversed");
+static bc_level_t bc_level = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX};
 #endif
 
 static ID runtime_mutex;
@@ -210,9 +210,7 @@ static void process_frame(const ir_raw_frame_t *frame)
      * 60/35 scale missed blurred narrow bars. Display values stay calibrated;
      * only the barcode capture input changes. Line sensors are unchanged. */
     {
-        const uint16_t raw_bc = raw[IR_CH_BARCODE];
-        const bool black = raw_bc >= IR_BC_RAW_BLACK_MIN ||
-                           (bridge.capture.is_bar && raw_bc > IR_BC_RAW_WHITE_MAX);
+        const bool black = bc_level_black(&bc_level, bridge.capture.is_bar, raw[IR_CH_BARCODE]);
         normalized[IR_CH_BARCODE] = black ? 100u : 0u;
     }
 #endif

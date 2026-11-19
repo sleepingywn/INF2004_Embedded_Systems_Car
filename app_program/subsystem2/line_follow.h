@@ -42,7 +42,7 @@
  * Provisional count/time bounds, not a diagnosis of mechanical vs electrical
  * movement. Legacy profiles retain their previous one-count policy. */
 #define LINE_PAUSE_REVERSE_BUDGET (MOTION_LINE_ADAPTIVE ? 2u:1u)
-#define LINE_PAUSE_SETTLE_MS 120u
+#define LINE_PAUSE_SETTLE_MS 140u
 #define LINE_PAUSE_REARM_MS 60u
 #define LINE_PAUSE_REARM_COUNTS 3u
 _Static_assert(LINE_FOLLOW_MAX_MS <= 30000u, "Fits motion request TTL");
@@ -248,7 +248,7 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
     if(!line_follow_sample_valid(line,now,line_ms,epoch,line_epoch,have_line))return LINE_STEP_IR;
     bool both_black=LINE_FEEDBACK_PROFILE && line->state==LINE_BOTH_BLACK && line->err==0;
     if(!both_black && !line_follow_usable(line,now,line_ms,epoch,line_epoch,have_line))return LINE_STEP_IR;
-    if((uint32_t)(now-f->started_ms)>=LINE_FOLLOW_MAX_MS)return LINE_STEP_DONE;
+    if(!MOTION_LINE_UNLIMITED && (uint32_t)(now-f->started_ms)>=LINE_FOLLOW_MAX_MS)return LINE_STEP_DONE;
     if((uint32_t)(now-sampled_ms)>LINE_FOLLOW_INPUT_AGE_MS)return LINE_STEP_TIME;
     if(invalid!=f->invalid){f->encoder_reject=LINE_ENCODER_INVALID_EDGES;return LINE_STEP_ENCODER;}
     uint32_t dt=sampled_ms-f->previous_ms;

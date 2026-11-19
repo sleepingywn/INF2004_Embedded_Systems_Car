@@ -8,6 +8,11 @@
 #include <string.h>
 #include <setjmp.h>
 #include "motion_host_shim.h"
+#define ROUTE_SETTINGS_HOST 1
+#include "../../app_program/subsystem2/route_settings.c"
+static unsigned settings_reboots;
+void route_settings_reboot(const uint8_t map[26]) { (void)map; ++settings_reboots; }
+void route_settings_boot(void) {}
 #include "../../app_program/subsystem2/motion.c"
 #undef memset
 #undef memcpy
@@ -98,9 +103,11 @@ static uint32_t clock_ms, flag_bits, stop_at_ms;
 static int out_left, out_right; /* electrical duty as written */
 static encoder_raw_t fake_raw;
 static int scenario;
+static void (*owner_hook)(void);
 static bool sent;
 static int max_phase_seen;
 static unsigned carried_handovers;
+static bool observed_slow_pivot;
 static char route_seen[64];
 static unsigned event_count;
 UW in_w(UW reg) { uint64_t t = (uint64_t)clock_ms * 1000; return reg == TIMER_TIMERAWH ? (UW)(t >> 32) : (UW)t; }
@@ -150,6 +157,27 @@ static void publish_line(void)
         else if (right) { line = (line_msg_t){.state = LINE_EDGE_ONLY, .err = -40}; levels = line_levels_pack(5, 45); }
         else { line = (line_msg_t){.state = LINE_EDGE_ONLY, .err = 40}; levels = line_levels_pack(45, 5); }
     }
+    if (route.phase == ROUTE_PIVOT) {
+        int32_t travel = motion_count_delta(route_fwd_left(), route.origin_left);
+        if (route.pivot_slow && route.speed.left.target_cps && route.speed.right.target_cps) {
+            assert(route.speed.left.target_cps <= ROUTE_PIVOT_SLOW_CPS);
+            assert(route.speed.right.target_cps <= ROUTE_PIVOT_SLOW_CPS);
+            observed_slow_pivot = true;
+        }
+        if (travel >= (int32_t)ROUTE_PIVOT_FIND_COUNTS && travel < (int32_t)ROUTE_U_TURN_COUNTS + 30) {
+            line.state = LINE_LOST; levels = line_levels_pack(4, 4);
+        }
+        if (scenario == 11) {
+            /* Recorded pass: departure edge, then the first return edge. */
+            bool edge = travel < 105 || (travel >= 2134 && travel <= 2198);
+            line.state = edge ? LINE_EDGE_ONLY : LINE_LOST;
+            levels = edge ? line_levels_pack(1, 90) : line_levels_pack(2, 2);
+        }
+        if (scenario == 9) { line.state = LINE_BOTH_BLACK; levels = line_levels_pack(90,90); }
+    }
+    if (scenario == 10 && route.phase == ROUTE_SETTLE_AFTER) {
+        line.state = LINE_LOST; levels = line_levels_pack(4,4);
+    }
     shared.line = line; shared.have_line = true; shared.line_ms = clock_ms;
     shared.line_epoch = state.epoch; shared.line_levels = levels;
 }
@@ -186,12 +214,13 @@ ER tk_wai_flg(ID a, UINT b, UINT c, UINT *d, int e)
     /* A barcode completes at 400 ms (scenario 5: none). */
     if (clock_ms == 400 && scenario != 5) {
         const char *letter = scenario == 1 || scenario == 6 ? "WNNNNWNNW" : scenario == 2 ? "WNWNNWNNW" :
-                             scenario == 3 ? "NNNNWWNNW" : scenario == 4 ? "NWWNWNNNN" : "WNNNWWNNN";
+                             (scenario == 3 || scenario == 9 || scenario == 10 || scenario == 11) ? "NNNNWWNNW" : scenario == 4 ? "NWWNWNNNN" : "WNNNWWNNN";
         if (scenario == 2) letter = "WNWNNWNNN"; /* C */
         bc_msg_t bc = make_code(letter, false, 3, 9); /* short widths: fits the 400 ms history */
         shared.barcode = bc; shared.have_barcode = true;
         shared.barcode_ms = clock_ms; shared.barcode_epoch = state.epoch;
     }
+    if(owner_hook)owner_hook();
     *d = flag_bits;
     return E_OK;
 }
@@ -234,9 +263,43 @@ static void owner_tests(void)
     puts("PASS route owner 2: barcode C drives straight 100 mm, then V5 resumes");
 
     /* 3: D -> pivot (right wheel reverses) 2667 counts each, V5 restarts. */
-    reset_owner(3, 9000); run();
-    assert(!state.faults && has(ROUTE_EV_LEG_DONE) && has(ROUTE_EV_RESUMED) && max_phase_seen >= ROUTE_PIVOT);
+    reset_owner(3, 13000); run();
+    assert(observed_slow_pivot && !state.faults && has(ROUTE_EV_LEG_DONE) && has(ROUTE_EV_RESUMED) && max_phase_seen >= ROUTE_PIVOT);
+    motion_pivot_sample_t row;
+    uint32_t turn;
+    unsigned rows;
+    assert(motion_pivot_sample(0, &row, &turn, &rows));
+    uint32_t success_turn = turn;
+    assert(row.elapsed_ms == 0 && row.left_counts == 0 && row.right_counts == 0);
+    bool saw_gap = false;
+    for (unsigned i = 0; i < rows; ++i) {
+        assert(motion_pivot_sample(i, &row, &turn, &rows));
+        if (row.levels == line_levels_pack(4,4) && !row.edge) saw_gap = true;
+    }
+    assert(saw_gap && row.settled_phase && row.edge && !row.reason);
+    assert(row.left_counts >= ROUTE_PIVOT_FIND_COUNTS && row.right_counts >= ROUTE_PIVOT_FIND_COUNTS);
     puts("PASS route owner 3: barcode D pivots 180 deg, then V5 resumes");
+
+    reset_owner(11, 13000); run();
+    assert(has(ROUTE_EV_RESUMED) && !state.faults);
+    assert(motion_pivot_sample(0, &row, &turn, &rows));
+    unsigned i = 0;
+    while (i < rows && !row.settled_phase)
+        assert(motion_pivot_sample(i++, &row, &turn, &rows));
+    assert(row.settled_phase && row.left_counts >= 2134 && row.left_counts < 2489);
+    puts("PASS recorded early return edge stops pivot before old search gate");
+
+    reset_owner(9, 13000); run();
+    assert(has(ROUTE_EV_FAILED) && !has(ROUTE_EV_RESUMED) && state.faults==MOTION_FAULT_IR);
+    assert(!out_left && !out_right && !owner_flags.active_valid);
+    assert(motion_pivot_sample(0, &row, &turn, &rows) && turn != success_turn);
+    assert(motion_pivot_sample(rows-1, &row, &turn, &rows));
+    assert(row.reason == 19 && !row.edge && row.levels == line_levels_pack(90,90));
+    puts("PASS U-turn short sweep ends stopped on ambiguous both-black input");
+
+    reset_owner(10, 13000); run();
+    assert(has(ROUTE_EV_LEG_DONE) && has(ROUTE_EV_FAILED) && !has(ROUTE_EV_RESUMED));
+    assert(state.faults==MOTION_FAULT_IR && !out_left && !out_right);
 
     /* 5: no barcode -> the junction is left to V5 (route never moves). */
     reset_owner(5, 1500); run();

@@ -26,7 +26,7 @@ def main():
         exe = str(Path(temp) / "handoff.exe")
         subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem2/ir_handoff_integration_test.c",
                         "app_program/subsystem2/motion_logic.c", "app_program/subsystem3/sensor_line.c",
-                        "app_program/subsystem3/barcode_sense.c", "-o", exe], cwd=ROOT, check=True)
+                        "app_program/subsystem3/barcode_sense.c", "-DROUTE_SETTINGS_HOST=1", "app_program/subsystem2/route_settings.c", "-o", exe], cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
         print("PASS route-profile IR handoff (16-bit barcode widths)")
         # Barcode black/white from the raw ADC (fixed cutoffs + relative bar end).

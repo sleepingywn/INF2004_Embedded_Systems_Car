@@ -174,7 +174,7 @@ ER tk_wai_flg(ID a,UINT b,UINT c,UINT*d,int e){
                 unsigned reverse=0;
                 if(scenario<=80 && (age==40 || age==60 || (scenario>=79 && age==80)))reverse=1;
                 if((scenario==81 || scenario==82) && age==40)reverse=3;
-                if((scenario==83 || scenario==84) && age==120)reverse=1;
+                if((scenario==83 || scenario==84) && age==140)reverse=1;
                 if(scenario>=85 && age==40)reverse=1;
                 if(reverse) {if(inside)fake_raw.right-=reverse;else fake_raw.left+=reverse;}
                 if(scenario==85 && age==40)++fake_raw.invalid;

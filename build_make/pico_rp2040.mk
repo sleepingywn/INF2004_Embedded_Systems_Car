@@ -181,7 +181,41 @@ endif
 LINE_SUFFIX := _line30_button_adaptive_route
 endif
 
+LINE_REMOTE ?= 0
+ifneq ($(filter $(LINE_REMOTE),0 1),$(LINE_REMOTE))
+$(error Unknown LINE_REMOTE '$(LINE_REMOTE)'; use 0 or 1)
+endif
+ifeq ($(LINE_REMOTE),1)
+ifneq ($(MQTT)-$(LINE_CIRCUIT)-$(LINE_AUTOSTART),1-1-0)
+$(error LINE_REMOTE=1 requires MQTT=1 LINE_CIRCUIT=1 LINE_AUTOSTART=0)
+endif
+LINE_SUFFIX := $(LINE_SUFFIX)_remote
+endif
+
 #
+# BARCODE_DIGITAL=1 reads D0 on GP26; line sensors stay ADC1/2.
+LINE_UNLIMITED ?= 0
+ifneq ($(filter $(LINE_UNLIMITED),0 1),$(LINE_UNLIMITED))
+$(error LINE_UNLIMITED must be 0 or 1)
+endif
+ifeq ($(LINE_UNLIMITED),1)
+ifneq ($(LINE_CIRCUIT),1)
+$(error LINE_UNLIMITED=1 requires LINE_CIRCUIT=1)
+endif
+LINE_SUFFIX := $(LINE_SUFFIX)_no_time_limit
+endif
+BARCODE_DIGITAL ?= 0
+BARCODE_BLACK_LEVEL ?= 1
+ifneq ($(filter $(BARCODE_DIGITAL),0 1),$(BARCODE_DIGITAL))
+$(error BARCODE_DIGITAL must be 0 or 1)
+endif
+ifneq ($(filter $(BARCODE_BLACK_LEVEL),0 1),$(BARCODE_BLACK_LEVEL))
+$(error BARCODE_BLACK_LEVEL must be 0 or 1)
+endif
+ifeq ($(BARCODE_DIGITAL),1)
+LINE_SUFFIX := $(LINE_SUFFIX)_bc_digital$(BARCODE_BLACK_LEVEL)
+endif
+
 # Images are named after the profile they were built with.  Every image is
 # flashed by hand from a downloads folder, so identically-named artifacts are
 # a live hazard: an SMP=1 build was once flashed in place of an SMP=0 one and
@@ -250,7 +284,9 @@ endif
 CFLAGS  += -DAPP_TEST=$(TEST) -DMOTION_LINE_DEMO=$(LINE_DEMO) -DMOTION_LINE_CIRCUIT=$(LINE_CIRCUIT) -DMOTION_LINE_AUTOSTART=$(LINE_AUTOSTART)
 CFLAGS  += -DMOTION_LINE_SEARCH=$(LINE_SEARCH)
 CFLAGS  += -DMOTION_LINE_ADAPTIVE=$(LINE_ADAPTIVE)
-CFLAGS  += -DMOTION_LINE_ROUTE=$(LINE_ROUTE)
+CFLAGS  += -DMOTION_LINE_UNLIMITED=$(LINE_UNLIMITED)
+CFLAGS  += -DIR_BARCODE_DIGITAL=$(BARCODE_DIGITAL) -DIR_BARCODE_BLACK_LEVEL=$(BARCODE_BLACK_LEVEL)
+CFLAGS  += -DMOTION_LINE_ROUTE=$(LINE_ROUTE) -DMOTION_LINE_REMOTE=$(LINE_REMOTE)
 ifeq ($(LINE_ROUTE),1)
 CFLAGS  += -DBARCODE_SLOW_SCAN=1 -DBARCODE_WIDE=1
 endif
@@ -287,7 +323,7 @@ endif
 ################################################################################
 
 PROFILE_ID := smp$(SMP)-$(CONSOLE)-wifi$(WIFI)-net$(NET)-mqtt$(MQTT)-crash$(CRASH_REPORT)-test$(TEST)-line$(LINE_DEMO)-circuit$(LINE_CIRCUIT)-auto$(LINE_AUTOSTART)-search$(LINE_SEARCH)
-PROFILE_ID := $(PROFILE_ID)-adaptive$(LINE_ADAPTIVE)-route$(LINE_ROUTE)
+PROFILE_ID := $(PROFILE_ID)-adaptive$(LINE_ADAPTIVE)-route$(LINE_ROUTE)-remote$(LINE_REMOTE)-digital$(BARCODE_DIGITAL)-black$(BARCODE_BLACK_LEVEL)-unlimited$(LINE_UNLIMITED)
 PROFILE_FILE := .build_profile
 
 ifneq ($(strip $(shell cat $(PROFILE_FILE) 2>/dev/null)),$(PROFILE_ID))

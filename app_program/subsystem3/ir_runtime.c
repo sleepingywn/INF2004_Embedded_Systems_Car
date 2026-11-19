@@ -10,7 +10,7 @@
 #define IR_TASK_PRIORITY 16
 #define IR_WATCHDOG_MS 20u /* liveness watchdog; not the 1 kHz pacing source */
 #define IR_MAX_QUEUE_AGE_MS (IR_ACQ_RING_SIZE - 1u)
-#if MOTION_LINE_ROUTE
+#if MOTION_LINE_ROUTE && !IR_BARCODE_DIGITAL
 #include "barcode_level.h"   /* fixed cutoffs 200/240 + relative bar end (18 Nov 2026) */
 _Static_assert(BC_LVL_WHITE_MAX < BC_LVL_BLACK_MIN, "raw barcode hysteresis reversed");
 static bc_level_t bc_level = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
@@ -177,6 +177,10 @@ static void apply_command(unsigned command)
          * Discard queued frames so a pre-FINISH barcode can never be replayed. */
         ir_acquisition_discard();
         owner.failed_channels = ir_cal_finish(&accumulator, owner.calibration);
+#if IR_BARCODE_DIGITAL
+        /* D0 has a hardware threshold; only the analogue line pair calibrates. */
+        owner.failed_channels &= ~(1u << IR_CH_BARCODE);
+#endif
         if (owner.failed_channels != 0u)
         {
             runtime_fault();
@@ -242,9 +246,12 @@ static void process_frame(const ir_raw_frame_t *frame)
     for (unsigned ch = 0; ch < IR_NUM_CH; ++ch)
     {
         normalized[ch] = ir_normalise(&owner.calibration[ch], raw[ch]);
+        #if IR_BARCODE_DIGITAL
+        if(ch == IR_CH_BARCODE)normalized[ch] = raw[ch] ? 100u : 0u;
+#endif
         owner.normalized[ch].value = normalized[ch];
     }
-#if MOTION_LINE_ROUTE
+#if MOTION_LINE_ROUTE && !IR_BARCODE_DIGITAL
     /* Barcode black/white from fixed raw ADC cutoffs with hysteresis, as in
      * Ken's working bench (barcode-turning 1bbb41b/4083fb3). The calibrated
      * 60/35 scale missed blurred narrow bars. Display values stay calibrated;
@@ -392,6 +399,9 @@ ER ir_runtime_init(void)
     owner.failed_channels = 7u;
 #if MOTION_LINE_CIRCUIT
     owner.failed_channels = line_boot_calibration(owner.calibration);
+#if IR_BARCODE_DIGITAL
+    owner.failed_channels &= ~(1u << IR_CH_BARCODE);
+#endif
     if(owner.failed_channels==0u)owner.state=IR_RUNTIME_READY;
     /* healthy stays false until acquisition and fresh bridge publication pass. */
 #endif

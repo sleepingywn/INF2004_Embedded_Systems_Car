@@ -84,6 +84,7 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-11-01 | S4-U05 | same | Andy | PASS | `../integration/logs/2026-11-01_I14_selftest.txt` | exec max 3203 µs (read 2623) < 5 ms, overruns 0. Higher than 1349 µs before integration, probably because motion_task (S2, priority 14) now shares core 1 |
 | 2026-11-01 | S4-U24 | I15 (`bd8421a` without hysteresis) | Andy | PASS except TURNING | `../integration/logs/2026-11-01_I15_motion_classes.txt` | STOPPED, STRAIGHT (15 %), ON_HUMP on 2 passes (10.1 / 12.7 mm), TILTED (roll -27.1). TURNING flickered: curve at 14-16 deg/s against a 15 deg/s threshold (second flip also as the car reached the mat edge). v: HUMP_ENTRY x2, HUMP_DONE x2 13 mm, TILT x1 27.0 deg, COLLISION / IMU_FAULT never. n: run cleared. SPINNING not run (USB cable); IMPACT not run |
 | 2026-11-01 | S4-U24 | I16 (`bd8421a`) | Andy | PASS (TURNING) | `../integration/logs/2026-11-01_I16_turning_hysteresis.txt` | Trim +50 %, 2 s: STRAIGHT -> TURNING once at 15 deg/s, held at 14 deg/s, left at 6 deg/s; no flicker |
+| 2026-11-12 | S4-U10 | KR3 (lift 0.20 g) | Andy | PARTIAL | `logs/2026-11-12_KR3_lift_first.txt` | Idle lift: `LIFTED up +203 mg -> motors stopped`, cleared after ~1 s level. Lift during a GP20 run: no LIFTED (gentler lift under 0.20 g); the car stopped anyway (wheels off the mat). Threshold lowered to 0.15 g for KR4 |
 
 ## Bench evidence (before integration)
 

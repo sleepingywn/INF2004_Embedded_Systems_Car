@@ -21,6 +21,8 @@
 
 #define FAULT_AFTER	5	/* failed reads in a row -> IMU fault (100 ms) */
 #define REINIT_EVERY	50	/* while faulted, retry the sensor every 1 s   */
+#define FROZEN_AFTER	25	/* identical raw x,y,z for 25 reads (0.5 s)    */
+				/* -> IMU fault: a live sensor always has noise */
 #define PRINT_EVERY	50	/* status line every 50 x 20 ms = 1 s          */
 
 EXPORT volatile BOOL s4_status_print = TRUE;	/* status line on/off */
@@ -415,7 +417,9 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 	imu_config_t	cfg;
 	gy511_accel_t	raw;
 	UW		start_us, prev_us, fail_run = 0;
-	BOOL		fault = FALSE, announced_cal = FALSE;
+	BOOL		fault = FALSE, announced_cal = FALSE, got;
+	gy511_accel_t	last_raw = {0.0f, 0.0f, 0.0f};
+	UW		same_run = 0;
 
 	(void)stacd; (void)exinf;
 
@@ -457,7 +461,34 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		}
 
 		/* ---- read + process (this is what "exec" measures) ---- */
-		if (!fault && gy511_read(&raw)) {
+		got = (!fault && gy511_read(&raw)) ? TRUE : FALSE;
+
+		/* Frozen data (seen 18 Nov 2026 on the car: |a| stuck at
+		   2592 mg, i2c err 0) is a sensor fault, not a lift.  Drop the
+		   calibration and the LIFTED latch (both built on bad data),
+		   re-initialise the chip and recalibrate once it reads again.
+		   This way a stuck sensor cannot keep the motors off. */
+		if (got) {
+			if (raw.x == last_raw.x && raw.y == last_raw.y && raw.z == last_raw.z) {
+				same_run++;
+			} else {
+				same_run = 0;
+			}
+			last_raw = raw;
+			if (same_run >= FROZEN_AFTER) {
+				same_run = 0;
+				got = FALSE;
+				fault = TRUE;
+				imu_logic_init(&logic, &cfg);
+				announced_cal = FALSE;
+				motion_now = motion_shown = IMU_MOTION_UNKNOWN;
+				record_event(S4_EV_IMU_FAULT, 2);
+				tk_set_flg(flg_terrain, S4_EVT_IMU_FAULT);
+				tm_printf((UB*)"terrain: IMU FAULT (readings frozen for 0.5 s) -- re-initialising\n");
+			}
+		}
+
+		if (got) {
 			UINT  ev;
 			UW    read_us = now_us() - start_us, logic_start;
 			float dt = (float)(start_us - prev_us) * 1e-6f;
@@ -588,6 +619,9 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 				tk_clr_flg(flg_terrain, ~(UINT)S4_EVT_IMU_FAULT);
 				tm_printf((UB*)"terrain: IMU fault cleared (%s at 0x%02x)\n",
 					  gy511_chip_name(), gy511_address());
+				if (!logic.calibrated) {
+					tm_printf((UB*)"terrain: calibrating -- keep the car STILL and LEVEL for 2 s\n");
+				}
 			}
 		}
 

@@ -142,7 +142,11 @@ LOCAL void lift_stop_motors(BOOL edge)
 		motion_status_t m;
 		if (now - lift_last_stop_us < 100000u) return;
 		if (motion_get_status(&m) != E_OK) return;
-		if (m.state == MOTION_IDLE && !motion_left_duty(&m) && !motion_right_duty(&m)) return;
+		/* only a run that is actually driving: after a run ends (IDLE, or
+		   ERROR while "GP20 retry ready") repeated stops would spam the
+		   console and could interfere with the GP20 retry (car test 19 Nov) */
+		if ((m.state == MOTION_IDLE || m.state == MOTION_ERROR) &&
+		    !motion_left_duty(&m) && !motion_right_duty(&m)) return;
 		tm_printf((UB*)"terrain: still lifted -> motors stopped\n");
 	}
 	lift_last_stop_us = now;

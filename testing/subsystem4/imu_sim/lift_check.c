@@ -121,5 +121,17 @@ int main(void)
     hold(1.0f, 15.0f, 0, 0);
     assert(lifted_events == 0);
     puts("PASS 9: tilted 15 deg in place -> no LIFTED");
+    /* 10. Lifted in the middle of a hump climb, tilted in the hand, put
+     *     down: no hump is counted (car test 19 Nov 2026). */
+    start();
+    hold(1.0f, 0, 0, 0.66f);
+    for (int i = 0; i <= 10; i++) step(i * 1.0f, 0, 0.66f);   /* climbing to 10 deg */
+    hold(0.3f, 10.0f, 0, 0.66f);
+    hold(0.15f, 10.0f, 0.35f, 0);                             /* lifted */
+    assert(s.lifted);
+    hold(1.0f, 15.0f, 0, 0); hold(1.0f, -15.0f, 0, 0);        /* tilted in the hand */
+    hold(2.0f, 0, 0, 0);                                      /* put down, still */
+    assert(!s.lifted && s.hump_count == 0);
+    puts("PASS 10: lifted mid-hump and tilted in the hand -> no hump counted");
     return 0;
 }

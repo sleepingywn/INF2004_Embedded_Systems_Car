@@ -207,7 +207,15 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
     /* ---------- 2. Lift: sustained upward acceleration ---------- */
     /* median of the last 3 up samples: a one-sample jolt never counts */
     s->up_hist[s->up_n % 3u] = a.up;
-    s->mag_hist[s->up_n % 3u] = mag;
+    {   /* slow-lift input: |a| without the car's own forward acceleration
+           (from the wheels), so speeding up / braking does not look like a
+           lift.  Clamped: wheels spinning free in the air must not matter. */
+        float ma = motion_accel_g;
+        if (ma >  0.5f) ma =  0.5f;
+        if (ma < -0.5f) ma = -0.5f;
+        float f = a.fwd - ma;
+        s->mag_hist[s->up_n % 3u] = imu_sqrtf(f * f + a.side * a.side + a.up * a.up);
+    }
     s->up_n++;
     float up_avg = 1.0f;
     if (s->up_n >= 3u) {
@@ -309,6 +317,12 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
 
     bool moving = dist_delta_mm > 0.0f;
 
+    /* While the car is held up (lifted latch), tilting it in the hand is not
+       a hump: no new hump starts and none is counted (car test 19 Nov 2026:
+       a 21 mm "hump" was counted while the car was held). */
+    if (s->lifted) {
+        if (s->hump_state != HUMP_FLAT) abort_hump(s);
+    } else
     switch (s->hump_state) {
     case HUMP_FLAT:
         if (s->rearm_needed) {
@@ -385,6 +399,7 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
         bool by_tilt = s->overturn_timer >= c->overturn_hold_s;
         if (by_lift || by_tilt) {
             s->lifted = true;
+            if (s->hump_state != HUMP_FLAT) abort_hump(s);   /* lifted mid-hump: not a hump */
             s->lift_by_tilt = !by_lift;
             s->lift_peak_up_g = up_avg - 1.0f;
             s->lift_peak_vel = s->lift_vel;

@@ -332,7 +332,8 @@ LOCAL void print_events(UINT ev)
 			tm_printf((UB*)"terrain: OVERTURNED");
 			print_tenths("  tilt", to_tenths(logic.tilt_total_deg));
 		} else {
-			tm_printf((UB*)"terrain: LIFTED  up %+d mg", (INT)(logic.lift_peak_up_g * 1000.0f));
+			tm_printf((UB*)"terrain: LIFTED  up %+d mg  rise %d mm/s",
+				  (INT)(logic.lift_peak_up_g * 1000.0f), (INT)(logic.lift_peak_vel * 9810.0f));
 		}
 		tm_printf((UB*)" -> motors stopped\n");
 	}

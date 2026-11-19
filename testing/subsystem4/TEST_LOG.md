@@ -23,7 +23,7 @@ Define a test here before running it. Test IDs never change.
 | S4-U11 | stalled bus: dead sensor cannot freeze the car | fault handling (C03) | manual | normal image; pull SDA while running, then reconnect | `IMU FAULT` within ~100 ms, other tasks keep printing, `overruns 0`; `IMU fault cleared` after reconnecting |
 | S4-U12 | hump detected and height reported | FR5 | manual | bench `m` key or the PRETEND_MOVING build (until encoder data exists); push the car's right wheel over the hump | `HUMP ENTRY` then `HUMP DETECTED` with a peak; compare with the block |
 | S4-U13 | own maths matches the C library | imu_math.h | auto (laptop) | `imu_sim/math_check.c` | `PASS` |
-| S4-U14 | logic regression (synthetic hump, knock, slope) | imu_logic.c | auto (laptop) | `imu_sim --fake` | hump 18.8 mm vs 19.9 mm true; no LIFTED from the knock; TILT on the slope; `imu_sim/lift_check.c` PASS 1-6 |
+| S4-U14 | logic regression (synthetic hump, knock, slope) | imu_logic.c | auto (laptop) | `imu_sim --fake` | hump 18.8 mm vs 19.9 mm true; no LIFTED from the knock; TILT on the slope; `imu_sim/lift_check.c` PASS 1-9 |
 | S4-U15 | minimum-bit snapshot: size, round trip, saturation, wrap | change requirement, C06 | auto (laptop) | `imu_sim/pack_check.c` | `PASS`; 8 bytes; error ≤ half a step |
 | S4-U16 | packed snapshot on target: 8 bytes, saturates, 15-bit age | change requirement, C06 | auto | `subsystem4_test.c` | `[TEST] S4-U16 PASS` |
 | S4-U17 | one-sided right-side hump (10–13 mm) detected from roll; height = lever × sin(peak tilt); no false hump from speeding up/braking | FR5, one-sided layout | auto (laptop) | `imu_sim --fake1 10`, `11.5`, `13` | `HUMP DETECTED (one-sided)` within ±10 mm; no hump at the 0.15 g speed-up/brake |
@@ -86,6 +86,7 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-11-01 | S4-U24 | I16 (`bd8421a`) | Andy | PASS (TURNING) | `../integration/logs/2026-11-01_I16_turning_hysteresis.txt` | Trim +50 %, 2 s: STRAIGHT -> TURNING once at 15 deg/s, held at 14 deg/s, left at 6 deg/s; no flicker |
 | 2026-11-12 | S4-U10 | KR3 (lift 0.20 g) | Andy | PARTIAL | `logs/2026-11-12_KR3_lift_first.txt` | Idle lift: `LIFTED up +203 mg -> motors stopped`, cleared after ~1 s level. Lift during a GP20 run: no LIFTED (gentler lift under 0.20 g); the car stopped anyway (wheels off the mat). Threshold lowered to 0.15 g for KR4 |
 | 2026-11-18 | S4-U10 | KR4 (lift 0.15 g) | Andy | FAIL (frozen IMU) | `logs/2026-11-18_KR4_runs_frozen_imu.txt` | Two Z runs: no false LIFTED while driving (run 2 ended on a route stall, reason 4, not S4). After one power-up the GY-511 data froze (\|a\| 2592 mg, i2c err 0): LIFTED latched and GP20 runs were stopped without a lift. KR5: 0.5 s of identical readings -> IMU fault, re-init, recalibrate; LIFTED cleared |
+| 2026-11-18 | S4-U10 | KR5 | Andy | FAIL (calm lift) | `logs/2026-11-18_KR5_calm_lift_missed.txt` | Car lifted calmly while stationary (tilt up to 15 deg in the hand): no LIFTED, the push stayed under 0.15 g. KR6 adds a slow-lift check: leaky sum of median-of-3 \|a\| - 1 (~upward speed), trigger at 0.015 g*s (0.15 m/s) + 0.3 x measured vibration; `lift_check` 1-9 PASS |
 
 ## Bench evidence (before integration)
 

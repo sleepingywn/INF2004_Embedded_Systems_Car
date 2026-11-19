@@ -75,6 +75,15 @@ typedef struct {
     float overturn_deg;           /* total tilt above this = overturned           */
     float overturn_hold_s;        /* ... for at least this long                   */
     float lift_clear_s;           /* level and still this long = back on the ground */
+    /* Slow lift (18 Nov 2026): a calm hand lift stays under lift_up_g, so
+     * also add up |a| - 1 g over time with a leak (time constant lift_vel_tau_s).
+     * That is roughly the upward speed in g*s (x 9.81 = m/s).  Each sample is
+     * clipped to +-lift_vel_clip_g, so a knock adds very little. */
+    float lift_vel_g_s;           /* leaky sum above this (+ k x vibration) = lifted */
+    float lift_vel_noise_k;       /* threshold rises by this x mean |a| change per
+                                     sample: still ~0.005 g, motors driving ~0.05 g */
+    float lift_vel_tau_s;
+    float lift_vel_clip_g;
 } imu_config_t;
 
 typedef struct {
@@ -87,6 +96,8 @@ typedef struct {
     bool         lifted;                    /* latched: lifted or overturned  */
     float        lift_peak_up_g;            /* largest up-axis median while lifted (g above 1) */
     bool         lift_by_tilt;              /* true: triggered by overturn tilt */
+    float        lift_vel;                  /* leaky sum of |a| - 1 (g*s)       */
+    float        lift_peak_vel;             /* largest lift_vel while lifted    */
     hump_state_t hump_state;
     float        current_hump_peak_mm;      /* peak of the latest hump       */
     float        current_hump_peak_pitch_deg;
@@ -115,6 +126,8 @@ typedef struct {
     float        tilt_timer;
     bool         tilt_active;
     float        up_hist[3];        /* last 3 up-axis samples (car frame)  */
+    float        mag_hist[3];       /* last 3 |a| samples (slow lift)      */
+    float        mag_prev, mag_noise;  /* vibration: mean |a| change per sample */
     uint32_t     up_n;
     float        lift_timer, overturn_timer, clear_timer;
 } imu_logic_t;

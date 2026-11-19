@@ -31,6 +31,13 @@ void imu_logic_default_config(imu_config_t *c)
     c->overturn_deg           = 45.0f;
     c->overturn_hold_s        = 0.10f;
     c->lift_clear_s           = 1.0f;
+    /* Slow lift: 0.015 g*s = 0.15 m/s upward.  A calm hand lift reaches
+     * 0.2-0.5 m/s.  Recorded driving (hump pass, 50 Hz): |a| sd 0.006 g, the
+     * sum peaked at 0.002 g*s; KR4 motor runs showed |a| 0.88-1.07 g. */
+    c->lift_vel_g_s           = 0.015f;  /* + 0.3 x vibration: ~0.017 still, ~0.03 driving */
+    c->lift_vel_noise_k       = 0.3f;
+    c->lift_vel_tau_s         = 0.6f;
+    c->lift_vel_clip_g        = 0.3f;
 }
 
 void imu_logic_init(imu_logic_t *s, const imu_config_t *cfg)
@@ -200,6 +207,7 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
     /* ---------- 2. Lift: sustained upward acceleration ---------- */
     /* median of the last 3 up samples: a one-sample jolt never counts */
     s->up_hist[s->up_n % 3u] = a.up;
+    s->mag_hist[s->up_n % 3u] = mag;
     s->up_n++;
     float up_avg = 1.0f;
     if (s->up_n >= 3u) {
@@ -209,6 +217,28 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
     }
     bool lifting = up_avg - 1.0f > c->lift_up_g;
     s->lift_timer = lifting ? s->lift_timer + dt_s : 0.0f;
+
+    /* slow lift: leaky sum of median-of-3 |a| - 1 (orientation-free:
+       tilting the car in the hand does not change |a|; the median drops
+       one-sample jolts) */
+    {
+        float d = 0.0f;
+        if (s->up_n >= 3u) {
+            float x = s->mag_hist[0], y = s->mag_hist[1], z = s->mag_hist[2];
+            d = ((x > y) ? ((y > z) ? y : (x > z) ? z : x)
+                         : ((x > z) ? x : (y > z) ? z : y)) - 1.0f;
+        }
+        if (d >  c->lift_vel_clip_g) d =  c->lift_vel_clip_g;
+        if (d < -c->lift_vel_clip_g) d = -c->lift_vel_clip_g;
+        float k = (c->lift_vel_tau_s > dt_s) ? dt_s / c->lift_vel_tau_s : 1.0f;
+        s->lift_vel += d * dt_s - k * s->lift_vel;
+        /* vibration level (0.5 s average of the sample-to-sample change):
+           a hand lift is smooth, a driving car shakes */
+        float jump = imu_fabsf(mag - s->mag_prev);
+        float kn = (0.5f > dt_s) ? dt_s / 0.5f : 1.0f;
+        if (s->up_n > 1u) s->mag_noise += kn * (jump - s->mag_noise);
+        s->mag_prev = mag;
+    }
 
     /* ---------- 3. Remove the car's own acceleration (from encoders) ------- */
     imu_accel_t g = a;
@@ -350,23 +380,27 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
      * lifting for lift_clear_s; then a new lift can trigger again. */
     s->overturn_timer = (tilt > c->overturn_deg) ? s->overturn_timer + dt_s : 0.0f;
     if (!s->lifted) {
-        bool by_lift = s->lift_timer >= c->lift_hold_s;
+        bool by_lift = s->lift_timer >= c->lift_hold_s ||
+                       s->lift_vel > c->lift_vel_g_s + c->lift_vel_noise_k * s->mag_noise;
         bool by_tilt = s->overturn_timer >= c->overturn_hold_s;
         if (by_lift || by_tilt) {
             s->lifted = true;
             s->lift_by_tilt = !by_lift;
             s->lift_peak_up_g = up_avg - 1.0f;
+            s->lift_peak_vel = s->lift_vel;
             s->clear_timer = 0.0f;
             ev |= IMU_EVT_LIFTED;
         }
     } else {
         if (up_avg - 1.0f > s->lift_peak_up_g) s->lift_peak_up_g = up_avg - 1.0f;
+        if (s->lift_vel > s->lift_peak_vel) s->lift_peak_vel = s->lift_vel;
         bool settled = tilt < c->overturn_deg - 10.0f && !lifting &&
                        imu_fabsf(mag - 1.0f) < 0.10f;
         s->clear_timer = settled ? s->clear_timer + dt_s : 0.0f;
         if (s->clear_timer >= c->lift_clear_s) {
             s->lifted = false;
             s->lift_timer = s->overturn_timer = s->clear_timer = 0.0f;
+            s->lift_vel = 0.0f;
         }
     }
 

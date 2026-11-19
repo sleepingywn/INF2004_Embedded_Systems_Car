@@ -1,7 +1,7 @@
 /* lift_check.c - laptop check of the lift / overturn detector (imu_logic.c).
  *   gcc -O2 -Wall -I../../../app_program/subsystem4 -o lift_check lift_check.c \
  *       ../../../app_program/subsystem4/imu_logic.c -lm && ./lift_check
- * Synthetic 50 Hz data in car axes (g). The real hump pass is checked with
+ * Synthetic 50 Hz data in car axes (g).  Lift = 0.15 g check OR slow-lift sum. The real hump pass is checked with
  *   ./imu_sim --g ../logs/2026-10-31_A8_hump_pass.csv   (no LIFTED expected)
  */
 #include <assert.h>
@@ -10,7 +10,9 @@
 #include <stdlib.h>
 #include "imu_logic.h"
 
-static float noise(void) { return ((float)rand() / RAND_MAX - 0.5f) * 0.06f; }
+/* +-0.01 g per axis: the recorded hump pass had |a| sd 0.006 g; idle car
+   logs show |a| 995-1005 mg.  Motor vibration is added in check 8. */
+static float noise(void) { return ((float)rand() / RAND_MAX - 0.5f) * 0.02f; }
 static imu_logic_t s;
 static unsigned lifted_events, by_tilt_events;
 static float t;
@@ -88,10 +90,36 @@ int main(void)
     assert(lifted_events == 0);
     puts("PASS 5: hump tilt and 30 deg slope -> no LIFTED");
 
-    /* 6. Very gentle lift (+0.1 g) is NOT detected: known limit, lift briskly. */
+    /* 6. Calm hand lift (18 Nov 2026 car test: missed by the 0.15 g check):
+     *    +0.08 g for 0.3 s, then -0.08 g for 0.3 s = rises ~0.24 m/s, ~7 cm.
+     *    Caught by the slow-lift sum, not by the 0.15 g check. */
     start();
-    hold(0.5f, 0, 0.10f, 0);
+    hold(1.0f, 0, 0, 0); hold(0.3f, 0, 0.08f, 0); hold(0.3f, 0, -0.08f, 0); hold(0.5f, 0, 0, 0);
+    assert(lifted_events == 1 && by_tilt_events == 0);
+    puts("PASS 6: calm hand lift (+0.08 g, 0.3 s) -> LIFTED");
+
+    /* 7. Very slow lift: +0.03 g for 0.3 s (~0.09 m/s) is still not detected. */
+    start();
+    hold(0.3f, 0, 0.03f, 0); hold(0.3f, 0, -0.03f, 0); hold(0.5f, 0, 0, 0);
     assert(lifted_events == 0);
-    puts("PASS 6: gentle lift +0.1 g -> not detected (documented limit)");
+    puts("PASS 7: very slow lift (+0.03 g) -> not detected (documented limit)");
+
+    /* 8. 30 s of rough driving: +-0.10 g random on every sample (sd 0.058 g,
+     *    10x the recorded hump pass), plus a +0.6 g jolt every 0.5 s. */
+    start();
+    for (int i = 0; i < 1500; i++) {
+        float r = ((float)rand() / RAND_MAX - 0.5f) * 0.20f;
+        step(0.0f, r + ((i % 25 == 0) ? 0.6f : 0.0f), 0.66f);
+    }
+    assert(lifted_events == 0);
+    puts("PASS 8: 30 s rough driving (+-0.10 g noise, jolts) -> no LIFTED");
+
+    /* 9. Car picked up and tilted 15 deg in the hand without rising
+     *    (orientation change only): |a| stays 1 g -> no slow-lift trigger. */
+    start();
+    for (int i = 0; i <= 15; i++) step((float)i, 0, 0);
+    hold(1.0f, 15.0f, 0, 0);
+    assert(lifted_events == 0);
+    puts("PASS 9: tilted 15 deg in place -> no LIFTED");
     return 0;
 }

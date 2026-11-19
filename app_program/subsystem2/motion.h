@@ -278,6 +278,15 @@ typedef struct {
     bool one_marker;   /* chosen by the one-marker decode (time and distance agree) */
     uint32_t sequence;
 } motion_route_barcode_t;
+/* USB diagnostics for the most recent U-turn. Wheel travel is relative
+ * to pivot start, positive in each wheel's commanded pivot direction. */
+typedef struct {
+    int32_t left_counts, right_counts;
+    uint16_t elapsed_ms, levels;
+    uint8_t state, edge, settled_phase, reason;
+} motion_pivot_sample_t;
+bool motion_pivot_sample(unsigned index, motion_pivot_sample_t *sample,
+                         uint32_t *turn, unsigned *count);
 bool motion_route_next_event(motion_route_event_t *event);
 bool motion_route_barcode(motion_route_barcode_t *out, uint32_t *last_sequence);
 #endif

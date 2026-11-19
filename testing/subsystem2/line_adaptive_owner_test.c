@@ -46,7 +46,7 @@ int main(void)
                 assert((right ? e->pause_age_right_ms:e->pause_age_left_ms)>20);
             }
             assert(stopped_at==500u);
-            assert(e->pause_window_limit_ms==120);
+            assert(e->pause_window_limit_ms==LINE_PAUSE_SETTLE_MS);
         }
         if(scenario==77 || scenario==78 || scenario==87)
             assert(stop_injected && !state.faults && state.result==MOTION_CANCELLED);
@@ -56,14 +56,14 @@ int main(void)
             motion_encoder_failure_t *e=&frozen.encoder_failure;
             bool right=scenario%2==0;
             assert(state.faults==MOTION_FAULT_ENCODER && diagnostics.line_step==LINE_STEP_ENCODER);
-            assert(e->pause_budget==2 && e->pause_window_limit_ms==120);
+            assert(e->pause_budget==2 && e->pause_window_limit_ms==LINE_PAUSE_SETTLE_MS);
             if(scenario==85)assert(e->reason==LINE_ENCODER_INVALID_EDGES);
             else if(scenario==86)assert(e->reason==LINE_ENCODER_LEFT_RECEDING && e->prior_duty_left>0);
             else {
                 assert(e->reason==(right ? LINE_ENCODER_RIGHT_RECEDING:LINE_ENCODER_LEFT_RECEDING));
                 assert((right ? e->pause_used_right:e->pause_used_left)==(scenario<=80 ? 2:0));
                 assert((right ? e->pause_window_right_ms:e->pause_window_left_ms)==
-                    (scenario<=80 ? 80u:scenario<=82 ? 40u:120u));
+                    (scenario<=80 ? 80u:scenario<=82 ? 40u:140u));
                 assert((right ? e->delta_right:e->delta_left)==(scenario==81 || scenario==82 ? -3:-1));
             }
         }

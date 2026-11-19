@@ -30,6 +30,34 @@ static void route_print_widths(const char *label, const bc_msg_t *m)
         tm_printf((UB*)" %s%u", (UB*)((i & 1u) ? "S" : "B"), (UINT)m->widths[i]);
     tm_printf((UB*)"\n");
 }
+/* Read on demand, in pages, so printing does not run in the motor task. */
+static void pivot_console_page(void)
+{
+    static uint32_t previous_turn;
+    static unsigned next;
+    motion_pivot_sample_t row;
+    uint32_t turn;
+    unsigned count;
+    if (!motion_pivot_sample(0, &row, &turn, &count)) {
+        tm_printf((UB*)"[pivot] no capture available\n");
+        return;
+    }
+    if (turn != previous_turn || next >= count) next = 0;
+    previous_turn = turn;
+    unsigned end = next + 12u;
+    if (end > count) end = count;
+    tm_printf((UB*)"[pivot] turn=%u rows=%u first=%u end=%u\n",
+              (UINT)turn, (UINT)count, (UINT)next, (UINT)end);
+    for (; next < end; ++next) {
+        if (!motion_pivot_sample(next, &row, &turn, &count) || turn != previous_turn) break;
+        int left = line_levels_valid(row.levels) ? (int)line_level_left(row.levels) : -1;
+        int right = line_levels_valid(row.levels) ? (int)line_level_right(row.levels) : -1;
+        tm_printf((UB*)"[pivot] ms=%u IR=%d,%d counts=%d,%d state=%u edge=%u settle=%u reason=%u\n",
+                  (UINT)row.elapsed_ms, (INT)left, (INT)right,
+                  (INT)row.left_counts, (INT)row.right_counts, (UINT)row.state,
+                  (UINT)row.edge, (UINT)row.settled_phase, (UINT)row.reason);
+    }
+}
 static void route_console_drain(void)
 {
     motion_route_event_t e;
@@ -86,7 +114,7 @@ static void route_console_drain(void)
             break;
         case ROUTE_EV_FAILED:
             tm_printf((UB*)"[route] FAILED during %c: reason=%d (16 exit not found, 13 leg timeout, "
-                      "4 stall, 3 encoder/control, 18 line lost or stale) phase=%d\n",
+                      "4 stall, 3 encoder/control, 18 line lost or stale, 19 U-turn line not acquired) phase=%d\n",
                       (INT)route_ch(e.code), (INT)e.v[0], (INT)e.v[1]);
             break;
         case ROUTE_EV_TIME_LIMIT:
@@ -418,6 +446,9 @@ static bool line_console_key(int key)
         return true;
     }
 #endif
+#if MOTION_LINE_ROUTE
+    if(key=='u') {pivot_console_page();return true;}
+#endif
     if(key=='t') {line_history_page();return true;}
     if(key=='r' || key=='g') {
         if(key=='g' && !line_armed) {
@@ -454,7 +485,11 @@ static struct {
     uint8_t ack,op,stage,stop_result;
 } remote;
 static bool mapping_pending;
-static uint8_t pending_mapping[26];
+/* The console owns writes. Each barcode lookup reads exactly one atomic slot. */
+static bool mapping_run_state(unsigned state)
+{
+    return state == MOTION_TRACING || state == MOTION_REACQUIRE;
+}
 static void remote_stop(uint8_t result,uint32_t now,uint32_t epoch)
 {
     (void)line_console_key('x');
@@ -492,13 +527,19 @@ static void remote_poll(void)
            (m.state==MOTION_IDLE || m.state==MOTION_ERROR) &&
            !motion_left_duty(&m) && !motion_right_duty(&m)) {
             remote.stage=0;remote.owner=0;remote.ack=remote.stop_result;
-            if(mapping_pending){mapping_pending=false;route_settings_reboot(pending_mapping);}
+            if(mapping_pending){mapping_pending=false;route_settings_reboot(route_mapping);}
         } else if((uint32_t)(now-remote.pending_ms)>=1000u) {
             /* Retain the stop guard and retry; do not claim a stopped motor. */
             remote.ack=CONTROL_TIMED_OUT;(void)motion_stop();
         }
     }
-    bool can_start=!button_retry_gesture && !button_restart_pending && connected && boot && fresh && m.ready && m.raw_valid && !m.faults &&
+    /* Persist after the motion owner reports a terminal state, never during
+     * a turn or temporary zero-duty pause. STOP acknowledgement fences reboot. */
+    if(mapping_pending && remote.stage==0 && fresh &&
+       (m.state==MOTION_IDLE || m.state==MOTION_ERROR) &&
+       !motion_left_duty(&m) && !motion_right_duty(&m))
+        remote_stop(CONTROL_STOPPED,now,m.epoch);
+    bool can_start=!mapping_pending && !button_retry_gesture && !button_restart_pending && connected && boot && fresh && m.ready && m.raw_valid && !m.faults &&
         m.state==MOTION_IDLE && button.armed && button.ready && !button.pressed_once &&
         !button_pressed() && !button_boot_pending && !button_reset_pending && !boot_pending && remote.stage==0;
     control_command_t c;
@@ -514,14 +555,21 @@ static void remote_poll(void)
             }
         } else if(control_newer(c.id,remote.last_id)) {
             remote.last_id=c.id;remote.ack_id=c.id;remote.op=c.op;
-            if(c.op==CONTROL_STOP){mapping_pending=false;remote_stop(CONTROL_STOPPED,now,fresh ? m.epoch : c.epoch);}
+            if(c.op==CONTROL_STOP){remote_stop(CONTROL_STOPPED,now,fresh ? m.epoch : c.epoch);}
             else if(c.op==CONTROL_MAPPING) {
-                if(fresh && m.ready && !m.faults && m.state==MOTION_IDLE && remote.stage==0 &&
-                   !motion_left_duty(&m) && !motion_right_duty(&m) && !button_pressed() &&
-                   !button.started && !button_reset_pending && !button_boot_pending && !boot_pending &&
+                bool moving=mapping_run_state(m.state) && (remote.stage==0 || remote.stage==2);
+                bool idle=m.state==MOTION_IDLE && remote.stage==0 && !button.started &&
+                          !motion_left_duty(&m) && !motion_right_duty(&m);
+                if(fresh && !m.faults && (moving || (idle && m.ready)) &&
+                   !button_pressed() && !button_reset_pending && !button_boot_pending && !boot_pending &&
                    c.revision==route_mapping_revision && route_settings_valid(c.mapping)) {
-                    for(unsigned i=0;i<26;++i)pending_mapping[i]=c.mapping[i];
-                    mapping_pending=true;remote_stop(CONTROL_STOPPED,now,m.epoch);
+                    for(unsigned i=0;i<26;++i)
+                        __atomic_store_n(&route_mapping[i],c.mapping[i],__ATOMIC_RELAXED);
+                    ++route_mapping_revision;
+                    route_mapping_persisted=false;
+                    mapping_pending=true;
+                    remote.ack=CONTROL_QUEUED;
+                    if(idle)remote_stop(CONTROL_STOPPED,now,m.epoch);
                 } else remote.ack=CONTROL_REJECTED;
             }
             else if(can_start) {
@@ -536,7 +584,7 @@ static void remote_poll(void)
             } else remote.ack=CONTROL_REJECTED;
         }
     }
-    uint8_t b[CONTROL_STATUS_SIZE]={ 'R','S',2,CONTROL_SUPPORTED };
+    uint8_t b[CONTROL_STATUS_SIZE]={ 'R','S',2,CONTROL_SUPPORTED | CONTROL_LIVE_MAPPING };
     if(can_start && remote.stage==0)b[3]|=CONTROL_ARMED;
     if(remote.stage==1 || remote.stage==2)b[3]|=CONTROL_ACTIVE;
     if(fresh)b[3]|=CONTROL_MOTION_FRESH;
@@ -611,7 +659,7 @@ bool motion_line_console_key(int key)
 void motion_line_console_help(void)
 {
 #if MOTION_LINE_REMOTE
-    tm_printf((UB*)"[line] REMOTE v1: armed Start/Stop, 1500ms connection lease; GP20 stops. No remote reset.\n");
+    tm_printf((UB*)"[line] REMOTE v1: armed Start/Stop, %ums connection lease; GP20 stops. No remote reset.\n", (UINT)CONTROL_LEASE_MS);
 #endif
 #if MOTION_LINE_DEMO
 #if MOTION_LINE_ADAPTIVE
@@ -643,6 +691,9 @@ void motion_line_console_help(void)
 #if MOTION_LINE_AUTOSTART
     tm_printf((UB*)"[line] AUTO CIRCUIT: a line-follow run after 5s boot delay, max 20%% duty. Saved IR references. GP20 or x/SPACE stops/cancels. No repeat until power-cycle.\n");
 #elif MOTION_LINE_CIRCUIT
+#if MOTION_LINE_ROUTE
+    tm_printf((UB*)"[line] u pages through the latest U-turn: calibrated IR and relative wheel counts L,R\n");
+#endif
     tm_printf((UB*)"[line] Pico W green LED: slow blink=armed, double pulse=queued, solid=run accepted, fast blink=rejected/fault, off=finished/disarmed.\n");
 #if MOTION_LINE_UNLIMITED
     tm_printf((UB*)"[line] RUN TIME: no automatic time cutoff; Stop, sensor/encoder faults, distance guards and remote heartbeat still apply.\n");

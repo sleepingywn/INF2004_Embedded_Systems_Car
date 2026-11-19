@@ -17,3 +17,13 @@ test('mapping save rejects running, stale revision, invalid actions, unsupported
  const bad=status();bad[40]=5;assert.throws(()=>decodeStatus(bad));
  const old=status().subarray(0,36);old[2]=1;h.accept(old);assert.throws(()=>h.issue({action:'mapping',viewer,mappings:mapping,revision:7}));
 });
+
+test('live edit preserves the driving viewer heartbeat and supports replacing pending instructions',()=>{
+ const h=new ControlHub(()=>1000);
+ h.accept(status());
+ const start=h.issue({action:'start',viewer});
+ const b=status(); b[3]=1|4|8|16|32;b[29]=4;b.writeUInt32LE(2,12);
+ b.writeUInt32LE(start.payload.readUInt32LE(12),32);b[67]=1;h.accept(b);
+ assert.equal(h.issue({action:'mapping',viewer:'second-viewer-123456',mappings:mapping,revision:7}).payload[3],4);
+ assert.equal(h.issue({action:'keep',viewer}).payload.readUInt32LE(12),start.payload.readUInt32LE(12));
+});

@@ -42,7 +42,7 @@
  * Provisional count/time bounds, not a diagnosis of mechanical vs electrical
  * movement. Legacy profiles retain their previous one-count policy. */
 #define LINE_PAUSE_REVERSE_BUDGET (MOTION_LINE_ADAPTIVE ? 2u:1u)
-#define LINE_PAUSE_SETTLE_MS 120u
+#define LINE_PAUSE_SETTLE_MS 140u
 #define LINE_PAUSE_REARM_MS 60u
 #define LINE_PAUSE_REARM_COUNTS 3u
 _Static_assert(LINE_FOLLOW_MAX_MS <= 30000u, "Fits motion request TTL");

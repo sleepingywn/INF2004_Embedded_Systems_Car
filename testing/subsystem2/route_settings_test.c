@@ -25,6 +25,8 @@ int main(void) {
  reset_owner(1,2000);route_mapping[0]=4;
  bc_msg_t scan=make_code("WNNNNWNNW",false,100,300);
  route_on_barcode(&scan,400,true);assert(barcode_status.code=='A');assert(route.armed=='D');
+ route_mapping[0]=2;assert(route.armed=='D'); /* earlier decision survives the edit */
+ route_on_barcode(&scan,450,true);assert(route.armed=='B'); /* next A uses left */
  route.phase=ROUTE_IDLE;route.armed=0;route_mapping[0]=0;
  route_on_barcode(&scan,500,true);assert(!route.armed&&barcode_status.code=='A');
  puts("PASS mapping journal: blank/corrupt flash, every interrupted program prefix, CRC bit flips, revision wrap, pending CRC, remapped/ignored actual barcode");

@@ -46,12 +46,17 @@ static void bounds(int sign,unsigned dt,uint32_t start)
     f=initial;assert(step(&f,20,sign,-2,0,sign*90)==LINE_STEP_OK);
     assert(step(&f,20,sign,2,0,sign*90)==LINE_STEP_OK);
     assert(step(&f,20,sign,-1,0,sign*90)==LINE_STEP_ENCODER);
-    /* Window is strict: 119 ms accepted, 120 ms rejected. */
-    f=initial;assert(step(&f,59,sign,0,0,sign*90)==LINE_STEP_OK);
+    /* Reproduce the track stop: one backward tick at 120 ms, on either side. */
+    f=initial;
+    for(unsigned t=20;t<120;t+=20)assert(step(&f,20,sign,0,0,sign*90)==LINE_STEP_OK);
+    assert(step(&f,20,sign,-1,0,sign*90)==LINE_STEP_OK);
+    /* The window is strict: 139 ms accepted, 140 ms rejected. */
+    f=initial;assert(step(&f,20,sign,0,0,sign*90)==LINE_STEP_OK);
+    assert(step(&f,59,sign,0,0,sign*90)==LINE_STEP_OK);
     assert(step(&f,60,sign,-1,0,sign*90)==LINE_STEP_OK);
     /* No delayed drift exemption, even with all count allowance unused. */
     f=initial;
-    for(unsigned t=20;t<120;t+=20)assert(step(&f,20,sign,0,0,sign*90)==LINE_STEP_OK);
+    for(unsigned t=20;t<140;t+=20)assert(step(&f,20,sign,0,0,sign*90)==LINE_STEP_OK);
     assert(step(&f,20,sign,-1,0,sign*90)==LINE_STEP_ENCODER);
     assert(f.pause_reverse_used[i]==0);
     /* An unchanged wheel can remain paused after the settling deadline. */

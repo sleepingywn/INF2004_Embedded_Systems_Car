@@ -23,9 +23,9 @@
  </div>
  <section class="control-bar" aria-label="Vehicle controls"><div><div class="buttons"><button id="remote-start" class="start" disabled>▶ Start</button><button id="remote-stop" class="stop" disabled>■ Stop</button></div><p id="control-status" role="status" aria-live="polite">Remote control unavailable - use GP20.</p></div><div class="health"><span>Faults <strong id="faults">—</strong></span><span>Ready <strong id="ready">—</strong></span></div></section>
  <details class="card mapping-settings" id="mapping-settings"><summary>Barcode instructions <span>A–Z settings</span></summary>
-  <p>Choose what each letter tells the car to do at the next junction. Saving restarts the stopped car and keeps these instructions after power-off.</p>
+  <p>Edits apply from the next barcode scan. After stopping, the robot restarts to save them. Keep power on until the settings show as stored.</p>
   <div class="mapping-grid" id="mapping-grid"></div>
-  <div class="mapping-actions"><button id="mapping-defaults" disabled>Use default instructions</button><button id="mapping-reload" disabled>Discard edits</button><button id="mapping-save" disabled>Save on robot</button></div>
+  <div class="mapping-actions"><button id="mapping-defaults" disabled>Use default instructions</button><button id="mapping-reload" disabled>Discard edits</button><button id="mapping-save" disabled>Apply instructions</button></div>
   <p id="mapping-status" role="status" aria-live="polite">Waiting for mapping-capable firmware.</p>
  </details>
  <footer><span id="freshness-note">Waiting for the first live packet.</span><span>Wheel-based heading · provisional calibration</span></footer>

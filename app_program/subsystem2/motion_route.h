@@ -32,6 +32,16 @@
 #define ROUTE_STRAIGHT_COUNTS 1358u  /* 100 mm: 100000 um * 2774 / 204200 */
 #define ROUTE_U_TURN_COUNTS 2667u    /* 180 deg pivot on 125 mm track */
 
+/* Nominal angles use the existing wheel calibration. Sweep forward only. */
+#define ROUTE_PIVOT_SLOW_COUNTS (ROUTE_U_TURN_COUNTS * 130u / 180u)
+#define ROUTE_PIVOT_FIND_COUNTS (ROUTE_U_TURN_COUNTS * 135u / 180u)
+/* Preserve the original start of the three-second final sweep. */
+#define ROUTE_PIVOT_SWEEP_START_COUNTS (ROUTE_U_TURN_COUNTS * 160u / 180u)
+#define ROUTE_PIVOT_MAX_COUNTS  (ROUTE_U_TURN_COUNTS * 198u / 180u)
+#define ROUTE_PIVOT_SLOW_CPS 275
+#define ROUTE_PIVOT_SWEEP_MS 3000u
+#define ROUTE_PIVOT_CONFIRM_MS 40u
+
 typedef enum {
     ROUTE_IDLE = 0,       /* V5 is driving */
     ROUTE_ARC_RIGHT,

@@ -3,7 +3,7 @@ export function installMappingSettings() {
  const el=id=>document.getElementById(id),viewer=crypto.randomUUID();
  const defaults=Array.from({length:26},(_,i)=>i<4?i+1:i===25?2:0);
  const actions=['Ignore','Turn right','Turn left','Straight · 100 mm','U-turn'];
- let status=null,draft=null,baseRevision=null,dirty=false,pending=null,notice='';
+ let status=null,draft=null,baseBoot=null,baseRevision=null,dirty=false,pending=null,notice='';
  const equal=(a,b)=>a?.length===26&&b?.length===26&&a.every((v,i)=>v===b[i]);
  const selects=defaults.map((_,i)=>{
   const label=document.createElement('label'),select=document.createElement('select');
@@ -19,21 +19,23 @@ export function installMappingSettings() {
   selects.forEach((select,i)=>{select.disabled=!available||!!pending;if(draft)select.value=draft[i];});
   el('mapping-defaults').disabled=!available||!!pending;
   el('mapping-reload').disabled=!available||!!pending;
-  el('mapping-save').disabled=!(available&&draft&&!pending&&!status.mappingPending&&
-    !(status.flags&4)&&(status.flags&8)&&status.state===0&&!status.faults&&baseRevision===status.mappingRevision&&
-    (!equal(draft,status.mappings)||!status.mappingPersisted));
-  el('mapping-status').textContent=pending?'Saving — waiting for the robot to restart and confirm its stored instructions…':
+  el('mapping-save').disabled=!(available&&draft&&!pending&&(status.flags&8)&&
+    ((status.flags&32 && [4,5].includes(status.state)) || (!status.mappingPending && !(status.flags&4) && status.state===0))&&!status.faults&&baseBoot===status.bootId&&baseRevision===status.mappingRevision&&
+    (!equal(draft,status.mappings)||(!status.mappingPersisted&&!status.mappingPending)));
+  el('mapping-status').textContent=pending?'Waiting for the robot to confirm the instructions…':
     notice || (!available?'Settings unavailable — connect a robot with mapping firmware.':
-    dirty?'Unsaved changes':status.mappingPersisted?`Stored on robot · revision ${status.mappingRevision}`:'Factory instructions · not yet saved on robot');
+    dirty?'Unsaved changes':status.mappingPending?'Active on robot · saves after stopping. Keep power on until stored.':status.mappingPersisted?`Stored on robot · revision ${status.mappingRevision}`:'Factory instructions · not yet saved on robot');
  }
- function reload(){draft=[...status.mappings];baseRevision=status.mappingRevision;dirty=false;notice='';draw();}
+ function reload(){draft=[...status.mappings];baseBoot=status.bootId;baseRevision=status.mappingRevision;dirty=false;notice='';draw();}
  window.addEventListener('message',event=>{
   if(event.origin!==location.origin||event.source!==window.parent)return;
   const p=event.data?.payload;
   if(event.data?.type==='robocar-control'&&p?.kind==='controlStatus'){
    status=p;
    if(pending&&p.mappings){
-    if(p.mappingPersisted&&equal(p.mappings,pending.map)&&
+    if(p.mappingPending && p.bootId===pending.boot && p.mappingRevision!==pending.revision && equal(p.mappings,pending.map)){
+     pending=null;reload();
+    } else if(p.mappingPersisted&&equal(p.mappings,pending.map)&&
        (p.bootId!==pending.boot||p.mappingRevision!==pending.revision)){
      pending=null;reload();notice='Saved on robot — these instructions survive power-off.';
     } else if((pending.id&&p.ackId===pending.id&&p.result===3)||
@@ -41,8 +43,8 @@ export function installMappingSettings() {
      pending=null;notice='Save was not confirmed. The robot is using the reported settings; discard edits to reload them.';
     }
    }
-   if(p.mappings&&!pending&&!dirty&&(!draft||baseRevision!==p.mappingRevision||!equal(draft,p.mappings)))reload();
-   else if(dirty&&!pending&&p.mappings&&baseRevision!==p.mappingRevision)
+   if(p.mappings&&!pending&&!dirty&&(!draft||(baseBoot!==p.bootId||baseRevision!==p.mappingRevision)||!equal(draft,p.mappings)))reload();
+   else if(dirty&&!pending&&p.mappings&&(baseBoot!==p.bootId||baseRevision!==p.mappingRevision))
     notice='Settings changed on the robot. Discard edits to load the latest instructions before saving.';
    draw();
   } else if(event.data?.type==='robocar-control-feedback'&&p?.viewer===viewer&&p.action==='mapping'){
@@ -51,7 +53,7 @@ export function installMappingSettings() {
    draw();
   }
  });
- el('mapping-defaults').addEventListener('click',()=>{draft=[...defaults];dirty=true;notice='Default instructions selected — press Save on robot to apply.';draw();});
+ el('mapping-defaults').addEventListener('click',()=>{draft=[...defaults];dirty=true;notice='Default instructions selected — press Apply instructions.';draw();});
  el('mapping-reload').addEventListener('click',reload);
  el('mapping-save').addEventListener('click',()=>{
   pending={map:[...draft],boot:status.bootId,revision:baseRevision,at:Date.now()};notice='';

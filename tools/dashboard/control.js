@@ -6,7 +6,7 @@ const results=['Ready','Command queued','Running','Start rejected','Stopped','Ru
 
 function decodeStatus(b){
 
- if(!Buffer.isBuffer(b)||!((b.length===36&&b[2]===1)||(b.length===68&&b[2]===2))||b.toString('ascii',0,2)!=='RS'||(b[3]&~31)||b[28]>7||b[31]>4)throw Error('Invalid control status');
+ if(!Buffer.isBuffer(b)||!((b.length===36&&b[2]===1)||(b.length===68&&b[2]===2))||b.toString('ascii',0,2)!=='RS'||(b[3]&~63)||b[28]>7||b[31]>4)throw Error('Invalid control status');
 
  const u=n=>b.readUInt32LE(n);
  const mappings=b[2]===2?Array.from(b.subarray(40,66)):null;
@@ -70,17 +70,18 @@ class ControlHub {
 
   if(input.action==='start' && ((s.flags&10)!==10 || (s.flags&4) || this.owner || s.state!==0 || s.faults))throw Error('Robot is not armed and idle');
 
-  if(input.action==='mapping' && (!s.mappings || !validMappings(input.mappings) || input.revision!==s.mappingRevision || s.mappingPending || (s.flags&12)!==8 || this.owner || s.state!==0 || s.faults))throw Error('Save requires a stopped car and the latest mapping settings');
+  if(input.action==='mapping' && (!s.mappings || !validMappings(input.mappings) || input.revision!==s.mappingRevision || !(s.flags&8) || s.faults ||
+     !((s.flags&32 && [4,5].includes(s.state)) || (!s.mappingPending && !(s.flags&4) && !this.owner && s.state===0))))throw Error('Cannot apply instructions in the current state or revision');
 
   const id=(this.nextId+1)>>>0;if(!id)throw Error('Command counter exhausted; reconnect the robot');this.nextId=id;
 
   const op=input.action==='start'?1:input.action==='mapping'?4:2;
 
-  if(op===1)this.owner={viewer:input.viewer,id,created:now};else this.owner=null;
+  if(op===1)this.owner={viewer:input.viewer,id,created:now};else if(op===2)this.owner=null;
 
   return {payload:encodeCommand(op,s,id,now,input.mappings),topic:BASE+'/command',qos:'1',retain:false,
 
-   feedback:{kind:'controlFeedback',viewer:input.viewer,action:input.action,id,message:input.action==='mapping'?'Save sent — waiting for robot restart':input.action==='start'?'Start sent — waiting for robot':'Stop sent — waiting for robot'}};
+   feedback:{kind:'controlFeedback',viewer:input.viewer,action:input.action,id,message:input.action==='mapping'?'Instructions sent — waiting for robot confirmation':input.action==='start'?'Start sent — waiting for robot':'Stop sent — waiting for robot'}};
 
  }
 

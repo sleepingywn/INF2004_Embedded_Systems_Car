@@ -9,7 +9,7 @@ This implementation adds a separate command/status channel to the existing telem
 - Stop requests the existing persistent motor STOP path, including a GP20-started run. The dashboard displays Stopped only after the motor owner confirms a changed epoch, idle/error state and zero commanded duty. This confirms outputs, not mechanical braking.
 - GP20 remains a local stop during a remote run. Motor requests are marked `MOTION_NETWORK`; only line following is permitted from this source in the opt-in build. Remote velocity, distance, turn and reset requests remain disabled.
 - The initiating browser sends a keepalive every 400 ms. Other open viewers cannot renew its run. Closing, refreshing or hiding that browser stops renewal (hiding also requests Stop). No automatic restart occurs after reconnect.
-- The motor owner checks a 1500 ms lease and a 30 s total remote-run bound every control iteration, independently of the console and WiFi tasks. Barcode segment handovers cannot reset this total limit. Existing line/IR/motor protection remains active.
+- The motor owner checks a 5000 ms lease and a 30 s total remote-run bound every control iteration, independently of the console and WiFi tasks. Barcode segment handovers cannot reset this total limit. Existing line/IR/motor protection remains active.
 - All users allowed to access this private dashboard can request Start/Stop. The viewer identifier separates keepalive ownership; it is not authentication. Authentication is the existing private dashboard access and authenticated MQTT broker ACL.
 
 ## Build and installation
@@ -71,8 +71,12 @@ Start/Stop/Keep remain RC version 1, 24 bytes. Mapping save is RC version 2,
 then 26 action bytes at 28 (0 ignore, 1 right, 2 left, 3 straight 100 mm, 4 U-turn).
 Exact length, action range, boot/session, epoch, freshness and newer command ID
 are validated. Expected revision prevents overwriting changes from another view.
-STOP retains mailbox priority. Running, faulted, pressed-button and reset-pending
-states reject mapping saves. No remote rearm or drive command is added.
+STOP retains mailbox priority. Status flag 32 advertises live mapping edits.
+During line tracing and reacquisition the console publishes the new RAM revision.
+A decoded letter selects its action once, so an already armed junction keeps its
+action. Further edits replace the pending table. At the first idle or fault stop,
+the console confirms a STOP epoch with zero duty before rebooting to save. Keep
+power on until persisted readback. The save reboot clears RAM run history.
 
 Status RS version 2 extends the 36-byte v1 prefix to 68 bytes: revision u32 at 36,
 26 actions at 40, persisted flag at 66, save-pending flag at 67 (both 0/1).
@@ -127,7 +131,7 @@ GP20 retry. This disables the active line-follow request's duration cutoff, the
 V5 elapsed-run cutoff and the remote total-run cutoff. The dashboard keeps
 renewing an owned run beyond 30 seconds while status is fresh. Admission still
 rejects stale commands; other finite motion commands retain their TTLs.
-The 1.5 s remote heartbeat lease, STOP, sensor/encoder/stall checks, individual
+The 5 s remote heartbeat lease, STOP, sensor/encoder/stall checks, individual
 manoeuvre timeouts and cumulative line distance guards remain active.
 
 The default build option remains `LINE_UNLIMITED=0` for legacy bounded profiles;

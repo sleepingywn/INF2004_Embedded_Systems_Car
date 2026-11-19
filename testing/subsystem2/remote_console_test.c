@@ -35,7 +35,7 @@ unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq)
 ER ir_runtime_get_status(ir_runtime_status_t *ir){*ir=(ir_runtime_status_t){0};ir->state=IR_RUNTIME_READY;ir->healthy=healthy;ir->updated_ms=ir->raw.sampled_ms=clock_ms;return E_OK;}
 static void test_poll(void){observer_status=shared.status;remote_poll();}
 static void setup(void){
- mapping_pending=false;settings_reboots=0;
+ mapping_pending=false;settings_reboots=0;route_mapping_revision=0;
  button_retry_allowed=button_retry_gesture=button_restart_pending=button_retry_waiting=false;
  line_indicator_clear(&indicator);
  reset_owner(1,2000);memset(&remote,0,sizeof remote);button=(line_button_t){.armed=true,.ready=true};
@@ -72,7 +72,10 @@ int main(void){
  queued.mapping[25]=4;available=true;test_poll();assert(mapping_pending&&remote.stage==3&&!settings_reboots&&!button.armed);
  test_poll();assert(!settings_reboots); /* no flash until STOP changes epoch */
  ++shared.status.epoch;shared.status.updated_ms=++clock_ms;test_poll();assert(settings_reboots==1&&!mapping_pending);
- setup();shared.status.state=MOTION_TRACING;queued.epoch=shared.status.epoch;queued.issued=clock_ms;available=true;test_poll();assert(remote.ack==CONTROL_REJECTED&&!mapping_pending);
+ setup();shared.status.state=MOTION_TRACING;queued.epoch=shared.status.epoch;queued.issued=clock_ms;available=true;test_poll();assert(mapping_pending && remote.stage==0 && !settings_reboots);
+ assert(route_mapping_code('Z')=='D' && route_mapping_revision==1);
+ shared.status.state=MOTION_IDLE;test_poll();assert(remote.stage==3&&!settings_reboots);
+ ++shared.status.epoch;shared.status.updated_ms=++clock_ms;test_poll();assert(settings_reboots==1);
  setup();queued.revision=1;queued.epoch=shared.status.epoch;queued.issued=clock_ms;available=true;test_poll();assert(remote.ack==CONTROL_REJECTED&&!mapping_pending);
  setup();queued.revision=0;queued.mapping[3]=5;queued.epoch=shared.status.epoch;queued.issued=clock_ms;available=true;test_poll();assert(remote.ack==CONTROL_REJECTED&&!mapping_pending);
  /* Completed local run: rearm gesture only; RESET waits for a fresh click. */
@@ -110,6 +113,6 @@ int main(void){
  setup();button_restart_pending=true;shared.status.faults=MOTION_FAULT_STALL;observer_status=shared.status;
  assert(button_queue_reset()<E_OK&&!shared.pending);
  puts("PASS GP20 retry: fresh gesture, exact reset acknowledgement, held-button protection, fault and transaction guards");
- puts("PASS mapping arbiter: stopped-only, STOP acknowledgement before reboot, stale revision and invalid action rejection");
+ puts("PASS mapping arbiter: live RAM update and deferred save, STOP acknowledgement before reboot, stale revision and invalid action rejection");
  puts("PASS console: queued vs accepted, duplicate/stale/held-button/unhealthy rejection, owner keepalive, STOP confirmation, GP20 override, disconnect/reconnect cancellation");
 }

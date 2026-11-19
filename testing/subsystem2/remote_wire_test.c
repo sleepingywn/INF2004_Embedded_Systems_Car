@@ -15,7 +15,7 @@ int main(void){
  assert(!control_fresh(&c,124,7,9,16)&&!control_fresh(&c,123,8,9,16)&&!control_fresh(&c,123,7,10,16));
  assert(!control_fresh(&c,123,7,9,1000)&&!control_fresh(&c,123,7,9,0xffffffefu));
  assert(!control_decode(b,23,&c)&&!control_decode(b,25,&c));b[3]=4;assert(!control_decode(b,24,&c));b[3]=1;
- assert(!control_expired(0x10,0xfffffff0u,0xfffffff0u));assert(control_expired(1500,0,0));
+ assert(!control_expired(0x10,0xfffffff0u,0xfffffff0u));assert(!control_expired(4999,0,0));assert(control_expired(5000,0,0));
  assert(s1_transport_init()==0);s1_control_boot(123);s1_control_link(7,1);
  assert(s1_control_offer(b,24));assert(!s1_control_offer(b,24));
  b[3]=CONTROL_STOP;assert(s1_control_offer(b,24));assert(s1_control_take(&c)&&c.op==CONTROL_STOP);assert(!s1_control_take(&c));

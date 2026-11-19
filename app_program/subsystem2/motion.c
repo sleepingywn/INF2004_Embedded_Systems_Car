@@ -985,7 +985,8 @@ static struct {
     char armed;            /* letter for the next junction, 0 = none */
     char doing;            /* letter of the running manoeuvre */
     bool junction_candidate, exit_candidate;
-    uint32_t junction_since_ms, exit_since_ms;
+    uint32_t junction_since_ms, exit_since_ms, pivot_sweep_ms;
+    bool pivot_slow, pivot_sweep_started;
     uint32_t phase_ms;     /* motion_now_ms() when the phase began */
     uint32_t origin_left, origin_right, origin_invalid; /* forward counts */
     uint32_t step_ms;      /* encoder time of the last speed step */
@@ -1042,6 +1043,55 @@ static uint32_t route_fwd_right(void)
 {
     return MOTION_RIGHT_ENCODER_SIGN < 0 ? 0u - state.right_count : state.right_count;
 }
+/* One row per control step, including the final settled-line check. The
+ * motion task only appends. Atomic fields allow a USB read across rollover
+ * to the next turn; the reader discards that row if the turn ID changed. */
+#define PIVOT_TRACE_ROWS ((2u * ROUTE_TURN_TIMEOUT_MS + ROUTE_SETTLE_MS) / MOTION_PERIOD_MS + 5u)
+static motion_pivot_sample_t pivot_rows[PIVOT_TRACE_ROWS];
+static uint32_t pivot_turn, pivot_count, pivot_started;
+static uint8_t pivot_failure;
+
+static void pivot_trace_begin(uint32_t now)
+{
+    __atomic_store_n(&pivot_count, 0u, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&pivot_turn, __atomic_load_n(&pivot_turn, __ATOMIC_RELAXED) + 1u, __ATOMIC_SEQ_CST);
+    pivot_started = now;
+    pivot_failure = 0;
+}
+static void pivot_trace_append(uint32_t now, uint16_t levels, uint8_t line_state,
+                               bool edge, bool settling)
+{
+    unsigned i = __atomic_load_n(&pivot_count, __ATOMIC_RELAXED);
+    if (i >= PIVOT_TRACE_ROWS) return;
+    motion_pivot_sample_t *row = &pivot_rows[i];
+    __atomic_store_n(&row->elapsed_ms, now - pivot_started, __ATOMIC_RELAXED);
+    __atomic_store_n(&row->left_counts, motion_count_delta(route_fwd_left(), route.origin_left), __ATOMIC_RELAXED);
+    __atomic_store_n(&row->right_counts, motion_count_delta(route.origin_right, route_fwd_right()), __ATOMIC_RELAXED);
+    __atomic_store_n(&row->levels, levels, __ATOMIC_RELAXED);
+    __atomic_store_n(&row->state, line_state, __ATOMIC_RELAXED);
+    __atomic_store_n(&row->edge, edge, __ATOMIC_RELAXED);
+    __atomic_store_n(&row->settled_phase, settling, __ATOMIC_RELAXED);
+    __atomic_store_n(&row->reason, pivot_failure, __ATOMIC_RELAXED);
+    __atomic_store_n(&pivot_count, i + 1u, __ATOMIC_RELEASE);
+}
+bool motion_pivot_sample(unsigned index, motion_pivot_sample_t *sample,
+                         uint32_t *turn, unsigned *count)
+{
+    *turn = __atomic_load_n(&pivot_turn, __ATOMIC_SEQ_CST);
+    *count = __atomic_load_n(&pivot_count, __ATOMIC_ACQUIRE);
+    if (index >= *count) return false;
+    const motion_pivot_sample_t *row = &pivot_rows[index];
+    sample->elapsed_ms = __atomic_load_n(&row->elapsed_ms, __ATOMIC_RELAXED);
+    sample->left_counts = __atomic_load_n(&row->left_counts, __ATOMIC_RELAXED);
+    sample->right_counts = __atomic_load_n(&row->right_counts, __ATOMIC_RELAXED);
+    sample->levels = __atomic_load_n(&row->levels, __ATOMIC_RELAXED);
+    sample->state = __atomic_load_n(&row->state, __ATOMIC_RELAXED);
+    sample->edge = __atomic_load_n(&row->edge, __ATOMIC_RELAXED);
+    sample->settled_phase = __atomic_load_n(&row->settled_phase, __ATOMIC_RELAXED);
+    sample->reason = __atomic_load_n(&row->reason, __ATOMIC_RELAXED);
+    __atomic_thread_fence(__ATOMIC_SEQ_CST);
+    return *turn == __atomic_load_n(&pivot_turn, __ATOMIC_ACQUIRE);
+}
 static void route_reset(void)
 {
     route.phase = ROUTE_IDLE;
@@ -1063,6 +1113,7 @@ static void route_motors_off(void)
 }
 static void route_fail(int reason, unsigned fault)
 {
+    pivot_failure = (uint8_t)reason;
     route_event(ROUTE_EV_FAILED, route.doing, reason, (int)route.phase, 0, 0);
     route.phase = ROUTE_IDLE;
     fault_stop(fault);
@@ -1082,10 +1133,12 @@ static void route_begin_motion(route_phase_t phase, uint32_t now)
     route.progress_ms[0] = route.progress_ms[1] = now;
     route.last_total[0] = route.last_total[1] = 0;
     route.exit_candidate = false;
+    route.pivot_slow = false;
+    route.pivot_sweep_started = false;
     route.phase = phase;
     route.phase_ms = now;
     route.goal = phase == ROUTE_STRAIGHT ? ROUTE_STRAIGHT_COUNTS :
-                 phase == ROUTE_PIVOT ? ROUTE_U_TURN_COUNTS : 0u;
+                 phase == ROUTE_PIVOT ? ROUTE_PIVOT_MAX_COUNTS : 0u;
     if (phase == ROUTE_ARC_RIGHT || phase == ROUTE_ARC_LEFT) {
         /* Bias the inner wheel before the first speed-control update. */
         wheel_speed_t *inner = phase == ROUTE_ARC_RIGHT ? &route.speed.right : &route.speed.left;
@@ -1121,7 +1174,7 @@ static void route_v5_begin(uint32_t now, bool carry)
     active.issued_ms = now;
 }
 /* Speed-controlled arc / straight / pivot step. */
-static void route_drive(uint32_t now)
+static void route_drive(uint32_t now, bool line_edge, uint32_t line_ms)
 {
     const bool arc = route.phase == ROUTE_ARC_RIGHT || route.phase == ROUTE_ARC_LEFT;
     const int right_direction = route.phase == ROUTE_PIVOT ? -1 : 1;
@@ -1148,7 +1201,34 @@ static void route_drive(uint32_t now)
             return;
         }
     }
-    if (reached[0] && reached[1]) {
+    bool leg_done = reached[0] && reached[1];
+    if (route.phase == ROUTE_PIVOT) {
+        if (!route.pivot_slow && (total[0] >= (int32_t)ROUTE_PIVOT_SLOW_COUNTS ||
+                                  total[1] >= (int32_t)ROUTE_PIVOT_SLOW_COUNTS)) {
+            route.pivot_slow = true;
+        }
+        if (!route.pivot_sweep_started && (total[0] >= (int32_t)ROUTE_PIVOT_SWEEP_START_COUNTS ||
+                                          total[1] >= (int32_t)ROUTE_PIVOT_SWEEP_START_COUNTS)) {
+            route.pivot_sweep_started = true;
+            route.pivot_sweep_ms = now;
+        }
+        if (reached[0] || reached[1] ||
+            (route.pivot_sweep_started && now - route.pivot_sweep_ms >= ROUTE_PIVOT_SWEEP_MS)) {
+            route_fail(19, MOTION_FAULT_IR);
+            return;
+        }
+        leg_done = false;
+        if (!line_edge || total[0] < (int32_t)ROUTE_PIVOT_FIND_COUNTS ||
+                          total[1] < (int32_t)ROUTE_PIVOT_FIND_COUNTS) {
+            route.exit_candidate = false;
+        } else if (!route.exit_candidate) {
+            route.exit_candidate = true;
+            route.exit_since_ms = line_ms;
+        } else {
+            leg_done = line_ms - route.exit_since_ms >= ROUTE_PIVOT_CONFIRM_MS;
+        }
+    }
+    if (leg_done) {
         route_motors_off();
         route_event(ROUTE_EV_LEG_DONE, route.doing, total[0], total[1], 0, 0);
         route.phase = ROUTE_SETTLE_AFTER;
@@ -1163,10 +1243,11 @@ static void route_drive(uint32_t now)
         left_target = right ? ROUTE_ARC_OUTER_CPS : ROUTE_ARC_INNER_CPS;
         right_target = right ? ROUTE_ARC_INNER_CPS : ROUTE_ARC_OUTER_CPS;
     } else {
-        int32_t trim_limit = ROUTE_LEG_CPS / 2 < 60 ? ROUTE_LEG_CPS / 2 : 60;
+        int32_t target = route.pivot_slow ? ROUTE_PIVOT_SLOW_CPS : ROUTE_LEG_CPS;
+        int32_t trim_limit = target / 2 < 60 ? target / 2 : 60;
         int32_t trim = clamp_i64(((int64_t)total[0] - total[1]) * 2, -trim_limit, trim_limit);
-        left_target = reached[0] ? 0 : ROUTE_LEG_CPS - (trim > 0 ? trim : 0);
-        right_target = reached[1] ? 0 : ROUTE_LEG_CPS + (trim < 0 ? trim : 0);
+        left_target = reached[0] ? 0 : target - (trim > 0 ? trim : 0);
+        right_target = reached[1] ? 0 : target + (trim < 0 ? trim : 0);
     }
     if (!speed_control_targets_step(&route.speed, total[0], total[1], dt * 1000u,
                                     left_target, right_target)) {
@@ -1190,6 +1271,10 @@ static bool route_step(uint32_t now, const line_msg_t *line, uint32_t line_ms,
     const bool line_ok = route_line_fresh(now, line, line_ms, line_epoch, have_line);
     const unsigned a = line_levels_valid(levels) ? line_level_left(levels) : 0u;
     const unsigned b = line_levels_valid(levels) ? line_level_right(levels) : 0u;
+    bool pivot_edge = line_ok && line_levels_valid(levels) &&
+        (line->state == LINE_ON || line->state == LINE_EDGE_ONLY) &&
+        ((a >= ROUTE_EXIT_MIN_DARKNESS && (int)a - (int)b >= ROUTE_EXIT_MIN_CONTRAST) ||
+         (b >= ROUTE_EXIT_MIN_DARKNESS && (int)b - (int)a >= ROUTE_EXIT_MIN_CONTRAST));
     switch (route.phase) {
     case ROUTE_IDLE:
         if (!route.armed || !line_ok || line->state != LINE_BOTH_BLACK) {
@@ -1239,26 +1324,42 @@ static bool route_step(uint32_t now, const line_msg_t *line, uint32_t line_ms,
                 return true;
             }
         }
-        route_drive(now);
+        route_drive(now, false, line_ms);
         return true;
     }
-    case ROUTE_STRAIGHT:
     case ROUTE_PIVOT:
-        route_drive(now);
+        if (!line_ok || !line_levels_valid(levels)) route_fail(18, MOTION_FAULT_IR);
+        else route_drive(now, pivot_edge, line_ms);
+        pivot_trace_append(now, levels, line->state, pivot_edge, false);
+        return true;
+    case ROUTE_STRAIGHT:
+        route_drive(now, false, line_ms);
         return true;
     case ROUTE_SETTLE_BEFORE:
         route_motors_off();
-        if ((uint32_t)(now - route.phase_ms) >= ROUTE_SETTLE_MS)
+        if ((uint32_t)(now - route.phase_ms) >= ROUTE_SETTLE_MS) {
             route_begin_motion(route.doing == 'C' ? ROUTE_STRAIGHT : ROUTE_PIVOT, now);
+            if (route.phase == ROUTE_PIVOT) {
+                pivot_trace_begin(now);
+                pivot_trace_append(now, levels, line->state, pivot_edge, false);
+            }
+        }
         return true;
-    case ROUTE_SETTLE_AFTER:
+    case ROUTE_SETTLE_AFTER: {
+        bool pivot = route.doing == 'D';
         route_motors_off();
         if ((uint32_t)(now - route.phase_ms) >= ROUTE_SETTLE_MS) {
             char doing = route.doing;
-            route_v5_begin(now, false);
-            route_event(ROUTE_EV_RESUMED, doing, 0, 0, 0, 0);
+            if (pivot && !pivot_edge) {
+                route_fail(19, MOTION_FAULT_IR);
+            } else {
+                route_v5_begin(now, false);
+                route_event(ROUTE_EV_RESUMED, doing, 0, 0, 0, 0);
+            }
         }
+        if (pivot) pivot_trace_append(now, levels, line->state, pivot_edge, true);
         return true;
+    }
     }
     return false;
 }

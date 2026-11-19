@@ -12,7 +12,7 @@ static void guard_tick(void) {
 }
 int main(void) {
  for(guard_case=1;guard_case<=3;++guard_case){
-  reset_owner(1,guard_case==2?30600:2000);owner_hook=guard_tick;
+  reset_owner(1,guard_case==2?30600:5200);owner_hook=guard_tick;
   if(!setjmp(done))motion_task(0,NULL);
   if(guard_case!=3){assert(!out_left&&!out_right&&!owner_flags.active_valid);assert(state.result==MOTION_EXPIRED);}
   else assert(owner_flags.active_valid); /* a leftover guard for the SAME id cannot stop a LOCAL GP20 request */

@@ -286,7 +286,7 @@ LOCAL void print_line_fast(void)
 LOCAL void print_events_table(void)
 {
 	static const char *const name[S4_EV_NUM] = {
-		"HUMP_ENTRY", "HUMP_DONE", "TILT", "COLLISION", "IMU_FAULT"
+		"HUMP_ENTRY", "HUMP_DONE", "TILT", "LIFTED", "IMU_FAULT"
 	};
 	static const char *const unit[S4_EV_NUM] = {
 		"x0.1 deg", "mm", "x0.1 deg", "mg", "1=set 0=cleared"

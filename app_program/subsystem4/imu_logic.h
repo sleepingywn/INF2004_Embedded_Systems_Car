@@ -2,7 +2,7 @@
  * imu_logic.h  -  Buddy 4 (IMU / Terrain) processing logic
  *
  * This module turns accelerometer readings into terrain information:
- * pitch/roll, hump detection, hump peak height, tilt and collision events.
+ * pitch/roll, hump detection, hump peak height, tilt and lift/overturn events.
  *
  * It does NOT talk to any hardware. It only receives numbers.
  * That is what lets the same file run:
@@ -34,7 +34,8 @@ typedef struct {
 #define IMU_EVT_HUMP_ENTRY  (1u << 0)  /* started climbing a hump          */
 #define IMU_EVT_HUMP_DONE   (1u << 1)  /* finished a hump -> "hump detected" */
 #define IMU_EVT_TILT        (1u << 2)  /* abnormal tilt outside a hump      */
-#define IMU_EVT_COLLISION   (1u << 3)  /* sudden impact                     */
+#define IMU_EVT_LIFTED      (1u << 3)  /* lifted off the ground or overturned:
+                                          the car must stop (end of run)      */
 
 #define IMU_HUMP_ANY        0
 #define IMU_HUMP_ONE_SIDED  1
@@ -63,8 +64,17 @@ typedef struct {
                                      height = lever x sin(peak tilt). CALIBRATE
                                      with a block of known height (see README). */
     float tilt_deg;               /* |pitch| or |roll| above this = tilt         */
-    float collision_g;            /* |a| - 1 g above this = collision            */
-    float collision_refractory_s; /* ignore further spikes for this long         */
+    /* Lift / overturn (replaces collision detection, 12 Nov 2026).
+     * Lifted: the car is accelerated upward. Measured on the car's up axis
+     * (mounting removed) as the median of the last 3 samples, held for
+     * lift_hold_s, so one- or two-sample jolts from bumps cannot trigger it.
+     * Overturned: total tilt beyond overturn_deg (on its side/upside down,
+     * or held at a steep angle).  STARTING VALUES - check on the car. */
+    float lift_up_g;              /* up-axis median above 1 g + this = lifting    */
+    float lift_hold_s;            /* ... for at least this long                   */
+    float overturn_deg;           /* total tilt above this = overturned           */
+    float overturn_hold_s;        /* ... for at least this long                   */
+    float lift_clear_s;           /* level and still this long = back on the ground */
 } imu_config_t;
 
 typedef struct {
@@ -74,6 +84,9 @@ typedef struct {
     float        roll_deg;
     float        tilt_total_deg;            /* angle from vertical, pitch+roll combined */
     float        accel_mag_g;
+    bool         lifted;                    /* latched: lifted or overturned  */
+    float        lift_peak_up_g;            /* largest up-axis median while lifted (g above 1) */
+    bool         lift_by_tilt;              /* true: triggered by overturn tilt */
     hump_state_t hump_state;
     float        current_hump_peak_mm;      /* peak of the latest hump       */
     float        current_hump_peak_pitch_deg;
@@ -101,7 +114,9 @@ typedef struct {
     float        pre_h_mm;          /* height gained just before entry      */
     float        tilt_timer;
     bool         tilt_active;
-    float        coll_cooldown;
+    float        up_hist[3];        /* last 3 up-axis samples (car frame)  */
+    uint32_t     up_n;
+    float        lift_timer, overturn_timer, clear_timer;
 } imu_logic_t;
 
 void     imu_logic_default_config(imu_config_t *cfg);
@@ -126,7 +141,7 @@ const char *imu_hump_state_name(hump_state_t st);
 /* ---------------------------------------------------------------------
  *  Motion classification (B4-FR11).  Fits the 3-bit motion_class field
  *  of the S4 snapshot.  When several apply, the first in this list wins:
- *  IMPACT, TILTED, ON_HUMP, then the wheel-based classes.
+ *  LIFTED, TILTED, ON_HUMP, then the wheel-based classes.
  * --------------------------------------------------------------------- */
 typedef enum {
     IMU_MOTION_UNKNOWN = 0,   /* not calibrated, or no wheel data           */
@@ -136,7 +151,7 @@ typedef enum {
     IMU_MOTION_SPINNING,      /* turning >= 60 deg/s with |speed| < 40 mm/s  */
     IMU_MOTION_ON_HUMP,       /* hump state is CLIMBING or DESCENDING        */
     IMU_MOTION_TILTED,        /* abnormal tilt (the TILT event is active)    */
-    IMU_MOTION_IMPACT         /* within collision_refractory_s of a COLLISION */
+    IMU_MOTION_LIFTED         /* lifted or overturned (the LIFTED latch)     */
 } imu_motion_t;
 
 #define IMU_MOTION_STOP_MM_S    20.0f

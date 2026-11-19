@@ -21,8 +21,14 @@ void imu_logic_default_config(imu_config_t *c)
     c->hump_timeout_s         = 10.0f;   /* a slow hand push kept the wheel on the hump ~5 s */
     c->hump_lever_mm          = 98.0f;   /* calibrated 2026-10-31: wheel on the 11.5 mm hump -> total tilt 6.75 deg (S4-U18) */
     c->tilt_deg               = 25.0f;
-    c->collision_g            = 0.8f;
-    c->collision_refractory_s = 0.5f;
+    /* Lift / overturn: starting values (12 Nov 2026), confirm on the car.
+     * Driving logged |a| 0.88-1.12 g; a hand lift pushes the up axis well
+     * above 1.2 g for ~0.1-0.2 s.  Humps tilt ~7 deg, tilt event is 25. */
+    c->lift_up_g              = 0.20f;
+    c->lift_hold_s            = 0.06f;   /* 3 samples of the 3-sample median */
+    c->overturn_deg           = 45.0f;
+    c->overturn_hold_s        = 0.10f;
+    c->lift_clear_s           = 1.0f;
 }
 
 void imu_logic_init(imu_logic_t *s, const imu_config_t *cfg)
@@ -64,7 +70,7 @@ imu_motion_t imu_classify_motion(const imu_logic_t *s, float speed_mm_s,
 
     if (!s->calibrated)                  return IMU_MOTION_UNKNOWN;
     /* IMU-based classes first: they do not need the wheels */
-    if (s->coll_cooldown > 0.0f)         return IMU_MOTION_IMPACT;
+    if (s->lifted)                       return IMU_MOTION_LIFTED;
     if (s->tilt_active)                  return IMU_MOTION_TILTED;
     if (s->hump_state != HUMP_FLAT)      return IMU_MOTION_ON_HUMP;
     if (!wheels_valid)                   return IMU_MOTION_UNKNOWN;
@@ -80,7 +86,7 @@ const char *imu_motion_name(imu_motion_t m)
 {
     static const char *const name[8] = {
         "UNKNOWN", "STOPPED", "STRAIGHT", "TURNING",
-        "SPINNING", "ON_HUMP", "TILTED", "IMPACT"
+        "SPINNING", "ON_HUMP", "TILTED", "LIFTED"
     };
     return ((unsigned)m < 8u) ? name[m] : "?";
 }
@@ -189,13 +195,18 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
         return 0;
     }
 
-    /* ---------- 2. Collision: sudden spike in total acceleration ---------- */
-    if (s->coll_cooldown > 0.0f) {
-        s->coll_cooldown -= dt_s;
-    } else if (imu_fabsf(mag - 1.0f) > c->collision_g) {
-        ev |= IMU_EVT_COLLISION;
-        s->coll_cooldown = c->collision_refractory_s;
+    /* ---------- 2. Lift: sustained upward acceleration ---------- */
+    /* median of the last 3 up samples: a one-sample jolt never counts */
+    s->up_hist[s->up_n % 3u] = a.up;
+    s->up_n++;
+    float up_avg = 1.0f;
+    if (s->up_n >= 3u) {
+        float x = s->up_hist[0], y = s->up_hist[1], z = s->up_hist[2];
+        up_avg = (x > y) ? ((y > z) ? y : (x > z) ? z : x)
+                         : ((x > z) ? x : (y > z) ? z : y);
     }
+    bool lifting = up_avg - 1.0f > c->lift_up_g;
+    s->lift_timer = lifting ? s->lift_timer + dt_s : 0.0f;
 
     /* ---------- 3. Remove the car's own acceleration (from encoders) ------- */
     imu_accel_t g = a;
@@ -330,7 +341,34 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
         break;
     }
 
-    /* ---------- 7. Tilt, only when not on a hump (B4-FR6) ---------- */
+    /* ---------- 7. Lifted / overturned latch ----------
+     * Trigger: lifting for lift_hold_s, or total tilt beyond overturn_deg for
+     * overturn_hold_s.  One IMU_EVT_LIFTED per lift.  Clear: back level
+     * (tilt < overturn_deg - 10), steady (|a| within 0.1 g of 1) and not
+     * lifting for lift_clear_s; then a new lift can trigger again. */
+    s->overturn_timer = (tilt > c->overturn_deg) ? s->overturn_timer + dt_s : 0.0f;
+    if (!s->lifted) {
+        bool by_lift = s->lift_timer >= c->lift_hold_s;
+        bool by_tilt = s->overturn_timer >= c->overturn_hold_s;
+        if (by_lift || by_tilt) {
+            s->lifted = true;
+            s->lift_by_tilt = !by_lift;
+            s->lift_peak_up_g = up_avg - 1.0f;
+            s->clear_timer = 0.0f;
+            ev |= IMU_EVT_LIFTED;
+        }
+    } else {
+        if (up_avg - 1.0f > s->lift_peak_up_g) s->lift_peak_up_g = up_avg - 1.0f;
+        bool settled = tilt < c->overturn_deg - 10.0f && !lifting &&
+                       imu_fabsf(mag - 1.0f) < 0.10f;
+        s->clear_timer = settled ? s->clear_timer + dt_s : 0.0f;
+        if (s->clear_timer >= c->lift_clear_s) {
+            s->lifted = false;
+            s->lift_timer = s->overturn_timer = s->clear_timer = 0.0f;
+        }
+    }
+
+    /* ---------- 8. Tilt, only when not on a hump (B4-FR6) ---------- */
     if ((s->hump_state == HUMP_FLAT || !moving) &&
         (imu_fabsf(p) > c->tilt_deg || imu_fabsf(s->roll_deg) > c->tilt_deg)) {
         s->tilt_timer += dt_s;

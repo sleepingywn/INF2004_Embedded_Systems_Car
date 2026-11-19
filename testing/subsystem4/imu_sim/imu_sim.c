@@ -48,8 +48,9 @@ static void report(const imu_logic_t *s, uint32_t ev, float t)
     if (ev & IMU_EVT_TILT)
         printf("[%7.2f s] TILT            pitch %+5.1f, roll %+5.1f deg\n",
                t, s->pitch_deg, s->roll_deg);
-    if (ev & IMU_EVT_COLLISION)
-        printf("[%7.2f s] COLLISION       |a| = %.2f g\n", t, s->accel_mag_g);
+    if (ev & IMU_EVT_LIFTED)
+        printf("[%7.2f s] LIFTED          %s  up %+.2f g  tilt %.1f deg\n", t,
+               s->lift_by_tilt ? "(overturned)" : "(lifted)", s->lift_peak_up_g, s->tilt_total_deg);
 }
 
 static void log_row(const imu_logic_t *s, float t)

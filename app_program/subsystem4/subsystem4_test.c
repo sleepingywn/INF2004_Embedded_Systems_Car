@@ -104,8 +104,8 @@ EXPORT void subsystem4_test(void)
 		ok = ok && imu_classify_motion(&st, 150.0f, 0.0f, false, IMU_MOTION_STOPPED) == IMU_MOTION_ON_HUMP;
 		st.tilt_active = true;
 		ok = ok && imu_classify_motion(&st, 150.0f, 0.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_TILTED;
-		st.coll_cooldown = 0.3f;
-		ok = ok && imu_classify_motion(&st, 150.0f, 0.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_IMPACT;
+		st.lifted = true;
+		ok = ok && imu_classify_motion(&st, 150.0f, 0.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_LIFTED;
 		st.calibrated = false;
 		ok = ok && imu_classify_motion(&st, 150.0f, 0.0f, true, IMU_MOTION_STOPPED)  == IMU_MOTION_UNKNOWN;
 		TEST_CHECK("S4-U21", ok, "motion classes and their priority (B4-FR11)");
@@ -133,7 +133,7 @@ EXPORT void subsystem4_test(void)
 		for (i = 0; i < S4_EV_NUM && ok; i++) {
 			if (e.ev[i].count > 0 && (UW)(now.lo - e.ev[i].time_ms) > 0x7fffffffu) ok = FALSE;
 		}
-		ok = ok && e.ev[S4_EV_HUMP_DONE].count == 0 && e.ev[S4_EV_COLLISION].count == 0;
+		ok = ok && e.ev[S4_EV_HUMP_DONE].count == 0 && e.ev[S4_EV_LIFTED].count == 0;
 		TEST_CHECK("S4-U23", ok, "event records: source IMU, timestamps not in the future");
 	}
 

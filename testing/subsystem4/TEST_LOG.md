@@ -19,20 +19,20 @@ Define a test here before running it. Test IDs never change.
 | S4-U07 | snapshot keeps updating | IF-06 | auto | `subsystem4_test.c` | `[TEST] S4-U07 PASS` |
 | S4-U08 | no IMU fault bit with the sensor connected | IF-07 | auto | `subsystem4_test.c` | `[TEST] S4-U08 PASS` |
 | S4-U09 | tilt event | B4 tilt requirement | manual | normal image; lift the car's front past 25° and hold | console `terrain: TILT`; `S4_EVT_TILT` set |
-| S4-U10 | collision event | B4 collision requirement | manual | normal image; tap the car sharply | console `terrain: COLLISION` |
+| S4-U10 | lift / overturn stops the motors (replaces collision, 12 Nov 2026) | B4 lift requirement | manual | route image; start a run, then lift the car briskly; second run: roll it past 45° | console `terrain: LIFTED  up +N mg -> motors stopped` (or `OVERTURNED`); wheels stop at once; no LIFTED over the hump |
 | S4-U11 | stalled bus: dead sensor cannot freeze the car | fault handling (C03) | manual | normal image; pull SDA while running, then reconnect | `IMU FAULT` within ~100 ms, other tasks keep printing, `overruns 0`; `IMU fault cleared` after reconnecting |
 | S4-U12 | hump detected and height reported | FR5 | manual | bench `m` key or the PRETEND_MOVING build (until encoder data exists); push the car's right wheel over the hump | `HUMP ENTRY` then `HUMP DETECTED` with a peak; compare with the block |
 | S4-U13 | own maths matches the C library | imu_math.h | auto (laptop) | `imu_sim/math_check.c` | `PASS` |
-| S4-U14 | logic regression (synthetic hump, knock, slope) | imu_logic.c | auto (laptop) | `imu_sim --fake` | hump 18.8 mm vs 19.9 mm true; COLLISION; TILT on the slope |
+| S4-U14 | logic regression (synthetic hump, knock, slope) | imu_logic.c | auto (laptop) | `imu_sim --fake` | hump 18.8 mm vs 19.9 mm true; no LIFTED from the knock; TILT on the slope; `imu_sim/lift_check.c` PASS 1-6 |
 | S4-U15 | minimum-bit snapshot: size, round trip, saturation, wrap | change requirement, C06 | auto (laptop) | `imu_sim/pack_check.c` | `PASS`; 8 bytes; error ≤ half a step |
 | S4-U16 | packed snapshot on target: 8 bytes, saturates, 15-bit age | change requirement, C06 | auto | `subsystem4_test.c` | `[TEST] S4-U16 PASS` |
 | S4-U17 | one-sided right-side hump (10–13 mm) detected from roll; height = lever × sin(peak tilt); no false hump from speeding up/braking | FR5, one-sided layout | auto (laptop) | `imu_sim --fake1 10`, `11.5`, `13` | `HUMP DETECTED (one-sided)` within ±10 mm; no hump at the 0.15 g speed-up/brake |
 | S4-U18 | lever calibration on the car | FR5 | manual | right wheel on the hump (height h), car still; read total tilt θ; lever = h / sin(θ) | lever recorded; then S4-U12 on the real hump within ±10 mm |
 | S4-U19 | turn rate from the wheel encoders | FR8 | manual | console: z, then q (spin left on the spot); compare the hdg reading with the real angle turned | sign + for left; hdg within ±10 % of the real angle |
 | S4-U20 | no false hump while turning on the spot | FR4 | manual | console: q (spin left, 35 %, 1 s) on flat mat | no HUMP ENTRY / HUMP DETECTED |
-| S4-U21 | motion classification and its priority | FR11 | auto | `imu_classify_motion()` with fixed speed / turn / IMU states | STOPPED, STRAIGHT (both directions), TURNING, SPINNING (both directions), UNKNOWN without wheels; IMPACT > TILTED > ON_HUMP > wheel classes; 12 deg/s stays TURNING only if already TURNING, 8 deg/s leaves |
+| S4-U21 | motion classification and its priority | FR11 | auto | `imu_classify_motion()` with fixed speed / turn / IMU states | STOPPED, STRAIGHT (both directions), TURNING, SPINNING (both directions), UNKNOWN without wheels; LIFTED > TILTED > ON_HUMP > wheel classes; 12 deg/s stays TURNING only if already TURNING, 8 deg/s leaves |
 | S4-U22 | reset run | FR10 | auto | `s4_reset_run()` from the test task, then read the snapshot | returns E_OK; highest hump and hump count 0 |
-| S4-U23 | event records | FR9 | auto | `s4_get_events()` on a still car | source = IMU (4); no time in the future; no hump-done / collision on a still car |
+| S4-U23 | event records | FR9 | auto | `s4_get_events()` on a still car | source = IMU (4); no time in the future; no hump-done / lifted on a still car |
 | S4-U24 | motion classes on the car | FR11, FR9, FR10 | manual | console: idle, g 15 %, g with trim +50 % (curve), g over the hump, lift one side > 25 deg, then v and n | `terrain: motion A -> B` shows STOPPED, STRAIGHT, TURNING (once per curve), ON_HUMP, TILTED; v lists the events with time/count/value; n clears the run |
 
 *Method:* **auto** = `TEST_CHECK` in code, result printed on the console;

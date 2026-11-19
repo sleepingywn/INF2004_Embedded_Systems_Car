@@ -88,6 +88,9 @@ typedef struct {
      * than handle_deg away from where the car came to rest, for handle_hold_s.
      * A car stopped on a hump keeps its tilt, so it does not trigger. */
     float handle_deg;
+    float lift_vel_still_g_s;     /* rise trigger while the wheels are still (no motor
+                                     vibration): a slow lift that ends the run is
+                                     caught once the wheels stop */
     float handle_hold_s;
     float rest_settle_s;          /* wheels still this long = resting tilt taken */
 } imu_config_t;

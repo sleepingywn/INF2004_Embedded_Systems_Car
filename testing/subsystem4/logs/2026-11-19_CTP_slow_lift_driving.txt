@@ -1,0 +1,45 @@
+terrain: pitch -1.5 roll -1.0 tilt +2.0  v 27 mm/s  acc +0 mg  turn +0 dps  hdg +1 deg  STRAIGHT |a| 1028 mg  rise 37 mm/s  FLAT  humps 0  highest 0 mm  | exec max 2936 us (read 1324, logic 1849)  slow 0  print max 991 us  jitter max 2565 us  overruns 0  i2c err 0
+wifi: joining "your-network-name" ...
+wifi: link status -> joined AP, waiting for IP (1)
+terrain: pitch -1.5 roll -3.0 tilt +3.3  v 27 mm/s  acc +0 mg  turn +1 dps  hdg +2 deg  STRAIGHT |a| 1012 mg  rise 41 mm/s  FLAT  humps 0  highest 0 mm  | exec max 2936 us (read 1324, logic 1849)  slow 0  print max 1103 us  jitter max 2707 us  overruns 0  i2c err 0
+terrain: HUMP ENTRY  pitch -1.6
+terrain: motion STRAIGHT -> ON_HUMP  (v 27 mm/s, turn +1 dps)
+wifi: link status -> FAILED: SSID not found (out of range, wrong name, or 5GHz-only network -- this chip is 2.4GHz only) (-2)
+terrain: pitch -4.0 roll -5.0 tilt +6.2  v 25 mm/s  acc -1 mg  turn +0 dps  hdg +2 deg  ON_HUMP |a| 1017 mg  rise 28 mm/s  CLIMBING  humps 0  highest 0 mm  | exec max 3711 us (read 1324, logic 2344)  slow 0  print max 1103 us  jitter max 2707 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.5  v 14 mm/s  acc +3 mg  turn +0 dps  hdg +3 deg  ON_HUMP |a| 941 mg  rise 35 mm/s  CLIMBING  humps 0  highest 0 mm  | exec max 3711 us (read 1324, logic 2344)  slow 0  print max 1103 us  jitter max 2824 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -4.5 tilt +6.2  v 14 mm/s  acc -12 mg  turn +1 dps  hdg +4 deg  ON_HUMP |a| 1006 mg  rise 43 mm/s  CLIMBING  humps 0  highest 0 mm  | exec max 3711 us (read 1324, logic 2344)  slow 0  print max 1103 us  jitter max 2824 us  overruns 0  i2c err 0
+terrain: pitch -2.5 roll -3.0 tilt +3.9  v 25 mm/s  acc +0 mg  turn +0 dps  hdg +4 deg  ON_HUMP |a| 1004 mg  rise 27 mm/s  DESCENDING  humps 0  highest 0 mm  | exec max 3711 us (read 1324, logic 2344)  slow 0  print max 1103 us  jitter max 2824 us  overruns 0  i2c err 0
+terrain: HUMP DETECTED (one-sided)  peak mm +13.8  peak tilt +8.1  highest mm +13.8  count 1
+terrain: motion ON_HUMP -> STRAIGHT  (v 26 mm/s, turn +0 dps)
+terrain: pitch -1.0 roll -1.5 tilt +1.9  v 25 mm/s  acc -5 mg  turn +0 dps  hdg +4 deg  STRAIGHT |a| 997 mg  rise 11 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3711 us (read 1324, logic 2344)  slow 0  print max 1103 us  jitter max 2828 us  overruns 0  i2c err 0
+wifi: joining "your-network-name" ...
+wifi: link status -> joined AP, waiting for IP (1)
+terrain: motion STRAIGHT -> STOPPED  (v 17 mm/s, turn +2 dps)
+terrain: pitch -0.5 roll +0.5 tilt +0.7  v 7 mm/s  acc -6 mg  turn +0 dps  hdg +4 deg  STOPPED |a| 1061 mg  rise 36 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3711 us (read 1324, logic 2344)  slow 0  print max 1103 us  jitter max 2828 us  overruns 0  i2c err 0
+wifi: link status -> FAILED: SSID not found (out of range, wrong name, or 5GHz-only network -- this chip is 2.4GHz only) (-2)
+terrain: motion STOPPED -> STRAIGHT  (v 20 mm/s, turn +1 dps)
+terrain: pitch +0.0 roll +0.5 tilt +0.5  v 20 mm/s  acc +0 mg  turn +0 dps  hdg +4 deg  STRAIGHT |a| 998 mg  rise 56 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3711 us (read 1324, logic 2344)  slow 0  print max 1103 us  jitter max 2828 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll -0.5 tilt +0.9  v 44 mm/s  acc +0 mg  turn +3 dps  hdg +8 deg  STRAIGHT |a| 1002 mg  rise 105 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1103 us  jitter max 2843 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> UNKNOWN  (v 32 mm/s, turn +4 dps)
+terrain: motion UNKNOWN -> STRAIGHT  (v 32 mm/s, turn +3 dps)
+terrain: pitch +1.5 roll -1.5 tilt +2.4  v 33 mm/s  acc +0 mg  turn +4 dps  hdg +13 deg  STRAIGHT |a| 1041 mg  rise 113 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1103 us  jitter max 2843 us  overruns 0  i2c err 0
+terrain: pitch +2.5 roll -1.5 tilt +2.9  v 22 mm/s  acc +0 mg  turn +0 dps  hdg +14 deg  STRAIGHT |a| 963 mg  rise 80 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1103 us  jitter max 2843 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> UNKNOWN  (v 23 mm/s, turn +0 dps)
+terrain: motion UNKNOWN -> STRAIGHT  (v 22 mm/s, turn +0 dps)
+terrain: motion STRAIGHT -> STOPPED  (v 14 mm/s, turn +0 dps)
+terrain: pitch +0.5 roll -2.0 tilt +2.1  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +14 deg  STOPPED |a| 978 mg  rise 4 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1147 us  jitter max 2843 us  overruns 0  i2c err 0
+wifi: joining "your-network-name" ...
+[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.
+wifi: link status -> joined AP, waiting for IP (1)
+terrain: pitch +4.5 roll +0.0 tilt +4.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +14 deg  STOPPED |a| 979 mg  rise 64 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1147 us  jitter max 2843 us  overruns 0  i2c err 0
+wifi: link status -> FAILED: SSID not found (out of range, wrong name, or 5GHz-only network -- this chip is 2.4GHz only) (-2)
+terrain: pitch +0.5 roll +0.0 tilt +0.7  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +14 deg  STOPPED |a| 988 mg  rise 81 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1147 us  jitter max 2843 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +14 deg  STOPPED |a| 998 mg  rise 15 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1147 us  jitter max 2843 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +14 deg  STOPPED |a| 1001 mg  rise 7 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1147 us  jitter max 2843 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +14 deg  STOPPED |a| 1001 mg  rise 6 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1147 us  jitter max 2843 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +14 deg  STOPPED |a| 1000 mg  rise 5 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1147 us  jitter max 2843 us  overruns 0  i2c err 0
+wifi: joining "your-network-name" ...
+wifi: link status -> joined AP, waiting for IP (1)
+terrain: pitch +0.5 roll +0.0 tilt +0.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +14 deg  STOPPED |a| 1002 mg  rise 3 mm/s  FLAT  humps 1  highest 14 mm  | exec max 3820 us (read 2323, logic 2344)  slow 0  print max 1147 us  jitter max 2843 us  overruns 0  i2c err 0
+wifi: link status -> FAILED: SSID not found (out of range, wrong name, or 5GHz-only network -- this chip is 2.4GHz only) (-2)
+---- Closed the serial port COM5 ----

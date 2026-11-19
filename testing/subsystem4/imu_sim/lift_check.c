@@ -98,11 +98,17 @@ int main(void)
     assert(lifted_events == 1 && by_tilt_events == 0);
     puts("PASS 6: calm hand lift (+0.08 g, 0.3 s) -> LIFTED");
 
-    /* 7. Very slow lift: +0.03 g for 0.3 s (~0.09 m/s) is still not detected. */
+    /* 7. Slow lift with the wheels still (car test 19 Nov: a slow lift ended
+     *    the run, then the car was held): +0.03 g for 0.3 s (~0.09 m/s) is
+     *    caught by the still-wheels trigger.  Slower still (+0.012 g, ~0.04
+     *    m/s, no tilt) is the documented limit. */
     start();
     hold(0.3f, 0, 0.03f, 0); hold(0.3f, 0, -0.03f, 0); hold(0.5f, 0, 0, 0);
+    assert(lifted_events == 1);
+    start();
+    hold(0.3f, 0, 0.012f, 0); hold(0.3f, 0, -0.012f, 0); hold(0.5f, 0, 0, 0);
     assert(lifted_events == 0);
-    puts("PASS 7: very slow lift (+0.03 g) -> not detected (documented limit)");
+    puts("PASS 7: slow lift +0.03 g with wheels still -> LIFTED; +0.012 g -> not (limit)");
 
     /* 8. 30 s of rough driving: +-0.10 g random on every sample (sd 0.058 g,
      *    10x the recorded hump pass), plus a +0.6 g jolt every 0.5 s. */

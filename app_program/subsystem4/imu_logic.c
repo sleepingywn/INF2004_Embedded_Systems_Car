@@ -38,7 +38,8 @@ void imu_logic_default_config(imu_config_t *c)
     c->lift_vel_noise_k       = 0.3f;
     c->lift_vel_tau_s         = 0.6f;
     c->lift_vel_clip_g        = 0.3f;
-    c->handle_deg             = 8.0f;    /* stopped on the hump: tilt constant; in the hand: 6-12 deg */
+    c->handle_deg             = 5.0f;    /* stopped: tilt within ~1 deg; slow pick-up on 19 Nov: 4-5 deg */
+    c->lift_vel_still_g_s     = 0.006f;  /* 60 mm/s; still car in the logs: rise <= 31 mm/s */
     c->handle_hold_s          = 0.2f;
     c->rest_settle_s          = 0.5f;
 }
@@ -418,8 +419,10 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
         s->handle_timer = (s->rest_valid && dev > c->handle_deg) ? s->handle_timer + dt_s : 0.0f;
     }
     if (!s->lifted) {
-        bool by_rise = s->lift_timer >= c->lift_hold_s ||
-                       s->lift_vel > c->lift_vel_g_s + c->lift_vel_noise_k * s->mag_noise;
+        bool still = s->rest_timer >= 0.3f || s->rest_valid;   /* wheels still >= 0.3 s */
+        float rise_trigger = (still ? c->lift_vel_still_g_s : c->lift_vel_g_s)
+                             + c->lift_vel_noise_k * s->mag_noise;
+        bool by_rise = s->lift_timer >= c->lift_hold_s || s->lift_vel > rise_trigger;
         bool by_handle = s->handle_timer >= c->handle_hold_s;
         bool by_lift = by_rise || by_handle;
         bool by_tilt = s->overturn_timer >= c->overturn_hold_s;

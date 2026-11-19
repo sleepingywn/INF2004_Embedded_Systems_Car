@@ -34,10 +34,13 @@ void imu_logic_default_config(imu_config_t *c)
     /* Slow lift: 0.015 g*s = 0.15 m/s upward.  A calm hand lift reaches
      * 0.2-0.5 m/s.  Recorded driving (hump pass, 50 Hz): |a| sd 0.006 g, the
      * sum peaked at 0.002 g*s; KR4 motor runs showed |a| 0.88-1.07 g. */
-    c->lift_vel_g_s           = 0.015f;  /* + 0.3 x vibration: ~0.017 still, ~0.03 driving */
+    c->lift_vel_g_s           = 0.010f;  /* 0.10 m/s (was 0.015: a calm pick-up on 19 Nov was missed) */  /* + 0.3 x vibration: ~0.017 still, ~0.03 driving */
     c->lift_vel_noise_k       = 0.3f;
     c->lift_vel_tau_s         = 0.6f;
     c->lift_vel_clip_g        = 0.3f;
+    c->handle_deg             = 8.0f;    /* stopped on the hump: tilt constant; in the hand: 6-12 deg */
+    c->handle_hold_s          = 0.2f;
+    c->rest_settle_s          = 0.5f;
 }
 
 void imu_logic_init(imu_logic_t *s, const imu_config_t *cfg)
@@ -393,14 +396,38 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
      * (tilt < overturn_deg - 10), steady (|a| within 0.1 g of 1) and not
      * lifting for lift_clear_s; then a new lift can trigger again. */
     s->overturn_timer = (tilt > c->overturn_deg) ? s->overturn_timer + dt_s : 0.0f;
+    if (s->lift_vel > s->rise_max) s->rise_max = s->lift_vel;
+    /* resting tilt, taken once the wheels have been still for rest_settle_s.
+       Wheel motion comes from the caller (dist is zeroed during hard turns
+       for the hump detector, which must not count as "still" here). */
+    if (moving || s->wheels_moving) {
+        s->rest_valid = false;
+        s->rest_timer = s->handle_timer = 0.0f;
+    } else if (!s->rest_valid) {
+        s->rest_timer += dt_s;
+        if (s->rest_timer >= c->rest_settle_s) {
+            s->rest_valid = true;
+            s->rest_pitch = s->pitch_deg;
+            s->rest_roll = s->roll_deg;
+        }
+    }
+    {
+        float dev = imu_fabsf(s->pitch_deg - s->rest_pitch);
+        float dr = imu_fabsf(s->roll_deg - s->rest_roll);
+        if (dr > dev) dev = dr;
+        s->handle_timer = (s->rest_valid && dev > c->handle_deg) ? s->handle_timer + dt_s : 0.0f;
+    }
     if (!s->lifted) {
-        bool by_lift = s->lift_timer >= c->lift_hold_s ||
+        bool by_rise = s->lift_timer >= c->lift_hold_s ||
                        s->lift_vel > c->lift_vel_g_s + c->lift_vel_noise_k * s->mag_noise;
+        bool by_handle = s->handle_timer >= c->handle_hold_s;
+        bool by_lift = by_rise || by_handle;
         bool by_tilt = s->overturn_timer >= c->overturn_hold_s;
         if (by_lift || by_tilt) {
             s->lifted = true;
             if (s->hump_state != HUMP_FLAT) abort_hump(s);   /* lifted mid-hump: not a hump */
             s->lift_by_tilt = !by_lift;
+            s->lift_by_handle = by_handle && !by_rise;
             s->lift_peak_up_g = up_avg - 1.0f;
             s->lift_peak_vel = s->lift_vel;
             s->clear_timer = 0.0f;
@@ -416,6 +443,8 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
             s->lifted = false;
             s->lift_timer = s->overturn_timer = s->clear_timer = 0.0f;
             s->lift_vel = 0.0f;
+            s->rest_valid = false;            /* take the resting tilt again */
+            s->rest_timer = s->handle_timer = 0.0f;
         }
     }
 

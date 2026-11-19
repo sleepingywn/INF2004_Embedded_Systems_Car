@@ -81,8 +81,8 @@ int main(void)
     start();
     for (int i = 0; i <= 90; i++) step(i * 2.0f, 0, 0);   /* 0 -> 180 deg over 1.8 s */
     hold(0.5f, 180.0f, 0, 0);
-    assert(lifted_events == 1 && by_tilt_events == 1 && s.lifted);
-    puts("PASS 4: slowly overturned -> LIFTED (overturned)");
+    assert(lifted_events == 1 && s.lifted);   /* picked-up check may fire first (wheels still) */
+    puts("PASS 4: slowly overturned -> LIFTED (overturned or picked up)");
 
     /* 5. Hump tilt (7 deg) and a 30 deg parked slope: no LIFTED (TILT only). */
     start();
@@ -114,11 +114,13 @@ int main(void)
     assert(lifted_events == 0);
     puts("PASS 8: 30 s rough driving (+-0.10 g noise, jolts) -> no LIFTED");
 
-    /* 9. Car picked up and tilted 15 deg in the hand without rising
-     *    (orientation change only): |a| stays 1 g -> no slow-lift trigger. */
+    /* 9. Tilting 15 deg without rising while the wheels turn (e.g. a spin
+     *    turn on uneven ground): |a| stays 1 g -> no slow-lift trigger. */
     start();
-    for (int i = 0; i <= 15; i++) step((float)i, 0, 0);
+    s.wheels_moving = true;          /* e.g. a spin turn: the picked-up check is off, */
+    for (int i = 0; i <= 15; i++) step((float)i, 0, 0);   /* only the rise sum is tested */
     hold(1.0f, 15.0f, 0, 0);
+    s.wheels_moving = false;
     assert(lifted_events == 0);
     puts("PASS 9: tilted 15 deg in place -> no LIFTED");
     /* 10. Lifted in the middle of a hump climb, tilted in the hand, put
@@ -133,5 +135,21 @@ int main(void)
     hold(2.0f, 0, 0, 0);                                      /* put down, still */
     assert(!s.lifted && s.hump_count == 0);
     puts("PASS 10: lifted mid-hump and tilted in the hand -> no hump counted");
+
+    /* 11. Picked up while stopped (car test 19 Nov): wheels still, the car
+     *     tilts 1 -> 12 deg in the hand with almost no upward push. */
+    start();
+    hold(1.0f, 0, 0, 0);                                      /* stopped, resting */
+    for (int i = 0; i <= 24; i++) step(i * 0.5f, 0.02f, 0);   /* slow pick-up, 0 -> 12 deg */
+    hold(0.5f, 12.0f, 0, 0);
+    assert(lifted_events == 1 && s.lift_by_handle);
+    puts("PASS 11: picked up while stopped (tilt moved 12 deg, wheels still) -> LIFTED");
+
+    /* 12. Stopped ON the hump (tilt 7 deg, constant) for 5 s: not lifted. */
+    start();
+    for (int i = 0; i <= 14; i++) step(i * 0.5f, 0, 0.66f);  /* drive up to 7 deg */
+    hold(5.0f, 7.0f, 0, 0);                                   /* stalled on the hump */
+    assert(lifted_events == 0);
+    puts("PASS 12: stopped on the hump (constant 7 deg) -> no LIFTED");
     return 0;
 }

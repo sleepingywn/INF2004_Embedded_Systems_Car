@@ -336,7 +336,8 @@ LOCAL void print_events(UINT ev)
 			tm_printf((UB*)"terrain: OVERTURNED");
 			print_tenths("  tilt", to_tenths(logic.tilt_total_deg));
 		} else {
-			tm_printf((UB*)"terrain: LIFTED  up %+d mg  rise %d mm/s",
+			tm_printf((UB*)"terrain: LIFTED%s  up %+d mg  rise %d mm/s",
+				  (UB*)(logic.lift_by_handle ? " (picked up: tilt moved, wheels still)" : ""),
 				  (INT)(logic.lift_peak_up_g * 1000.0f), (INT)(logic.lift_peak_vel * 9810.0f));
 		}
 		tm_printf((UB*)" -> motors stopped\n");
@@ -361,9 +362,11 @@ LOCAL void print_status(void)
 		tm_printf((UB*)"  v --");
 	}
 	tm_printf((UB*)"  %s", imu_motion_name(motion_now));
-	tm_printf((UB*)" |a| %d mg  %s  humps %u  highest %u mm",
-		  s4_diag.accel_mag_mg, imu_hump_state_name(logic.hump_state),
+	tm_printf((UB*)" |a| %d mg  rise %d mm/s  %s  humps %u  highest %u mm",
+		  s4_diag.accel_mag_mg, (INT)(logic.rise_max * 9810.0f),
+		  imu_hump_state_name(logic.hump_state),
 		  (UINT)snapshot.hump_count, (UINT)snapshot.high_peak_mm);
+	logic.rise_max = 0.0f;		/* rise = highest upward speed in the last second */
 	tm_printf((UB*)"  | exec max %u us (read %u, logic %u)  slow %u  print max %u us"
 		  "  jitter max %u us  overruns %u  i2c err %u%s\n",
 		  s4_diag.exec_max_us, s4_diag.read_max_us, s4_diag.logic_max_us,
@@ -513,6 +516,12 @@ EXPORT void terrain_task(INT stacd, void *exinf)
                 acc_g = 0.0f;
 			}
 			car_accel_g = acc_g;
+
+			/* picked-up check needs "wheels really still": no encoder data
+			   counts as moving (check off); spin turns count as moving */
+			logic.wheels_moving = !wheel_ok || S4_PRETEND_SPEED_MM_S > 0 ||
+				wheel_speed_mm_s > 3.0f || wheel_speed_mm_s < -3.0f ||
+				wheel_turn_dps > 3.0f || wheel_turn_dps < -3.0f;
 
 			/* Bench override: pretend to move (S4_PRETEND_SPEED_MM_S) */
 			if (S4_PRETEND_SPEED_MM_S > 0) {

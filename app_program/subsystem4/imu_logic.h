@@ -84,6 +84,12 @@ typedef struct {
                                      sample: still ~0.005 g, motors driving ~0.05 g */
     float lift_vel_tau_s;
     float lift_vel_clip_g;
+    /* Picked up while the wheels are still (19 Nov 2026): tilt moves more
+     * than handle_deg away from where the car came to rest, for handle_hold_s.
+     * A car stopped on a hump keeps its tilt, so it does not trigger. */
+    float handle_deg;
+    float handle_hold_s;
+    float rest_settle_s;          /* wheels still this long = resting tilt taken */
 } imu_config_t;
 
 typedef struct {
@@ -98,6 +104,12 @@ typedef struct {
     bool         lift_by_tilt;              /* true: triggered by overturn tilt */
     float        lift_vel;                  /* leaky sum of |a| - 1 (g*s)       */
     float        lift_peak_vel;             /* largest lift_vel while lifted    */
+    bool         lift_by_handle;            /* true: picked up (tilt moved, wheels still) */
+    float        rise_max;                  /* largest lift_vel since the caller reset it */
+    bool         rest_valid;
+    bool         wheels_moving;             /* set by the caller each cycle (any wheel turning,
+                                               incl. spin turns); false: use dist > 0 */
+    float        rest_pitch, rest_roll, rest_timer, handle_timer;
     hump_state_t hump_state;
     float        current_hump_peak_mm;      /* peak of the latest hump       */
     float        current_hump_peak_pitch_deg;

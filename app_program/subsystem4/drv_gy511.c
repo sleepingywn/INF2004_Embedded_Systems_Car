@@ -31,6 +31,8 @@
 #define DLHC_CTRL1_VAL	0x57		/* 100 Hz, normal, X/Y/Z on       */
 #define DLHC_CTRL4_VAL	0x88		/* BDU, +-2 g, high resolution     */
 /* LSM303D */
+#define LSMD_CTRL0	0x1F
+#define LSMD_CTRL0_BOOT	0x80		/* reboot memory content           */
 #define LSMD_CTRL1	0x20
 #define LSMD_CTRL2	0x21
 #define LSMD_OUT	0x28
@@ -135,6 +137,10 @@ LOCAL bool configure(void)
 		return set_reg(acc_addr, DLHC_CTRL1, DLHC_CTRL1_VAL) &&
 		       set_reg(acc_addr, DLHC_CTRL4, DLHC_CTRL4_VAL);
 	case GY511_CHIP_LSM303D:
+		/* CTRL0 BOOT: reload the chip's trimming and reset its state
+		   (frozen-output recovery, 18-19 Nov 2026), then configure */
+		(void)set_reg(acc_addr, LSMD_CTRL0, LSMD_CTRL0_BOOT);
+		tk_dly_tsk(10);
 		return set_reg(acc_addr, LSMD_CTRL1, LSMD_CTRL1_VAL) &&
 		       set_reg(acc_addr, LSMD_CTRL2, LSMD_CTRL2_VAL);
 	case GY511_CHIP_ADXL345:

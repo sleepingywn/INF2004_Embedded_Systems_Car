@@ -39,7 +39,13 @@ void imu_logic_default_config(imu_config_t *c)
     c->lift_vel_tau_s         = 0.6f;
     c->lift_vel_clip_g        = 0.3f;
     c->handle_deg             = 5.0f;    /* stopped: tilt within ~1 deg; slow pick-up on 19 Nov: 4-5 deg */
-    c->lift_vel_still_g_s     = 0.006f;  /* 60 mm/s; still car in the logs: rise <= 31 mm/s */
+    c->lift_vel_still_g_s     = 0.006f;
+    /* Slow lift while driving (19 Nov 2026, twice): rise 105-117 mm/s, then
+       V5 lost the line and stopped the wheels.  Off the hump, driving stays
+       below ~90 mm/s; the hump itself reached 104, so only off the hump. */
+    c->rise_then_stop_g_s     = 0.0075f; /* 75 mm/s */
+    c->rise_memory_s          = 1.5f;
+    c->free_spin_mm_s         = 38.0f;   /* lifted: 44 mm/s (twice); V5 straight: 20-33 */  /* 60 mm/s; still car in the logs: rise <= 31 mm/s */
     c->handle_hold_s          = 0.2f;
     c->rest_settle_s          = 0.5f;
 }
@@ -50,6 +56,7 @@ void imu_logic_init(imu_logic_t *s, const imu_config_t *cfg)
     s->cfg = *cfg;
     s->hump_state = HUMP_FLAT;
     s->scale = 1.0f;
+    s->rise_age = s->spin_age = 1e3f;   /* nothing seen yet */
 }
 
 void imu_logic_reset_run(imu_logic_t *s)
@@ -398,6 +405,13 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
      * lifting for lift_clear_s; then a new lift can trigger again. */
     s->overturn_timer = (tilt > c->overturn_deg) ? s->overturn_timer + dt_s : 0.0f;
     if (s->lift_vel > s->rise_max) s->rise_max = s->lift_vel;
+    {   /* how long ago a rise (off the hump) and a free-spin speed were seen */
+        bool rise_now = s->hump_state == HUMP_FLAT && s->lift_vel > c->rise_then_stop_g_s;
+        s->rise_age = rise_now ? 0.0f : s->rise_age + dt_s;
+        if (s->hump_state != HUMP_FLAT) s->rise_age = 1e3f;
+        s->spin_age = (s->wheel_speed_mm_s > c->free_spin_mm_s) ? 0.0f : s->spin_age + dt_s;
+    }
+    float rest_before = s->rest_timer;
     /* resting tilt, taken once the wheels have been still for rest_settle_s.
        Wheel motion comes from the caller (dist is zeroed during hard turns
        for the hump detector, which must not count as "still" here). */
@@ -424,13 +438,18 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
                              + c->lift_vel_noise_k * s->mag_noise;
         bool by_rise = s->lift_timer >= c->lift_hold_s || s->lift_vel > rise_trigger;
         bool by_handle = s->handle_timer >= c->handle_hold_s;
+        /* wheels have just become still (0.3 s) after a recent rise */
+        bool by_stop = rest_before < 0.3f && s->rest_timer >= 0.3f &&
+                       s->rise_age < c->rise_memory_s && s->spin_age < c->rise_memory_s;
+        by_handle = by_handle || by_stop;
         bool by_lift = by_rise || by_handle;
         bool by_tilt = s->overturn_timer >= c->overturn_hold_s;
         if (by_lift || by_tilt) {
             s->lifted = true;
             if (s->hump_state != HUMP_FLAT) abort_hump(s);   /* lifted mid-hump: not a hump */
             s->lift_by_tilt = !by_lift;
-            s->lift_by_handle = by_handle && !by_rise;
+            s->lift_by_handle = by_handle && !by_rise && !by_stop;
+            s->lift_by_stop = by_stop && !by_rise;
             s->lift_peak_up_g = up_avg - 1.0f;
             s->lift_peak_vel = s->lift_vel;
             s->clear_timer = 0.0f;

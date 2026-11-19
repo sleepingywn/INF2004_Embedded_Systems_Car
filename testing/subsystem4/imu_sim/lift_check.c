@@ -157,5 +157,33 @@ int main(void)
     hold(5.0f, 7.0f, 0, 0);                                   /* stalled on the hump */
     assert(lifted_events == 0);
     puts("PASS 12: stopped on the hump (constant 7 deg) -> no LIFTED");
+
+    /* 13. Slow lift while driving (car test 19 Nov, twice): rise ~110 mm/s,
+     *     too low for the driving trigger; V5 then loses the line and the
+     *     wheels stop -> LIFTED once the wheels have been still 0.3 s. */
+    start();
+    s.wheels_moving = true;
+    s.wheel_speed_mm_s = 27.0f;
+    hold(1.0f, 0, 0, 0.66f);                                  /* driving */
+    s.wheel_speed_mm_s = 44.0f;                               /* wheels spin free */
+    hold(0.3f, 0, 0.05f, 0.66f); hold(0.3f, 0, -0.05f, 0.66f); /* slow lift */
+    assert(lifted_events == 0);
+    s.wheels_moving = false; s.wheel_speed_mm_s = 0.0f;
+    hold(0.6f, 0, 0, 0);                                      /* wheels stop, held */
+    assert(lifted_events == 1 && s.lift_by_stop);
+    puts("PASS 13: slow lift while driving, then wheels stop -> LIFTED");
+
+    /* 14. Bumpy driving (rise up to ~100 mm/s) at normal speed, then a stop
+     *     (e.g. V5 pause): no LIFTED - the wheels never spun free. */
+    start();
+    s.wheels_moving = true; s.wheel_speed_mm_s = 30.0f;
+    for (int i = 0; i < 250; i++) {
+        float r = ((float)rand() / RAND_MAX - 0.5f) * 0.10f;
+        step(0.0f, r + ((i > 200 && i < 215) ? 0.05f : 0.0f), 0.66f);   /* a rise */
+    }
+    s.wheels_moving = false; s.wheel_speed_mm_s = 0.0f;
+    hold(2.0f, 0, 0, 0);
+    assert(lifted_events == 0);
+    puts("PASS 14: drive then stop -> no LIFTED");
     return 0;
 }

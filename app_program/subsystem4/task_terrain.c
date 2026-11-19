@@ -337,7 +337,8 @@ LOCAL void print_events(UINT ev)
 			print_tenths("  tilt", to_tenths(logic.tilt_total_deg));
 		} else {
 			tm_printf((UB*)"terrain: LIFTED%s  up %+d mg  rise %d mm/s",
-				  (UB*)(logic.lift_by_handle ? " (picked up: tilt moved, wheels still)" : ""),
+				  (UB*)(logic.lift_by_handle ? " (picked up: tilt moved, wheels still)" :
+					logic.lift_by_stop ? " (rose while driving, then wheels stopped)" : ""),
 				  (INT)(logic.lift_peak_up_g * 1000.0f), (INT)(logic.lift_peak_vel * 9810.0f));
 		}
 		tm_printf((UB*)" -> motors stopped\n");
@@ -519,6 +520,10 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 
 			/* picked-up check needs "wheels really still": no encoder data
 			   counts as moving (check off); spin turns count as moving */
+			/* free-spin cue: only plain driving (route arcs run the outer
+			   wheel fast on purpose) */
+			logic.wheel_speed_mm_s = (wheel_ok && wheel_turn_dps < 10.0f &&
+				wheel_turn_dps > -10.0f) ? wheel_speed_mm_s : 0.0f;
 			logic.wheels_moving = !wheel_ok || S4_PRETEND_SPEED_MM_S > 0 ||
 				wheel_speed_mm_s > 3.0f || wheel_speed_mm_s < -3.0f ||
 				wheel_turn_dps > 3.0f || wheel_turn_dps < -3.0f;

@@ -88,7 +88,11 @@ typedef struct {
      * than handle_deg away from where the car came to rest, for handle_hold_s.
      * A car stopped on a hump keeps its tilt, so it does not trigger. */
     float handle_deg;
-    float lift_vel_still_g_s;     /* rise trigger while the wheels are still (no motor
+    float lift_vel_still_g_s;
+    float rise_then_stop_g_s;     /* rose this fast (off the hump) in the last
+                                     rise_memory_s, then the wheels stopped = lifted */
+    float rise_memory_s;
+    float free_spin_mm_s;         /* ...and the wheels spun this fast (load gone) */     /* rise trigger while the wheels are still (no motor
                                      vibration): a slow lift that ends the run is
                                      caught once the wheels stop */
     float handle_hold_s;
@@ -107,7 +111,10 @@ typedef struct {
     bool         lift_by_tilt;              /* true: triggered by overturn tilt */
     float        lift_vel;                  /* leaky sum of |a| - 1 (g*s)       */
     float        lift_peak_vel;             /* largest lift_vel while lifted    */
-    bool         lift_by_handle;            /* true: picked up (tilt moved, wheels still) */
+    bool         lift_by_handle;
+    bool         lift_by_stop;              /* true: rose while driving, then wheels stopped */
+    float        wheel_speed_mm_s;          /* set by the caller each cycle (forward speed) */
+    float        rise_age, spin_age;        /* s since a rise / a free-spin speed was seen */            /* true: picked up (tilt moved, wheels still) */
     float        rise_max;                  /* largest lift_vel since the caller reset it */
     bool         rest_valid;
     bool         wheels_moving;             /* set by the caller each cycle (any wheel turning,

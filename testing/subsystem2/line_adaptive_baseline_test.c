@@ -40,11 +40,39 @@ static void immediate_pause(int sign)
     }
     assert(entered);
 }
+/* Check both sides of the bend-gain threshold after the input filter settles. */
+static void steady_steering(unsigned error, int expected)
+{
+    for (int sign = -1; sign <= 1; sign += 2) {
+        line_adaptive_t state = {0};
+        unsigned left = 20 + (sign > 0 ? error : 0);
+        unsigned right = 20 + (sign < 0 ? error : 0);
+        line_adaptive_output_t out = {0};
+        for (unsigned tick = 0; tick < 100; tick++) {
+            out = line_adaptive_step(&state, line_levels_pack(left, right),
+                                     tick * 20, 20, tick * 5, tick * 5);
+        }
+        assert(out.mode == LINE_ADAPT_TRACK);
+        /* The integer filter can settle a few milli-points short of the input. */
+        assert(la_abs(sign * state.steering - expected) <= 2);
+        if (error == 0) {
+            assert(out.left == line_adaptive_config.cruise && out.right == out.left);
+        } else {
+            assert(sign > 0 ? out.left < out.right : out.right < out.left);
+        }
+    }
+}
+
 int main(void)
 {
     for(unsigned dt=20;dt<=60;dt+=20)for(int sign=-1;sign<=1;sign+=2) {
         baseline(dt,sign,0);baseline(dt,sign,UINT32_MAX-500);
     }
+    steady_steering(0, 0);
+    steady_steering(20, 70);
+    steady_steering(30, 105);
+    steady_steering(40, 150);
+    steady_steering(60, 240);
     immediate_pause(1);immediate_pause(-1);
     puts("PASS restored v2 steering: 600 outer cap, filtered hysteresis, moderate sustained error, immediate pause");
 }

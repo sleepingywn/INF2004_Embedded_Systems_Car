@@ -38,6 +38,15 @@ function renderReadings(){
  el('left-meter').style.width=(l==null?0:Math.min(Math.abs(l)/800,1)*100)+'%';el('right-meter').style.width=(r==null?0:Math.min(Math.abs(r)/800,1)*100)+'%';
  text('pitch',s.attitudeValid?number(d.pitch,1)+'°':'—');text('roll',s.attitudeValid?number(d.roll,1)+'°':'—');
  text('attitude-status',s.attitudeValid?'Live pitch and roll':'IMU unavailable · last pose held');
+ const liftState=!valid(8)||!d.motionClass?'Awaiting IMU classification':
+  d.motionClass===7?'Lifted / overturned':d.motionClass===6?'Tilted':'No lift detected';
+ text('lift-state',liftState);
+ const lift=d.lastLift;
+ if(lift){
+  // Negative values can encode either tilt or signed upward acceleration.
+  const measure=lift.value>=0?'upward acceleration +'+lift.value+' mg':'signed event value '+lift.value;
+  text('lift-detail','Last lift #'+lift.count+' · '+new Date(lift.receivedAt).toLocaleTimeString()+' · '+measure);
+ }else text('lift-detail','No lift event received this session.');
  el('level-marker').style.left=(s.attitudeValid?Math.max(5,Math.min(95,50+d.roll*1.5)):50)+'%';el('level-marker').style.opacity=s.attitudeValid?1:0;
  const heading=-s.pose.yaw*radToDeg;
  text('heading',s.motionValid?'Est. turn '+number(heading,1)+'°':'Heading held · no fresh counts');

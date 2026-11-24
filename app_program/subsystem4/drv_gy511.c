@@ -129,26 +129,6 @@ LOCAL gy511_chip_t identify(UB addr)
 	return GY511_CHIP_NONE;
 }
 
-LOCAL bool reboot_lsm303d(void)
-{
-	INT ctrl0 = -1;
-
-	if (!write_reg(acc_addr, LSMD_CTRL0, LSMD_CTRL0_BOOT)) {
-		tm_printf((UB*)"terrain: LSM303D BOOT write failed\n");
-		return false;
-	}
-	for (UINT poll = 0; poll < 5; poll++) {
-		tk_dly_tsk(10);
-		ctrl0 = read_reg(acc_addr, LSMD_CTRL0);
-		if (ctrl0 >= 0 && !(ctrl0 & LSMD_CTRL0_BOOT)) {
-			tm_printf((UB*)"terrain: LSM303D BOOT write accepted, CTRL0 back in normal mode\n");
-			return true;
-		}
-	}
-	tm_printf((UB*)"terrain: LSM303D BOOT write accepted, normal mode unconfirmed (last CTRL0=%d)\n", ctrl0);
-	return false;
-}
-
 LOCAL bool configure(void)
 {
 	switch (chip) {
@@ -157,8 +137,11 @@ LOCAL bool configure(void)
 		return set_reg(acc_addr, DLHC_CTRL1, DLHC_CTRL1_VAL) &&
 		       set_reg(acc_addr, DLHC_CTRL4, DLHC_CTRL4_VAL);
 	case GY511_CHIP_LSM303D:
-		return reboot_lsm303d() &&
-		       set_reg(acc_addr, LSMD_CTRL1, LSMD_CTRL1_VAL) &&
+		/* CTRL0 BOOT: reload the chip's trimming and reset its state
+		   (frozen-output recovery, 18-19 Nov 2026), then configure */
+		(void)set_reg(acc_addr, LSMD_CTRL0, LSMD_CTRL0_BOOT);
+		tk_dly_tsk(10);
+		return set_reg(acc_addr, LSMD_CTRL1, LSMD_CTRL1_VAL) &&
 		       set_reg(acc_addr, LSMD_CTRL2, LSMD_CTRL2_VAL);
 	case GY511_CHIP_ADXL345:
 		return set_reg(acc_addr, ADXL_BW_RATE, ADXL_BW_VAL) &&

@@ -70,7 +70,7 @@ fixed.
 | GP19 | *example:* S1 | external LED (LED + 330 Ω to GND) |
 | GP20 | S2 | Robo Pico active-low button; opt-in 30 s circuit start/stop |
 | GP21 | | |
-| GP22 | | |
+| GP22 | S2 | Robo Pico onboard piezo, successful barcode decode (PWM slice 3A) |
 | GP26 | S3 | IR Left A0 – barcode sensor (ADC0) |
 | GP27 | S3 | IR Centre A0 – line sensor A, left-hand (ADC1) |
 | GP28 | S3 | IR Right A0 – line sensor B, right-hand (ADC2); Robo Pico VBAT-sense jumper must be open |

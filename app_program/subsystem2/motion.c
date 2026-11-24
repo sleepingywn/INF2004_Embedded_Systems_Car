@@ -34,6 +34,9 @@ static motion_status_t observer_status;
 #if MOTION_LINE_ROUTE
 /* Writer: motor owner. Observer copy protected by status_mutex. */
 static motion_barcode_status_t barcode_status, observer_barcode_status;
+static bool barcode_beeping;
+static uint32_t barcode_beep_start_ms;
+#define BARCODE_BEEP_MS 100u
 #endif
 static motion_diagnostics_t diagnostics, observer_diagnostics;
 
@@ -1378,6 +1381,11 @@ static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool 
         char agreed = route_one_marker_agreed(barcode, &by_distance);
         if (agreed) { chosen = by_time = by_dist = agreed; one_marker = true; }
     }
+    if (chosen && owner_flags.motor_ready) {
+        barcode_beep_start_ms = motion_now_ms();
+        barcode_buzzer_set(true);
+        barcode_beeping = true;
+    }
     ++barcode_status.sequence;
     barcode_status.sampled_ms=barcode_ms;barcode_status.epoch=state.epoch;
     barcode_status.code=(uint8_t)chosen;barcode_status.elements=(uint8_t)barcode->hdr.count;
@@ -1703,6 +1711,12 @@ void motion_task(INT stacd, void *exinf)
         {
             fault_stop(MOTION_FAULT_HANDOFF);
         }
+#if MOTION_LINE_ROUTE
+        if (barcode_beeping && motion_now_ms() - barcode_beep_start_ms >= BARCODE_BEEP_MS) {
+            barcode_buzzer_set(false);
+            barcode_beeping = false;
+        }
+#endif
         if (tk_ref_flg(events, &flags) < E_OK)
         {
             fault_stop(MOTION_FAULT_HANDOFF);

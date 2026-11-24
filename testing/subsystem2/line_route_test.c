@@ -123,6 +123,12 @@ ID tk_cre_cyc(const T_CCYC *a) { (void)a; return 1; }
 ID app_start_task(FP a, int b, int c, const char *d) { (void)a; (void)b; (void)c; (void)d; return 1; }
 ER tk_sta_cyc(ID a) { (void)a; return E_OK; }
 ER tk_dly_tsk(unsigned a) { (void)a; return E_OK; }
+static unsigned buzzer_starts, buzzer_stops;
+void barcode_buzzer_set(bool sounding)
+{
+    if (sounding) ++buzzer_starts;
+    else ++buzzer_stops;
+}
 ER motor_hw_init(void) { return E_OK; }
 ER encoder_hw_init(void) { return E_OK; }
 void encoder_hw_snapshot(encoder_raw_t *r) { *r = fake_raw; }

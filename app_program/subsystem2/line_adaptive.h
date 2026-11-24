@@ -167,6 +167,10 @@ static inline line_adaptive_output_t line_adaptive_step(line_adaptive_t *s,
     int32_t derivative=(s->error_milli-previous)*1000/(int32_t)dt;
     s->derivative_milli+=(int32_t)((int64_t)(derivative-s->derivative_milli)*dt/(c->derivative_ms+dt));
     int32_t p=(int32_t)((int64_t)c->kp_milli*s->error_milli/1000000);
+    /* Add one count/s of proportional correction per filtered error point
+     * beyond 30, where sustained imbalance indicates a tighter bend. */
+    const int32_t bend_threshold=30000; /* sensor percentage points, scaled by 1000 */
+    p+=(s->error_milli-la_clip(s->error_milli,-bend_threshold,bend_threshold))/1000;
     int32_t d=(int32_t)((int64_t)c->kd_milli*s->derivative_milli/1000000);
     int32_t steering=la_clip(p+la_clip(d,-100,100),-c->max_steering,c->max_steering);
     /* Strong opposite evidence wins immediately over filter/motor memory. */

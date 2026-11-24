@@ -428,7 +428,8 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 	UW		start_us, prev_us, fail_run = 0;
 	BOOL		fault = FALSE, announced_cal = FALSE, got;
 	gy511_accel_t	last_raw = {0.0f, 0.0f, 0.0f};
-	UW		same_run = 0;
+	UW		same_run = 0, fresh_samples = 0;
+	BOOL		checking_samples = FALSE;
 
 	(void)stacd; (void)exinf;
 
@@ -470,7 +471,32 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		}
 
 		/* ---- read + process (this is what "exec" measures) ---- */
-		got = (!fault && gy511_read(&raw)) ? TRUE : FALSE;
+		BOOL verification_tick = checking_samples;
+		got = ((!fault || checking_samples) && gy511_read(&raw)) ? TRUE : FALSE;
+		if (checking_samples) {
+			/* A baseline and two changes on separate ticks rule out a
+			   constant output vector, including a new post-reboot constant. */
+			if (!got) {
+				fresh_samples = 0;
+			} else {
+				if (!fresh_samples) fresh_samples = 1;
+				else if (raw.x != last_raw.x || raw.y != last_raw.y || raw.z != last_raw.z)
+					fresh_samples++;
+				last_raw = raw;
+			}
+			if (fresh_samples >= 3) {
+				checking_samples = FALSE;
+				fault = FALSE;
+				fail_run = same_run = 0;
+				prev_us = start_us;
+				record_event(S4_EV_IMU_FAULT, 0);
+				tk_clr_flg(flg_terrain, ~(UINT)S4_EVT_IMU_FAULT);
+				tm_printf((UB*)"terrain: IMU fault cleared, fresh XYZ confirmed (%s at 0x%02x)\n",
+					  gy511_chip_name(), gy511_address());
+			}
+			/* Resume processing on the next tick with a normal dt. */
+			got = FALSE;
+		}
 
 		/* Frozen data (seen 18 Nov 2026 on the car: |a| stuck at
 		   2592 mg, i2c err 0) is a sensor fault, not a lift.  Drop the
@@ -619,29 +645,21 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 				tm_printf((UB*)"\n");
 				announced_cal = TRUE;
 			}
-		} else if (!fault && ++fail_run >= FAULT_AFTER) {
+		} else if (!fault && !verification_tick && ++fail_run >= FAULT_AFTER) {
 			fault = TRUE;
 			record_event(S4_EV_IMU_FAULT, 1);
 			tk_set_flg(flg_terrain, S4_EVT_IMU_FAULT);
 			tm_printf((UB*)"terrain: IMU FAULT (%u failed reads in a row)\n", fail_run);
 		} else if (fault && s4_diag.cycles % REINIT_EVERY == 0) {
-			BOOL ok;
-			counting = 0;	/* init takes > 20 ms: not an overrun */
-			ok = gy511_init();
+			if (checking_samples)
+				tm_printf((UB*)"terrain: IMU still faulted, fresh XYZ unconfirmed before retry\n");
+			counting = 0;
+			checking_samples = gy511_init();
 			counting = 1;
-			if (ok) {
-				fault = FALSE;
-				fail_run = 0;
-				s4_diag.sensor_found = TRUE;
-				prev_us = now_us();
-				record_event(S4_EV_IMU_FAULT, 0);
-				tk_clr_flg(flg_terrain, ~(UINT)S4_EVT_IMU_FAULT);
-				tm_printf((UB*)"terrain: IMU fault cleared (%s at 0x%02x)\n",
-					  gy511_chip_name(), gy511_address());
-				if (!logic.calibrated) {
-					tm_printf((UB*)"terrain: calibrating -- keep the car STILL and LEVEL for 2 s\n");
-				}
-			}
+			fresh_samples = 0;
+			s4_diag.sensor_found = checking_samples;
+			if (checking_samples)
+				tm_printf((UB*)"terrain: IMU configured, checking for fresh XYZ\n");
 		}
 
 		publish(fault);

@@ -111,8 +111,8 @@ static inline void speed_wheel_step(wheel_speed_t *w,int32_t measured_cps,
     if(request<(int64_t)lo*1000 || request>(int64_t)hi*1000)w->limits|=SPEED_LIMIT_SLEW;
     w->duty=(unsigned)clamp_i64(request/1000,lo,hi);
 }
-static inline bool speed_control_targets_step_report(speed_control_t *c,int32_t left,int32_t right,uint32_t dt_us,
-                                       int32_t lt,int32_t rt,unsigned *rejected)
+static inline bool speed_control_targets_step_policy(speed_control_t *c,int32_t left,int32_t right,uint32_t dt_us,
+                                       int32_t lt,int32_t rt,bool allow_rollback,unsigned *rejected)
 {
     /* Validate both inputs before updating either controller. Fault => caller
      * stops both motors. Raw counter wrap is handled by motion_count_delta.
@@ -123,8 +123,8 @@ static inline bool speed_control_targets_step_report(speed_control_t *c,int32_t 
     if(rejected)*rejected=reason;
     if(reason)return false;
     int64_t dl=(int64_t)left-c->previous_left,dr=(int64_t)right-c->previous_right;
-    if(dl<0)reason|=SPEED_REJECT_LEFT_REVERSE;
-    if(dr<0)reason|=SPEED_REJECT_RIGHT_REVERSE;
+    if(!allow_rollback && dl<0)reason|=SPEED_REJECT_LEFT_REVERSE;
+    if(!allow_rollback && dr<0)reason|=SPEED_REJECT_RIGHT_REVERSE;
     if(rejected)*rejected=reason;
     if(reason)return false;
     /* Reject implausible deltas before multiplying; keep conversion bounded
@@ -133,10 +133,13 @@ static inline bool speed_control_targets_step_report(speed_control_t *c,int32_t 
                  ((int64_t)1000000*REFERENCE_COUNTS_REV);
     int64_t rmax=(int64_t)MAX_MEASURED_CPS*dt_us*RIGHT_COUNTS_REV/
                  ((int64_t)1000000*REFERENCE_COUNTS_REV);
-    if(dl>lmax)reason|=SPEED_REJECT_LEFT_RATE;
-    if(dr>rmax)reason|=SPEED_REJECT_RIGHT_RATE;
+    if(dl>lmax || dl < -lmax)reason|=SPEED_REJECT_LEFT_RATE;
+    if(dr>rmax || dr < -rmax)reason|=SPEED_REJECT_RIGHT_RATE;
     if(rejected)*rejected=reason;
     if(reason)return false;
+    /* Reverse motion contributes zero forward speed; keep the measured position. */
+    if(dl<0)dl=0;
+    if(dr<0)dr=0;
     int64_t ls=dl*1000000*REFERENCE_COUNTS_REV/((int64_t)dt_us*LEFT_COUNTS_REV);
     int64_t rs=dr*1000000*REFERENCE_COUNTS_REV/((int64_t)dt_us*RIGHT_COUNTS_REV);
     if(ls>MAX_MEASURED_CPS)reason|=SPEED_REJECT_LEFT_RATE;
@@ -147,6 +150,11 @@ static inline bool speed_control_targets_step_report(speed_control_t *c,int32_t 
     speed_wheel_step(&c->right,(int32_t)rs,rt,dt_us);
     c->previous_left=left;c->previous_right=right;c->valid=true;
     return true;
+}
+static inline bool speed_control_targets_step_report(speed_control_t *c,int32_t left,int32_t right,uint32_t dt_us,
+                                       int32_t lt,int32_t rt,unsigned *rejected)
+{
+    return speed_control_targets_step_policy(c,left,right,dt_us,lt,rt,false,rejected);
 }
 static inline bool speed_control_targets_step(speed_control_t *c,int32_t left,int32_t right,uint32_t dt_us,
                                        int32_t lt,int32_t rt)

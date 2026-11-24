@@ -1249,8 +1249,8 @@ static void route_drive(uint32_t now, bool line_edge, uint32_t line_ms)
         left_target = reached[0] ? 0 : target - (trim > 0 ? trim : 0);
         right_target = reached[1] ? 0 : target + (trim < 0 ? trim : 0);
     }
-    if (!speed_control_targets_step(&route.speed, total[0], total[1], dt * 1000u,
-                                    left_target, right_target)) {
+    if (!speed_control_targets_step_policy(&route.speed, total[0], total[1], dt * 1000u,
+                                    left_target, right_target, true, NULL)) {
         route_fail(3, MOTION_FAULT_ENCODER);
         return;
     }
@@ -1474,10 +1474,7 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
                     .pause_age_left_ms=(pause_mask&1u) ? now-line_trial.output_pause_ms[0]:UINT32_MAX,
                     .pause_age_right_ms=(pause_mask&2u) ? now-line_trial.output_pause_ms[1]:UINT32_MAX,
                     .settle_age_left_ms=line_trial.pause_reverse_used[0] ? now-line_trial.last_settle_ms[0]:UINT32_MAX,
-                    .settle_age_right_ms=line_trial.pause_reverse_used[1] ? now-line_trial.last_settle_ms[1]:UINT32_MAX,
-                    .pause_window_left_ms=line_trial.pause_window_active[0] ? now-line_trial.pause_window_ms[0]:UINT32_MAX,
-                    .pause_window_right_ms=line_trial.pause_window_active[1] ? now-line_trial.pause_window_ms[1]:UINT32_MAX,
-                    .pause_window_limit_ms=MOTION_LINE_ADAPTIVE ? LINE_PAUSE_SETTLE_MS:0};
+                    .settle_age_right_ms=line_trial.pause_reverse_used[1] ? now-line_trial.last_settle_ms[1]:UINT32_MAX};
             }
             line_history_record(now,line,line_ms,line_epoch,have_line,result);
             diagnostics.line_failure_flags=1u | (have_line ? 2u:0u) |

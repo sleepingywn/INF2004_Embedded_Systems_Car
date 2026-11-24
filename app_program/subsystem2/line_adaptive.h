@@ -13,7 +13,7 @@ typedef struct {
     int32_t kp_milli, kd_milli, max_steering;
     uint32_t filter_ms, derivative_ms;
     unsigned seen_enter, seen_leave, black;
-    uint32_t confirm_ms, pause_confirm_ms, uncertainty_counts;
+    uint32_t confirm_ms, pause_confirm_ms, uncertainty_counts, bend_hold_counts;
     uint32_t sweep_counts, recovery_counts, recovery_ms;
 } line_adaptive_config_t;
 static const line_adaptive_config_t line_adaptive_config={
@@ -21,7 +21,7 @@ static const line_adaptive_config_t line_adaptive_config={
     .kp_milli=3500,.kd_milli=40,.max_steering=400,
     .filter_ms=40,.derivative_ms=80,
     .seen_enter=20,.seen_leave=10,.black=75,
-    .confirm_ms=60,.pause_confirm_ms=60,.uncertainty_counts=120,
+    .confirm_ms=60,.pause_confirm_ms=60,.uncertainty_counts=120,.bend_hold_counts=40,
     .sweep_counts=160,.recovery_counts=800,.recovery_ms=3000
 };
 typedef enum {
@@ -68,7 +68,7 @@ static inline line_adaptive_output_t line_adaptive_step(line_adaptive_t *s,
         uint16_t levels,uint32_t now,uint32_t dt,int32_t l,int32_t r)
 {
     const line_adaptive_config_t *c=&line_adaptive_config;
-    if(!line_levels_valid(levels) || dt<20 || dt>60 || l<0 || r<0)
+    if(!line_levels_valid(levels) || dt<20 || dt>60)
         return la_stop(s,LINE_ADAPT_INVALID,LINE_STOP_INVALID_INPUT);
     if(s->initialized && (s->mode==LINE_ADAPT_ROUTE_REQUIRED ||
         s->mode==LINE_ADAPT_LOST || s->mode==LINE_ADAPT_INVALID || s->mode==LINE_ADAPT_CROSSING_FAILED))
@@ -126,11 +126,16 @@ static inline line_adaptive_output_t line_adaptive_step(line_adaptive_t *s,
         /* Preserve filter continuity across intermittent edge sightings.
          * Fade toward neutral while the line position is unobservable. */
         s->error_milli-=(int32_t)((int64_t)s->error_milli*dt/(c->filter_ms+dt));
-        if(s->phase==0 && la_travel(l,r,s->origin)<(int32_t)c->uncertainty_counts) {
-            /* A small proportional continuation fades with travelled counts.
-             * Startup with no direction proceeds slowly within the same bound. */
-            int32_t remain=(int32_t)c->uncertainty_counts-la_travel(l,r,s->origin);
-            int32_t steer=s->steering*remain/(int32_t)c->uncertainty_counts;
+        int32_t travel=la_travel(l,r,s->origin);
+        int32_t limit=(int32_t)c->uncertainty_counts;
+        if(s->phase==0 && travel<limit) {
+            /* On white after a bend, hold the last correction briefly, then
+             * fade within the original approach distance. New visible samples
+             * still steer immediately. Weak or conflicting steering fades as usual. */
+            bool bend=maximum<c->seen_leave && s->steering*s->last_direction>=35;
+            int32_t hold=bend ? (int32_t)c->bend_hold_counts:0;
+            int32_t steer=s->steering;
+            if(travel>hold)steer=steer*(limit-travel)/(limit-hold);
             steer=la_clip(steer,-100,100);
             s->paused[0]=s->paused[1]=false;
             return la_output(s,LINE_ADAPT_UNCERTAIN,c->search_speed-steer,c->search_speed+steer);

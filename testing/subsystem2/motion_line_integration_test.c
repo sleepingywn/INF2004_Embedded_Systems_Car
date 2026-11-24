@@ -167,6 +167,10 @@ ER tk_wai_flg(ID a,UINT b,UINT c,UINT*d,int e){
             if(scenario%2)--fake_raw.right;else ++fake_raw.left;
         }
         if(scenario==76 && clock_ms==500)fake_raw.right=state.right_count-1u;
+        if(((scenario>=72 && scenario<=76) || (scenario>=79 && scenario<=84) || scenario==86) &&
+           clock_ms>=1000 && !stop_injected) {
+            assert(motion_stop()==E_OK);stop_injected=true;
+        }
         if(scenario>=77 && scenario<=88) {
             unsigned inside=scenario%2 ? 0u:1u;
             if(line_pause_eligible(&line_trial)&(1u<<inside)) {

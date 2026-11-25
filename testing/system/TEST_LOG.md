@@ -43,3 +43,4 @@ Add a new row for every run. Never edit or delete old rows.
 | Date | Test ID | Commit | Tester | Result | Log / evidence | Notes |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | SYS-01 | `abc1234` | | PASS / FAIL | `logs/YYYY-MM-DD_….txt` | |
+| 2026-11-25 | SYS-10 | `eab03b8` | Andy | PASS | `logs/2026-11-25_SYS-10_hump_video.txt`, video: (link to add) | 10 mm hump (ruler on video). One pass on video: `HUMP DETECTED (one-sided) peak mm +9.9`, count 4 (passes 1-3 earlier in the same session, highest 11.0 mm). V5 drove on over the hump without stopping. Repeatability: 21 car passes on 25 Nov read 9.7-11.7 mm, see `../subsystem4/TEST_LOG.md` S4-U12 |

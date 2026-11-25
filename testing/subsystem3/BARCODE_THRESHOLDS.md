@@ -3,6 +3,27 @@
 Handoff for whoever re-tunes the barcode sensor after the light hood is fitted
 (24 Nov 2026). Base branch: `CLOSE-TO-FINISH-2`.
 
+## Update 24 Nov: hood measured, constants kept
+
+Joel measured the hooded sensor on 24 Nov (`testing/subsystem3/TEST_LOG.md`,
+section "GP26 analogue barcode sensor with hood fitted";
+`logs/2026-11-24_hood_static_adc.csv`). Medians of 22 snapshots, car stopped:
+
+| Spot | No hood (18 Nov) | Hood (24 Nov) |
+|---|---|---|
+| white | ~177 | 188 (180–195) |
+| narrow black bar | ~307 | 333 (324–337) |
+| wide black bar | ~1309 | 2885 (2878–2889) |
+| thin white gap | ~177 | 234 (226–244) |
+
+He kept all constants (200 / 240 / 60 / 300 / half-peak / 8 ms). On the
+track (`logs/2026-11-24_hood_Z_passes.txt`, `logs/2026-11-24_hood_Z_drive_single.txt`),
+the first Z pass ended at 27 elements; Z then decoded by time and distance
+in the second pass and in the 18:24 single pass. The five-pass batch logged
+two Z decodes, but its success rate is undetermined. Note that the thin gap (234) is now above `BC_LVL_WHITE_MAX`, so
+gaps rely on the relative rule. Start any further tuning from these numbers,
+not the 18 Nov ones.
+
 ## Scope
 
 - Only the **barcode sensor** (left IR module, GP26) in the **analogue**

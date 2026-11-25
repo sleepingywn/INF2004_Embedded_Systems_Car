@@ -1,0 +1,18 @@
+[line] GP20 RESTART queued=0
+terrain: pitch +1.5 roll -0.5 tilt +1.8  v --  UNKNOWN |a| 1047 mg  rise 64 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1227, logic 2028)  slow 0  print max 928 us  jitter max 2278 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 22 mm/s, turn -1 dps)
+terrain: pitch -0.5 roll -0.5 tilt +0.9  v --  UNKNOWN |a| 1011 mg  rise 94 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1227, logic 2028)  slow 0  print max 928 us  jitter max 2278 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll -0.5 tilt +0.5  v 31 mm/s  acc -1 mg  turn +2 dps  hdg +4 deg  STRAIGHT |a| 916 mg  rise 103 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1286, logic 2028)  slow 0  print max 928 us  jitter max 2278 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll -0.5 tilt +0.8  v 27 mm/s  acc +3 mg  turn +0 dps  hdg +5 deg  STRAIGHT |a| 1002 mg  rise 49 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1307, logic 2028)  slow 0  print max 928 us  jitter max 2278 us  overruns 0  i2c err 0
+terrain: LIFTED  up +263 mg  rise 187 mm/s -> motors stopped
+terrain: motion STRAIGHT -> LIFTED  (v 29 mm/s, turn +4 dps)
+terrain: pitch -4.0 roll +1.5 tilt +4.1  v --  LIFTED |a| 850 mg  rise 301 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1307, logic 2028)  slow 0  print max 928 us  jitter max 2278 us  overruns 0  i2c err 0
+[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.
+terrain: pitch +2.5 roll +0.0 tilt +2.4  v 0 mm/s  acc +1 mg  turn +1 dps  hdg +6 deg  LIFTED |a| 976 mg  rise 22 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1307, logic 2028)  slow 0  print max 961 us  jitter max 2278 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll -0.5 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +6 deg  LIFTED |a| 1001 mg  rise 30 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1307, logic 2028)  slow 0  print max 961 us  jitter max 2278 us  overruns 0  i2c err 0
+terrain: motion LIFTED -> STOPPED  (v 0 mm/s, turn +0 dps)
+terrain: pitch +0.0 roll -0.5 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +6 deg  STOPPED |a| 1001 mg  rise 7 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1307, logic 2028)  slow 0  print max 961 us  jitter max 2278 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.2  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +6 deg  STOPPED |a| 1003 mg  rise 6 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1307, logic 2028)  slow 0  print max 961 us  jitter max 2278 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll -0.5 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +6 deg  STOPPED |a| 997 mg  rise 7 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1307, logic 2028)  slow 0  print max 961 us  jitter max 2278 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +6 deg  STOPPED |a| 996 mg  rise 2 mm/s  FLAT  humps 0  highest 0 mm  | exec max 3124 us (read 1307, logic 2028)  slow 0  print max 961 us  jitter max 2278 us  overruns 0  i2c err 0
+---- Closed the serial port COM5 ----

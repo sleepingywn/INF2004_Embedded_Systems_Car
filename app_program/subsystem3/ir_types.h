@@ -109,6 +109,13 @@ typedef uint8_t bc_width_t;
 #define BC_SAMPLE_PERIOD_US 1000u
 #endif
 #define BC_QUIET_SAMPLES ((BC_QUIET_MS * 1000u + BC_SAMPLE_PERIOD_US - 1u) / BC_SAMPLE_PERIOD_US)
+#ifdef BARCODE_WIDE
+/* Route profile: the quiet time also scales with the barcode's own widest
+ * element (barcode_sense.c bc_quiet_samples), up to BC_QUIET_MAX_MS. */
+#define BC_QUIET_WIDEST     4u
+#define BC_QUIET_MAX_MS     5000u
+#define BC_QUIET_MAX_SAMPLES ((BC_QUIET_MAX_MS * 1000u + BC_SAMPLE_PERIOD_US - 1u) / BC_SAMPLE_PERIOD_US)
+#endif
 
 /* ---------------------------------------------------------------------
  *  Line state: 7 states -> 3 bits.
@@ -173,6 +180,9 @@ _Static_assert(IR_CH_LINE_A != IR_CH_LINE_B && IR_CH_LINE_A != IR_CH_BARCODE &&
 _Static_assert(sizeof(line_msg_t) == 4, "line_msg_t must be 32 bits");
 _Static_assert(sizeof(bc_hdr_t) == 2, "bc_hdr_t must be 16 bits");
 _Static_assert(BC_QUIET_SAMPLES < BC_WIDTH_SAT, "quiet timeout must fit the duration counter");
+#ifdef BARCODE_WIDE
+_Static_assert(BC_QUIET_MAX_SAMPLES < BC_WIDTH_SAT, "longest quiet timeout must fit the duration counter");
+#endif
 _Static_assert(LINE_OFF_WHITE < LINE_ON_BLACK, "white threshold must be below black");
 _Static_assert(BC_BAR_OFF < BC_BAR_ON, "barcode hysteresis thresholds reversed");
 

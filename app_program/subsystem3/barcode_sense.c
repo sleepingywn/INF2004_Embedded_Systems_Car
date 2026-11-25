@@ -54,11 +54,32 @@ void bc_init(bc_capture_t *c)
 	c->active = false;
 	c->is_bar = false;
 	c->overflow = false;
+	c->widest = 0;
 }
 
 bool bc_active(const bc_capture_t *c)
 {
 	return c->active;
+}
+
+/* White this long after the last bar ends the capture.  Route profile: at
+ * least BC_QUIET_MS, and at least BC_QUIET_WIDEST x the longest element of
+ * this barcode, capped at BC_QUIET_MAX_MS.  Code 39 needs a quiet zone of
+ * >= 10 narrow widths, which is >= ~3.5 of its wide elements, so a white run
+ * 4x the widest element is past the barcode.  Car 25 Nov 2026: a bigger
+ * printed barcode driven at V5 speed had wide gaps up to 1483 ms, and the
+ * fixed 1.5 s ended both captures early (21 and 19 of 29 elements). */
+static uint32_t bc_quiet_samples(const bc_capture_t *c)
+{
+#ifdef BARCODE_WIDE
+	uint32_t q = (uint32_t)c->widest * BC_QUIET_WIDEST;
+	if (q < BC_QUIET_SAMPLES) q = BC_QUIET_SAMPLES;
+	if (q > BC_QUIET_MAX_SAMPLES) q = BC_QUIET_MAX_SAMPLES;
+	return q;
+#else
+	(void)c;
+	return BC_QUIET_SAMPLES;
+#endif
 }
 
 bool bc_feed(bc_capture_t *c, uint8_t n, bc_msg_t *out)
@@ -76,13 +97,14 @@ bool bc_feed(bc_capture_t *c, uint8_t n, bc_msg_t *out)
 			c->count = 0;
 			c->overflow = false;
 			c->run = 1;
+			c->widest = 0;
 		}
 		return false;
 	}
 
 	if (bar == c->is_bar) {			/* same colour: extend the run */
 		if (c->run < BC_WIDTH_SAT) c->run++;
-		if (!bar && c->run >= BC_QUIET_SAMPLES) {
+		if (!bar && c->run >= bc_quiet_samples(c)) {
 			/* long white after the last bar: barcode is over.
 			   The trailing white is not stored. */
 			return bc_finish(c, out);
@@ -91,6 +113,7 @@ bool bc_feed(bc_capture_t *c, uint8_t n, bc_msg_t *out)
 	}
 
 	/* Colour changed: the previous element is complete. */
+	if (c->run > c->widest) c->widest = c->run;
 	bc_push(c, c->run);
 	c->is_bar = bar;
 	c->run = 1;

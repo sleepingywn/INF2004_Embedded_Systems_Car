@@ -26,6 +26,7 @@ typedef struct {
 	bool		active;		/* capture in progress               */
 	bool		is_bar;		/* current run is a bar              */
 	bool		overflow;
+	bc_width_t	widest;		/* longest element so far (quiet scaling) */
 } bc_capture_t;
 
 void	bc_init(bc_capture_t *c);

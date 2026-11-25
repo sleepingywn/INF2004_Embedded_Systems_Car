@@ -46,6 +46,12 @@ def main():
                        cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
         print("PASS barcode replay (all logged track scans, no wrong letter)")
+        # End-of-capture time scales with the barcode's element size (25 Nov).
+        exe = str(Path(temp) / "quiet.exe")
+        subprocess.run(["gcc", *FLAGS, "-Iapp_program/subsystem3", "testing/subsystem3/barcode_quiet_test.c",
+                        "app_program/subsystem3/barcode_sense.c", "-o", exe], cwd=ROOT, check=True)
+        subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
+        print("PASS barcode quiet time (bigger barcode keeps all 29 elements)")
         # LINE_ROUTE requires LINE_ADAPTIVE.
         result = subprocess.run(["gcc", "-std=c11", "-DMOTION_LINE_ROUTE=1", "-I.", "-x", "c", "-fsyntax-only", "-"],
                                 cwd=ROOT, input='#include "app_program/subsystem2/motion_config.h"\n',

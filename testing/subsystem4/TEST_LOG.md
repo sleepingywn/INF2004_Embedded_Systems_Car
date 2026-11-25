@@ -95,6 +95,7 @@ Add a new row for every run. Never edit or delete old rows.
 | 2026-11-25 | S4-U12 | 00cb6cb | Andy | PASS | `logs/2026-11-25_hump_passes_lever78.txt` | Lever 78 mm, 10 mm hump driven under V5: 4 passes read 10.5 / 10.0 / 10.3 / 9.9 mm (peak tilt 7.3-7.7 deg), mean 10.2 mm, all within 0.5 mm. Two other passes ended on the hump with no S4 event (no LIFTED / IMU FAULT); the run stop came from S2 (GP20 retry offered, so the fault was at most IR / TIMEOUT / RANGE) |
 | 2026-11-25 | S4-U10 | 00cb6cb | Andy | PASS | `logs/2026-11-25_hump_and_lift_driving_lever78.txt` | Lift by hand during V5 runs: 5/5 detected, motors stopped each time (4x `LIFTED up +320..+406 mg`, 1x `rose while driving, then wheels stopped`); no false LIFTED on 6 hump passes in the same session |
 | 2026-11-25 | S4-U12 | 00cb6cb | Andy | PASS | `logs/2026-11-25_hump_and_lift_driving_lever78.txt` | 5 more hump passes: 10.1 / 10.6 / 10.1 / 10.6 / 10.3 mm. With the earlier 5: 10 passes, 9.9-10.7 mm, mean 10.3 mm on the 10 mm hump |
+| 2026-11-25 | S4-U12 | 00cb6cb | Andy | PASS | `logs/2026-11-25_hump_runs_3_lever78.txt` | 6 more hump passes: 10.4 / 10.2 / 10.2 / 10.0 / 10.1 / 9.7 mm. Total today 16 passes, 9.7-10.7 mm on the 10 mm hump. One more lift while driving detected (6/6 today). Several runs ended on or just after the hump with no S4 event (S2 stop, cause still open) |
 
 ## Bench evidence (before integration)
 

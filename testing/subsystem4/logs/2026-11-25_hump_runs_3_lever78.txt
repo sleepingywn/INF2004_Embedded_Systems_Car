@@ -1,0 +1,231 @@
+n: pitch -4.0 roll -5.0 tilt +6.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  ON_HUMP |a| 1001 mg  rise 0 mm/s  CLIMBING  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  ON_HUMP |a| 1006 mg  rise 0 mm/s  CLIMBING  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  ON_HUMP |a| 1000 mg  rise 0 mm/s  CLIMBING  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  ON_HUMP |a| 1006 mg  rise 0 mm/s  CLIMBING  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: motion ON_HUMP -> STOPPED  (v 0 mm/s, turn +0 dps)
+terrain: pitch -4.0 roll -5.0 tilt +6.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 996 mg  rise 0 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 996 mg  rise 1 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 1002 mg  rise 2 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 998 mg  rise 7 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 1001 mg  rise 1 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -3.5 roll -6.0 tilt +6.9  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 1105 mg  rise 15 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +1.0 roll +5.5 tilt +5.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 1038 mg  rise 146 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.5 tilt +0.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 959 mg  rise 35 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -0.5 roll +0.0 tilt +0.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 1003 mg  rise 24 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.3  v --  UNKNOWN |a| 1004 mg  rise 9 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 998 mg  rise 12 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 998 mg  rise 4 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPEDterrain: pitch +0.0 roll +0.0 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 1002 mg  rise 1 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+---- Sent utf8 encoded message: "t" ----
+terrain: pitch +0.0 roll +0.0 tilt +0.2  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 1005 mg  rise 0 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+[trace] epoch=39 id=32 count=64 first=0 end=8
+[trace] n=0 ms=1490 state=2 err=79 steer=58 step=1 age=5 flags=6 target=250,200 speed=418,406 duty=-97,64 tight=0 search=0 levels=32976 adaptive=0 reason=0
+[trace] n=1 ms=1590 state=1 err=49 steer=100 step=1 age=5 flags=6 target=0,400 speed=190,384 duty=0,81 tight=1 search=0 levels=33204 adaptive=0 reason=0
+[trace] n=2 ms=1690 state=1 err=-69 steer=-57 step=1 age=5 flags=6 target=200,250 speed=248,345 duty=-109,71 tight=0 search=0 levels=41600 adaptive=0 reason=0
+[trace] n=3 ms=1790 state=1 err=-60 steer=-100 step=1 age=5 flags=6 target=400,0 speed=355,268 duty=-119,0 tight=-1 search=0 levels=40577 adaptive=0 reason=0
+[trace] n=4 ms=1890 state=1 err=72 steer=47 step=1 age=5 flags=6 target=350,120 speed=361,119 duty=-114,91 tight=0 search=0 levels=32969 adaptive=0 reason=0
+[trace] n=5 ms=1990 state=1 err=50 steer=100 step=1 age=5 flags=6 target=0,320 speed=303,379 duty=0,79 tight=1 search=0 levels=33076 adaptive=0 reason=0
+[trace] n=6 ms=2090 state=1 err=-73 steer=-54 step=1 age=5 flags=6 target=160,250 speed=209,363 duty=-128,71 tight=0 search=0 levels=42112 adaptive=0 reason=0
+[trace] n=7 ms=2190 state=1 err=-39 steer=-97 step=1 age=5 flags=6 target=360,0 speed=398,291 duty=-126,0 tight=-1 search=0 levels=38018 adaptive=0 reason=0
+terrain: pitch +0.0 roll +0.0 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 1000 mg  rise 1 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.1  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +50 deg  STOPPED |a| 1002 mg  rise 0 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3337 us (read 1322, logic 2257)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+[line] GP20 TRACE queued=0
+[line] GP20 RESTART queued=0
+terrain: pitch -0.5 roll +0.0 tilt +0.6  v 7 mm/s  acc +7 mg  turn +1 dps  hdg +51 deg  STOPPED |a| 1031 mg  rise 6 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1470 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 21 mm/s, turn +0 dps)
+terrain: pitch +1.5 roll +0.0 tilt +1.7  v 25 mm/s  acc +0 mg  turn +1 dps  hdg +52 deg  STRAIGHT |a| 1007 mg  rise 40 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1501 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.3  v 27 mm/s  acc +0 mg  turn +0 dps  hdg +52 deg  STRAIGHT |a| 1018 mg  rise 74 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1502 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.1  v 18 mm/s  acc -4 mg  turn +0 dps  hdg +51 deg  STRAIGHT |a| 1024 mg  rise 40 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1502 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -1.5 roll -2.0 tilt +2.3  v 22 mm/s  acc -3 mg  turn +0 dps  hdg +52 deg  STRAIGHT |a| 989 mg  rise 37 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1502 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 17 mm/s, turn -3 dps)
+terrain: pitch -2.0 roll -3.0 tilt +3.6  v 20 mm/s  acc -4 mg  turn +0 dps  hdg +52 deg  STOPPED |a| 1061 mg  rise 19 mm/s  FLAT  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1502 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 20 mm/s, turn +2 dps)
+terrain: motion STRAIGHT -> STOPPED  (v 19 mm/s, turn -1 dps)
+terrain: HUMP ENTRY  pitch -3.0
+terrain: motion STOPPED -> ON_HUMP  (v 21 mm/s, turn -1 dps)
+terrain: pitch -3.0 roll -4.0 tilt +4.8  v 25 mm/s  acc +0 mg  turn +0 dps  hdg +52 deg  ON_HUMP |a| 1035 mg  rise 57 mm/s  CLIMBING  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1502 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -5.5 roll -5.5 tilt +7.7  v 27 mm/s  acc +0 mg  turn +0 dps  hdg +52 deg  ON_HUMP |a| 1048 mg  rise 34 mm/s  CLIMBING  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1502 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -3.5 roll -4.5 tilt +5.9  v 31 mm/s  acc -1 mg  turn +0 dps  hdg +52 deg  ON_HUMP |a| 991 mg  rise 25 mm/s  CLIMBING  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1510 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.0 tilt +3.7  v 27 mm/s  acc -1 mg  turn +0 dps  hdg +52 deg  ON_HUMP |a| 1048 mg  rise 24 mm/s  DESCENDING  humps 10  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1510 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: HUMP DETECTED (one-sided)  peak mm +10.4  peak tilt +7.7  highest mm +10.7  count 11
+terrain: motion ON_HUMP -> STRAIGHT  (v 25 mm/s, turn +0 dps)
+terrain: pitch -1.5 roll -0.5 tilt +1.4  v 23 mm/s  acc +0 mg  turn +0 dps  hdg +51 deg  STRAIGHT |a| 957 mg  rise 21 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1510 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch -1.0 roll -0.5 tilt +1.2  v 16 mm/s  acc -1 mg  turn +1 dps  hdg +52 deg  STRAIGHT |a| 1010 mg  rise 51 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1510 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +2.0 roll +0.0 tilt +1.8  v 36 mm/s  acc +4 mg  turn +1 dps  hdg +54 deg  STRAIGHT |a| 1032 mg  rise 61 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1510 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +2.0 roll -1.5 tilt +2.4  v 25 mm/s  acc +0 mg  turn +2 dps  hdg +57 deg  STRAIGHT |a| 1008 mg  rise 69 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1550 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 14 mm/s, turn +0 dps)
+terrain: pitch +2.5 roll -3.0 tilt +3.9  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +57 deg  STOPPED |a| 991 mg  rise 23 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2173 us  overruns 0  i2c err 0
+[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.
+terrain: pitch +1.5 roll +1.0 tilt +2.0  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +57 deg  STOPPED |a| 997 mg  rise 19 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +1.0 tilt +1.1  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +57 deg  STOPPED |a| 980 mg  rise 53 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2173 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.2  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +57 deg  STOPPED |a| 963 mg  rise 34 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2173 us  overruns 0  i2c err 0
+[line] GP20 TRACE queued=0
+[line] GP20 RESTART queued=0
+terrain: pitch -0.5 roll +0.0 tilt +0.6  v 24 mm/s  acc +0 mg  turn +1 dps  hdg +59 deg  STOPPED |a| 1055 mg  rise 25 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2242 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 23 mm/s, turn +0 dps)
+terrain: pitch +0.0 roll +0.5 tilt +0.6  v 27 mm/s  acc -2 mg  turn +0 dps  hdg +58 deg  STRAIGHT |a| 1003 mg  rise 19 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +1.0 roll +0.0 tilt +1.0  v 29 mm/s  acc +4 mg  turn +0 dps  hdg +58 deg  STRAIGHT |a| 981 mg  rise 23 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -1.5 roll -0.5 tilt +1.4  v 16 mm/s  acc -7 mg  turn +0 dps  hdg +59 deg  STRAIGHT |a| 1036 mg  rise 32 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 19 mm/s, turn +3 dps)
+terrain: motion STOPPED -> STRAIGHT  (v 22 mm/s, turn +3 dps)
+terrain: pitch -0.5 roll -2.0 tilt +2.2  v 18 mm/s  acc -4 mg  turn +0 dps  hdg +59 deg  STRAIGHT |a| 971 mg  rise 49 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 17 mm/s, turn +0 dps)
+terrain: pitch -1.0 roll -3.0 tilt +3.4  v 18 mm/s  acc -2 mg  turn +0 dps  hdg +59 deg  STOPPED |a| 944 mg  rise 44 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.5 tilt +4.1  v 25 mm/s  acc +8 mg  turn +0 dps  hdg +60 deg  STOPPED |a| 986 mg  rise 46 mm/s  FLAT  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 20 mm/s, turn +1 dps)
+terrain: motion STRAIGHT -> STOPPED  (v 19 mm/s, turn +0 dps)
+terrain: motion STOPPED -> STRAIGHT  (v 21 mm/s, turn +1 dps)
+terrain: HUMP ENTRY  pitch -3.9
+terrain: motion STRAIGHT -> ON_HUMP  (v 23 mm/s, turn +2 dps)
+terrain: pitch -2.5 roll -5.5 tilt +6.0  v 23 mm/s  acc +0 mg  turn +1 dps  hdg +61 deg  ON_HUMP |a| 992 mg  rise 63 mm/s  CLIMBING  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -3.0 roll -4.5 tilt +5.2  v 33 mm/s  acc -1 mg  turn +0 dps  hdg +60 deg  ON_HUMP |a| 1046 mg  rise 58 mm/s  CLIMBING  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 1556 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.0 tilt +3.7  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +60 deg  ON_HUMP |a| 998 mg  rise 15 mm/s  DESCENDING  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.
+terrain: pitch -2.0 roll -3.0 tilt +3.7  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +60 deg  ON_HUMP |a| 1001 mg  rise 4 mm/s  DESCENDING  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.0 tilt +3.7  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +60 deg  ON_HUMP |a| 998 mg  rise 4 mm/s  DESCENDING  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.0 tilt +3.7  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +60 deg  ON_HUMP |a| 1002 mg  rise 1 mm/s  DESCENDING  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.5 roll -2.0 tilt +3.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +60 deg  ON_HUMP |a| 1061 mg  rise 40 mm/s  DESCENDING  humps 11  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: HUMP DETECTED (one-sided)  peak mm +10.2  peak tilt +7.5  highest mm +10.7  count 12
+terrain: motion ON_HUMP -> STOPPED  (v 0 mm/s, turn +0 dps)
+terrain: pitch +2.0 roll +3.5 tilt +3.9  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +60 deg  STOPPED |a| 984 mg  rise 85 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.5 tilt +0.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +60 deg  STOPPED |a| 1009 mg  rise 48 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.5 tilt +0.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +61 deg  STOPPED |a| 1015 mg  rise 27 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -0.5 roll +0.5 tilt +0.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +61 deg  STOPPED |a| 997 mg  rise 26 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.5 tilt +0.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +61 deg  STOPPED |a| 1001 mg  rise 16 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 TRACE queued=0
+[line] GP20 RESTART queued=0
+terrain: motion STOPPED -> STRAIGHT  (v 22 mm/s, turn +0 dps)
+terrain: pitch +0.5 roll +0.0 tilt +0.5  v 27 mm/s  acc +0 mg  turn +0 dps  hdg +61 deg  STRAIGHT |a| 991 mg  rise 20 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.1  v 22 mm/s  acc -5 mg  turn +0 dps  hdg +62 deg  STRAIGHT |a| 1071 mg  rise 33 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.5 tilt +0.8  v 29 mm/s  acc +0 mg  turn +0 dps  hdg +61 deg  STRAIGHT |a| 1012 mg  rise 44 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -1.0 roll -1.0 tilt +1.4  v 25 mm/s  acc +0 mg  turn +0 dps  hdg +61 deg  STRAIGHT |a| 1022 mg  rise 27 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 19 mm/s, turn -1 dps)
+terrain: pitch -1.5 roll -3.5 tilt +3.9  v 20 mm/s  acc +0 mg  turn +0 dps  hdg +62 deg  STOPPED |a| 1073 mg  rise 45 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 20 mm/s, turn -1 dps)
+terrain: motion STRAIGHT -> STOPPED  (v 18 mm/s, turn +3 dps)
+terrain: pitch -2.5 roll -4.0 tilt +4.8  v 31 mm/s  acc +4 mg  turn +0 dps  hdg +62 deg  STRAIGHT |a| 1033 mg  rise 91 mm/s  FLAT  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 23 mm/s, turn +0 dps)
+terrain: HUMP ENTRY  pitch -3.9
+terrain: motion STRAIGHT -> ON_HUMP  (v 27 mm/s, turn +0 dps)
+terrain: pitch -4.0 roll -5.0 tilt +6.6  v 20 mm/s  acc -5 mg  turn +0 dps  hdg +62 deg  ON_HUMP |a| 1051 mg  rise 48 mm/s  CLIMBING  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.1  v 33 mm/s  acc +0 mg  turn +0 dps  hdg +62 deg  ON_HUMP |a| 974 mg  rise 9 mm/s  CLIMBING  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.0 tilt +3.7  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +62 deg  ON_HUMP |a| 1003 mg  rise 14 mm/s  DESCENDING  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.
+terrain: pitch -2.0 roll -3.0 tilt +3.6  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +62 deg  ON_HUMP |a| 997 mg  rise 11 mm/s  DESCENDING  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.0 tilt +3.6  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +62 deg  ON_HUMP |a| 1002 mg  rise 3 mm/s  DESCENDING  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -1.0 roll -2.5 tilt +2.9  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +62 deg  ON_HUMP |a| 981 mg  rise 2 mm/s  DESCENDING  humps 12  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: HUMP DETECTED (one-sided)  peak mm +10.2  peak tilt +7.5  highest mm +10.7  count 13
+terrain: motion ON_HUMP -> STOPPED  (v 0 mm/s, turn +0 dps)
+terrain: pitch -1.0 roll +3.0 tilt +3.0  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +62 deg  STOPPED |a| 963 mg  rise 136 mm/s  FLAT  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +1.0 tilt +1.2  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +62 deg  STOPPED |a| 1013 mg  rise 53 mm/s  FLAT  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.2  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +62 deg  STOPPED |a| 990 mg  rise 30 mm/s  FLAT  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 TRACE queued=0
+[line] GP20 RESTART queued=0
+terrain: pitch -0.5 roll +0.5 tilt +0.5  v 20 mm/s  acc +0 mg  turn +3 dps  hdg +65 deg  STOPPED |a| 1068 mg  rise 45 mm/s  FLAT  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 22 mm/s, turn +0 dps)
+terrain: pitch +1.0 roll +0.5 tilt +1.3  v 23 mm/s  acc -5 mg  turn +0 dps  hdg +65 deg  STRAIGHT |a| 1049 mg  rise 51 mm/s  FLAT  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.6  v 23 mm/s  acc +0 mg  turn +0 dps  hdg +65 deg  STRAIGHT |a| 1008 mg  rise 87 mm/s  FLAT  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.5 tilt +0.6  v 21 mm/s  acc +0 mg  turn +0 dps  hdg +65 deg  STOPPED |a| 1079 mg  rise 61 mm/s  FLAT  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 17 mm/s, turn +3 dps)
+terrain: motion STOPPED -> STRAIGHT  (v 20 mm/s, turn +0 dps)
+terrain: pitch -1.0 roll -1.5 tilt +1.7  v 27 mm/s  acc +0 mg  turn +0 dps  hdg +65 deg  STRAIGHT |a| 978 mg  rise 48 mm/s  FLAT  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: HUMP ENTRY  pitch -2.8
+terrain: motion STRAIGHT -> ON_HUMP  (v 25 mm/s, turn +0 dps)
+terrain: pitch -2.0 roll -3.0 tilt +3.7  v 18 mm/s  acc +0 mg  turn +0 dps  hdg +66 deg  ON_HUMP |a| 1025 mg  rise 38 mm/s  CLIMBING  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.5 roll -4.5 tilt +5.2  v 27 mm/s  acc +0 mg  turn +0 dps  hdg +66 deg  ON_HUMP |a| 961 mg  rise 31 mm/s  CLIMBING  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -4.5 roll -5.5 tilt +6.9  v 33 mm/s  acc +1 mg  turn +0 dps  hdg +67 deg  ON_HUMP |a| 1055 mg  rise 13 mm/s  CLIMBING  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -3.0 roll -4.0 tilt +5.3  v 29 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  ON_HUMP |a| 991 mg  rise 0 mm/s  CLIMBING  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.0 tilt +3.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  ON_HUMP |a| 1002 mg  rise 7 mm/s  DESCENDING  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.
+terrain: pitch -2.0 roll -3.0 tilt +3.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  ON_HUMP |a| 1001 mg  rise 4 mm/s  DESCENDING  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.0 tilt +3.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  ON_HUMP |a| 1005 mg  rise 27 mm/s  DESCENDING  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -3.0 tilt +3.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  ON_HUMP |a| 990 mg  rise 12 mm/s  DESCENDING  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -3.0 roll -2.0 tilt +3.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  ON_HUMP |a| 1037 mg  rise 84 mm/s  DESCENDING  humps 13  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: HUMP DETECTED (one-sided)  peak mm +10.0  peak tilt +7.3  highest mm +10.7  count 14
+terrain: motion ON_HUMP -> STOPPED  (v 0 mm/s, turn +0 dps)
+terrain: pitch +0.0 roll +2.5 tilt +2.7  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  STOPPED |a| 1011 mg  rise 91 mm/s  FLAT  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.5 tilt +0.6  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  STOPPED |a| 995 mg  rise 43 mm/s  FLAT  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.5 tilt +0.7  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  STOPPED |a| 1009 mg  rise 24 mm/s  FLAT  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +67 deg  STOPPED |a| 998 mg  rise 12 mm/s  FLAT  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 TRACE queued=0
+[line] GP20 RESTART queued=0
+terrain: pitch +0.5 roll +0.0 tilt +0.4  v 23 mm/s  acc +3 mg  turn +1 dps  hdg +68 deg  STOPPED |a| 976 mg  rise 15 mm/s  FLAT  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 22 mm/s, turn +0 dps)
+terrain: pitch -0.5 roll +0.0 tilt +0.3  v 23 mm/s  acc -3 mg  turn +0 dps  hdg +68 deg  STRAIGHT |a| 1002 mg  rise 31 mm/s  FLAT  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.3  v 27 mm/s  acc -3 mg  turn +0 dps  hdg +68 deg  STRAIGHT |a| 1003 mg  rise 48 mm/s  FLAT  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -1.0 roll -1.5 tilt +1.8  v 25 mm/s  acc +1 mg  turn +0 dps  hdg +69 deg  STRAIGHT |a| 996 mg  rise 32 mm/s  FLAT  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -3.5 roll -3.0 tilt +4.6  v 20 mm/s  acc -1 mg  turn +0 dps  hdg +68 deg  STRAIGHT |a| 1021 mg  rise 35 mm/s  FLAT  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: HUMP ENTRY  pitch -3.8
+terrain: motion STRAIGHT -> ON_HUMP  (v 23 mm/s, turn +0 dps)
+terrain: pitch -4.0 roll -5.0 tilt +6.4  v 25 mm/s  acc -4 mg  turn +1 dps  hdg +69 deg  ON_HUMP |a| 1023 mg  rise 40 mm/s  CLIMBING  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -3.0 roll -4.5 tilt +5.7  v 27 mm/s  acc +0 mg  turn +0 dps  hdg +70 deg  ON_HUMP |a| 986 mg  rise 17 mm/s  CLIMBING  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.5 roll -3.0 tilt +4.1  v 27 mm/s  acc -10 mg  turn +0 dps  hdg +70 deg  ON_HUMP |a| 987 mg  rise 36 mm/s  DESCENDING  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -1.0 roll -2.0 tilt +2.2  v 22 mm/s  acc -2 mg  turn +0 dps  hdg +70 deg  ON_HUMP |a| 1009 mg  rise 33 mm/s  DESCENDING  humps 14  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: HUMP DETECTED (one-sided)  peak mm +10.1  peak tilt +7.4  highest mm +10.7  count 15
+terrain: motion ON_HUMP -> STRAIGHT  (v 26 mm/s, turn +0 dps)
+terrain: pitch +0.5 roll -0.5 tilt +0.6  v 22 mm/s  acc -4 mg  turn +0 dps  hdg +70 deg  STRAIGHT |a| 915 mg  rise 25 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 19 mm/s, turn -2 dps)
+terrain: pitch +0.0 roll -0.5 tilt +0.4  v 16 mm/s  acc +0 mg  turn +0 dps  hdg +70 deg  STOPPED |a| 1019 mg  rise 66 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 22 mm/s, turn -1 dps)
+terrain: LIFTED  up +359 mg  rise 288 mm/s -> motors stopped
+terrain: motion STRAIGHT -> LIFTED  (v 34 mm/s, turn +5 dps)
+terrain: pitch +2.0 roll -1.5 tilt +2.6  v 0 mm/s  acc +0 mg  turn +1 dps  hdg +71 deg  LIFTED |a| 952 mg  rise 368 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.
+terrain: pitch +0.5 roll +0.0 tilt +0.7  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +71 deg  STOPPED |a| 963 mg  rise 0 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion LIFTED -> STOPPED  (v 0 mm/s, turn +0 dps)
+terrain: pitch +0.5 roll +2.0 tilt +2.0  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +71 deg  STOPPED |a| 1027 mg  rise 48 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +3.5 tilt +3.6  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +71 deg  STOPPED |a| 990 mg  rise 27 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +71 deg  STOPPED |a| 1023 mg  rise 67 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.0 roll +0.0 tilt +0.2  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +71 deg  STOPPED |a| 1000 mg  rise 31 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 TRACE queued=0
+[line] GP20 RESTART queued=0
+terrain: motion STOPPED -> STRAIGHT  (v 22 mm/s, turn +2 dps)
+terrain: pitch +0.5 roll +0.0 tilt +0.7  v 25 mm/s  acc +0 mg  turn +3 dps  hdg +75 deg  STRAIGHT |a| 1044 mg  rise 14 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.5 tilt +0.6  v 23 mm/s  acc -2 mg  turn +0 dps  hdg +75 deg  STRAIGHT |a| 964 mg  rise 52 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +1.0 roll -0.5 tilt +1.3  v 27 mm/s  acc +3 mg  turn +0 dps  hdg +75 deg  STRAIGHT |a| 982 mg  rise 55 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -1.5 roll -2.0 tilt +2.5  v 29 mm/s  acc +1 mg  turn +0 dps  hdg +75 deg  STRAIGHT |a| 1000 mg  rise 55 mm/s  FLAT  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: HUMP ENTRY  pitch -2.4
+terrain: pitch -2.5 roll -3.5 tilt +4.3  v 23 mm/s  acc +5 mg  turn +0 dps  hdg +76 deg  ON_HUMP |a| 1117 mg  rise 62 mm/s  CLIMBING  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> ON_HUMP  (v 22 mm/s, turn +0 dps)
+terrain: pitch -4.0 roll -5.5 tilt +6.7  v 31 mm/s  acc +4 mg  turn +0 dps  hdg +77 deg  ON_HUMP |a| 1020 mg  rise 33 mm/s  CLIMBING  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -1.5 roll -5.0 tilt +5.1  v 14 mm/s  acc +4 mg  turn -1 dps  hdg +76 deg  ON_HUMP |a| 1025 mg  rise 24 mm/s  CLIMBING  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -1.5 roll -3.0 tilt +3.5  v 29 mm/s  acc +0 mg  turn +1 dps  hdg +77 deg  ON_HUMP |a| 971 mg  rise 36 mm/s  DESCENDING  humps 15  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: HUMP DETECTED (one-sided)  peak mm +9.7  peak tilt +7.2  highest mm +10.7  count 16
+terrain: motion ON_HUMP -> STRAIGHT  (v 21 mm/s, turn -3 dps)
+terrain: pitch -0.5 roll -2.0 tilt +2.2  v 12 mm/s  acc +0 mg  turn +0 dps  hdg +77 deg  STRAIGHT |a| 947 mg  rise 23 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 19 mm/s, turn +2 dps)
+terrain: motion STOPPED -> STRAIGHT  (v 21 mm/s, turn +0 dps)
+terrain: pitch +0.0 roll +0.0 tilt +0.3  v 23 mm/s  acc -1 mg  turn +0 dps  hdg +77 deg  STRAIGHT |a| 1001 mg  rise 77 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.0 tilt +0.4  v 25 mm/s  acc -3 mg  turn +0 dps  hdg +77 deg  STRAIGHT |a| 1031 mg  rise 59 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +1.5 roll +0.0 tilt +1.4  v 33 mm/s  acc +0 mg  turn +0 dps  hdg +78 deg  STRAIGHT |a| 980 mg  rise 60 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +1.5 roll +1.0 tilt +1.7  v 23 mm/s  acc -1 mg  turn -2 dps  hdg +76 deg  STRAIGHT |a| 983 mg  rise 92 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 14 mm/s, turn +0 dps)
+terrain: pitch +1.5 roll -0.5 tilt +1.5  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +76 deg  STOPPED |a| 997 mg  rise 18 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.
+terrain: pitch +3.0 roll +2.5 tilt +4.0  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +76 deg  STOPPED |a| 994 mg  rise 1 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +1.0 roll +0.5 tilt +1.1  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +76 deg  STOPPED |a| 988 mg  rise 51 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -0.5 roll +0.0 tilt +0.4  v 0 mm/s  acc +0 mg  turn +1 dps  hdg +77 deg  STOPPED |a| 1028 mg  rise 14 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 TRACE queued=0
+[line] GP20 RESTART queued=0
+terrain: pitch +0.0 roll +0.0 tilt +0.2  v --  UNKNOWN |a| 1000 mg  rise 18 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> UNKNOWN  (v 0 mm/s, turn +0 dps)
+terrain: motion UNKNOWN -> STOPPED  (v 5 mm/s, turn +2 dps)
+terrain: motion STOPPED -> STRAIGHT  (v 21 mm/s, turn +0 dps)
+terrain: pitch -0.5 roll +0.0 tilt +0.4  v 22 mm/s  acc +0 mg  turn +0 dps  hdg +77 deg  STRAIGHT |a| 1042 mg  rise 36 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch +0.5 roll +0.5 tilt +0.8  v 25 mm/s  acc -4 mg  turn +0 dps  hdg +77 deg  STRAIGHT |a| 1102 mg  rise 27 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STRAIGHT -> STOPPED  (v 19 mm/s, turn +1 dps)
+terrain: pitch +1.0 roll +0.0 tilt +0.8  v 22 mm/s  acc +0 mg  turn +0 dps  hdg +77 deg  STRAIGHT |a| 947 mg  rise 93 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: motion STOPPED -> STRAIGHT  (v 22 mm/s, turn -1 dps)
+terrain: motion STRAIGHT -> STOPPED  (v 18 mm/s, turn -2 dps)
+terrain: motion STOPPED -> STRAIGHT  (v 21 mm/s, turn +0 dps)
+terrain: pitch -2.5 roll -1.5 tilt +2.9  v 27 mm/s  acc +0 mg  turn +0 dps  hdg +77 deg  STRAIGHT |a| 1032 mg  rise 82 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -2.0 roll -2.5 tilt +3.3  v 23 mm/s  acc -1 mg  turn +0 dps  hdg +78 deg  STRAIGHT |a| 941 mg  rise 54 mm/s  FLAT  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: HUMP ENTRY  pitch -3.0
+terrain: motion STRAIGHT -> ON_HUMP  (v 25 mm/s, turn +0 dps)
+terrain: pitch -3.5 roll -5.5 tilt +6.3  v 25 mm/s  acc -2 mg  turn +0 dps  hdg +77 deg  ON_HUMP |a| 1023 mg  rise 11 mm/s  CLIMBING  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +77 deg  ON_HUMP |a| 991 mg  rise 37 mm/s  CLIMBING  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+[line] GP20 retry ready: release, then press/release for another run; previous history retained until retry.
+terrain: pitch -3.5 roll -5.0 tilt +6.3  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +77 deg  ON_HUMP |a| 998 mg  rise 32 mm/s  CLIMBING  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +77 deg  ON_HUMP |a| 1006 mg  rise 6 mm/s  CLIMBING  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+terrain: pitch -4.0 roll -5.0 tilt +6.4  v 0 mm/s  acc +0 mg  turn +0 dps  hdg +77 deg  ON_HUMP |a| 1001 mg  rise 1 mm/s  CLIMBING  humps 0  highest 11 mm  | exec max 3656 us (read 1322, logic 2647)  slow 0  print max 2305 us  jitter max 2365 us  overruns 0  i2c err 0
+---- Closed the serial port COM5 ----

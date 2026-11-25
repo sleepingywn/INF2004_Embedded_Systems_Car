@@ -14,6 +14,7 @@ static unsigned settings_reboots;
 void route_settings_reboot(const uint8_t map[26]) { (void)map; ++settings_reboots; }
 void route_settings_boot(void) {}
 #include "../../app_program/subsystem2/motion.c"
+volatile uint32_t s4_hump_seen_ms;   /* S4 hump hint (s4_hump_hint.h): never set in these tests */
 #undef memset
 #undef memcpy
 

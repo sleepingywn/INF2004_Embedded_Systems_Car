@@ -5,6 +5,7 @@
 #include <setjmp.h>
 #include "motion_host_shim.h"
 #include "../../app_program/subsystem2/motion.c"
+volatile uint32_t s4_hump_seen_ms;   /* S4 hump hint (s4_hump_hint.h): never set in these tests */
 #undef memset
 #undef memcpy
 static jmp_buf done;

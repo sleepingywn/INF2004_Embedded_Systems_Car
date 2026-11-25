@@ -31,6 +31,7 @@ typedef enum {
 } line_adaptive_mode_t;
 typedef struct {
     bool initialized, visible, uncertain, confirming, route_blocked;
+    bool on_hump;          /* set by motion.c from S4 each cycle (s4_hump_hint.h) */
     line_crossing_t crossing;
     line_stop_reason_t stop_reason;
     bool paused[2];
@@ -92,7 +93,7 @@ static inline line_adaptive_output_t line_adaptive_step(line_adaptive_t *s,
      * Replenish the encounter budget only after one eye is clearly white. */
     unsigned minimum=left<right ? left:right;
     bool clear_line=visible && maximum>=c->seen_enter && minimum<=c->seen_leave;
-    line_crossing_result_t crossing=line_crossing_step(&s->crossing,black,clear_line,now,l,r,
+    line_crossing_result_t crossing=line_crossing_step(&s->crossing,black,clear_line,s->on_hump,now,l,r,
         &crossing_left,&crossing_right);
     if(crossing==CROSS_FAILED)
         return la_stop(s,LINE_ADAPT_CROSSING_FAILED,s->crossing.reason);

@@ -15,6 +15,7 @@
 #include "motion_logic.h"
 #include "drv_motor.h"
 #include "drv_encoder.h"
+#include "../subsystem4/s4_hump_hint.h"
 #include <limits.h>
 #define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
 #define memcpy __builtin_memcpy
@@ -1436,6 +1437,9 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
         if(route_step(now,line,line_ms,line_epoch,have_line,levels))return;
 #endif
         line_trial.observed_levels=levels; /* also record input if encoder snapshot is missing */
+#if MOTION_LINE_ADAPTIVE
+        line_trial.adaptive.on_hump=s4_hump_recent(now); /* tilted sensors read black on the hump */
+#endif
         unsigned prior_pause_mask=line_pause_eligible(&line_trial);
         line_step_t result=state.raw_valid ? line_follow_step_observed(&line_trial,
             state.left_count,state.right_count,state.invalid_edges,state.time_ms,now,

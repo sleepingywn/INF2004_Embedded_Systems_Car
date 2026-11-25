@@ -18,6 +18,7 @@
 #include "imu_logic.h"
 #include "../subsystem2/motion_logic.h"
 #include "../subsystem2/motion.h"	/* IF-09: Buddy 2's wheel encoder counts */
+#include "s4_hump_hint.h"		/* tells V5 the car is on a hump */
 
 #define FAULT_AFTER	5	/* failed reads in a row -> IMU fault (100 ms) */
 #define REINIT_EVERY	50	/* while faulted, retry the sensor every 1 s   */
@@ -26,6 +27,7 @@
 #define PRINT_EVERY	50	/* status line every 50 x 20 ms = 1 s          */
 
 EXPORT volatile BOOL s4_status_print = TRUE;	/* status line on/off */
+volatile uint32_t s4_hump_seen_ms;		/* s4_hump_hint.h */
 #define MTX_WAIT_MS	2	/* rounded by the kernel tick; not a 2 ms wall-time bound */
 
 EXPORT S4_DIAG	s4_diag;
@@ -550,6 +552,12 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			logic_start = now_us();
 			ev = imu_logic_update(&logic, map_axes(&raw), dt, dist, acc_g);
 			s4_diag.accel_mag_mg = (INT)(logic.accel_mag_g * 1000.0f);
+			/* On a hump the tilted line sensors read black: tell V5 so it
+			   does not take it for a wide black mark (s4_hump_hint.h). */
+			if (logic.calibrated && !logic.lifted && logic.hump_state != HUMP_FLAT) {
+				uint32_t t = motion_now_ms();
+				s4_hump_seen_ms = t ? t : 1u;
+			}
 
 			/* B4-FR11: classify on ~0.2 s smoothed wheel speed and turn */
 			if (wheel_ok && dt > 0.0f) {

@@ -55,8 +55,38 @@ static void crossing(uint32_t start)
     o=line_adaptive_step(&s,line_levels_pack(80,5),start+100,20,900,900);
     assert(o.mode==LINE_ADAPT_CROSSING_FAILED && s.stop_reason==LINE_STOP_CROSSING_DISTANCE);
 }
+/* Car 25 Nov 2026: on the hump the tilted sensors read black on both sides.
+ * With S4's hump hint the mark limits are skipped; the crossing time and
+ * distance limits still stop a car that stays blind. */
+static void hump(uint32_t start)
+{
+    line_adaptive_t s={0};line_adaptive_output_t o;
+    s.on_hump=true;
+    o=line_adaptive_step(&s,line_levels_pack(90,90),start,20,0,0);
+    for(unsigned t=20;t<=800;t+=20) {           /* 600 counts black: > mark, < total */
+        o=line_adaptive_step(&s,line_levels_pack(90,90),start+t,20,(int32_t)(t*3/4),(int32_t)(t*3/4));
+        assert(o.mode==LINE_ADAPT_CROSSING);
+    }
+    s.on_hump=false;                             /* back on flat, line seen again */
+    for(unsigned t=820;t<=920;t+=20)
+        o=line_adaptive_step(&s,line_levels_pack(5,60),start+t,20,610,610);
+    assert(o.mode==LINE_ADAPT_TRACK && !s.crossing.active);
+
+    s=(line_adaptive_t){0};s.on_hump=true;        /* still blind at 900 counts: stop */
+    o=line_adaptive_step(&s,line_levels_pack(90,90),start,20,0,0);
+    o=line_adaptive_step(&s,line_levels_pack(90,90),start+100,20,500,500);
+    assert(o.mode==LINE_ADAPT_CROSSING);
+    o=line_adaptive_step(&s,line_levels_pack(90,90),start+200,20,900,900);
+    assert(o.mode==LINE_ADAPT_CROSSING_FAILED && s.stop_reason==LINE_STOP_CROSSING_DISTANCE);
+
+    s=(line_adaptive_t){0};                       /* same input without the hint: mark stop */
+    o=line_adaptive_step(&s,line_levels_pack(90,90),start,20,0,0);
+    o=line_adaptive_step(&s,line_levels_pack(90,90),start+100,20,500,500);
+    assert(o.mode==LINE_ADAPT_CROSSING_FAILED && s.stop_reason==LINE_STOP_MARK_DISTANCE);
+}
 int main(void)
 {
+    hump(0);hump(UINT32_MAX-1000);
     crossing(0);crossing(UINT32_MAX-1000);
     puts("PASS crossing: bounded advance/reacquisition, non-renewing budgets, reason codes, clock wrap");
 }

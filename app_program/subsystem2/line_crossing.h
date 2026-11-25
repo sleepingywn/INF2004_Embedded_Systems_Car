@@ -26,8 +26,12 @@ typedef struct {
     int32_t origin[2];
     line_stop_reason_t reason;
 } line_crossing_t;
+/* on_hump: S4 sees the car on a hump (s4_hump_hint.h).  The tilt lifts the
+ * line sensors and they read black, which is not a wide black mark, so the
+ * two mark limits are skipped.  The crossing time and distance limits still
+ * apply: the car never drives blind without a bound. */
 static inline line_crossing_result_t line_crossing_step(line_crossing_t *s,
-        bool black,bool visible,uint32_t now,int32_t l,int32_t r,int32_t *lt,int32_t *rt)
+        bool black,bool visible,bool on_hump,uint32_t now,int32_t l,int32_t r,int32_t *lt,int32_t *rt)
 {
     const line_crossing_config_t *c=&line_crossing_config;
     if(s->reason)return CROSS_FAILED;
@@ -42,8 +46,8 @@ static inline line_crossing_result_t line_crossing_step(line_crossing_t *s,
      * the allowance. A whole new encounter requires confirmed clear line. */
     if(elapsed>=c->total_ms)s->reason=LINE_STOP_CROSSING_TIME;
     else if(travel>=(int32_t)c->total_counts)s->reason=LINE_STOP_CROSSING_DISTANCE;
-    else if(black && elapsed>=c->mark_ms)s->reason=LINE_STOP_MARK_TIME;
-    else if(black && travel>=(int32_t)c->mark_counts)s->reason=LINE_STOP_MARK_DISTANCE;
+    else if(black && !on_hump && elapsed>=c->mark_ms)s->reason=LINE_STOP_MARK_TIME;
+    else if(black && !on_hump && travel>=(int32_t)c->mark_counts)s->reason=LINE_STOP_MARK_DISTANCE;
     if(s->reason)return CROSS_FAILED;
     if(!black && visible) {
         if(!s->clear_pending){s->clear_pending=true;s->clear_since=now;}

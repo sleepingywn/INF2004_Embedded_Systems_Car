@@ -474,9 +474,11 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 
 		/* Frozen data (seen 18 Nov 2026 on the car: |a| stuck at
 		   2592 mg, i2c err 0) is a sensor fault, not a lift.  Drop the
-		   calibration and the LIFTED latch (both built on bad data),
-		   re-initialise the chip and recalibrate once it reads again.
-		   This way a stuck sensor cannot keep the motors off. */
+		   LIFTED latch and the filter (both built on bad data) and
+		   re-initialise the chip.  A stuck sensor cannot keep the motors
+		   off.  The mounting calibration and the run's highest hump are
+		   kept: recalibrating while driving would give a wrong level
+		   reference, and FR5 reports the highest hump since boot. */
 		if (got) {
 			if (raw.x == last_raw.x && raw.y == last_raw.y && raw.z == last_raw.z) {
 				same_run++;
@@ -488,8 +490,8 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 				same_run = 0;
 				got = FALSE;
 				fault = TRUE;
-				imu_logic_init(&logic, &cfg);
-				announced_cal = FALSE;
+				imu_logic_sensor_restart(&logic);
+				if (!logic.calibrated) announced_cal = FALSE;
 				motion_now = motion_shown = IMU_MOTION_UNKNOWN;
 				record_event(S4_EV_IMU_FAULT, 2);
 				tk_set_flg(flg_terrain, S4_EVT_IMU_FAULT);

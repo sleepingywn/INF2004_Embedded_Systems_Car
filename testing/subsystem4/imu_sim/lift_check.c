@@ -185,5 +185,32 @@ int main(void)
     hold(2.0f, 0, 0, 0);
     assert(lifted_events == 0);
     puts("PASS 14: drive then stop -> no LIFTED");
+
+    /* 15. Frozen-IMU restart while the car is tilted 6 deg (on the hump):
+     *     calibration, highest hump and count are kept, the LIFTED latch is
+     *     dropped, and back on level ground the car reads level again (a
+     *     recalibration on the tilt would read about -6 deg here). */
+    start();
+    s.wheels_moving = true; s.wheel_speed_mm_s = 27.0f;
+    s.highest_hump_peak_mm = 11.5f; s.current_hump_peak_mm = 11.5f; s.hump_count = 2;
+    hold(1.0f, 6.0f, 0, 0.66f);                               /* on the hump */
+    s.lifted = true;                                          /* latch set on bad data */
+    imu_logic_sensor_restart(&s);
+    assert(s.calibrated && !s.lifted);
+    assert(s.highest_hump_peak_mm == 11.5f && s.hump_count == 2);
+    hold(1.0f, 6.0f, 0, 0.66f);                               /* still on the hump */
+    hold(2.0f, 0.0f, 0, 0.66f);                               /* back on level ground */
+    assert(fabsf(s.pitch_deg) < 0.5f && fabsf(s.roll_deg) < 0.5f);
+    assert(s.hump_count == 2 && lifted_events == 0);
+    /* restart before calibration finished: calibration starts over */
+    {
+        imu_config_t cfg;
+        imu_logic_default_config(&cfg);
+        imu_logic_init(&s, &cfg);
+        for (int i = 0; i < 50; i++) { imu_accel_t a = {0, 0, 1.0f}; imu_logic_update(&s, a, 0.02f, 0, 0); }
+        imu_logic_sensor_restart(&s);
+        assert(!s.calibrated && s.cal_n == 0);
+    }
+    puts("PASS 15: IMU restart keeps calibration and highest hump, drops the LIFTED latch");
     return 0;
 }

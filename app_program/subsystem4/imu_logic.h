@@ -168,6 +168,10 @@ void     imu_logic_init(imu_logic_t *s, const imu_config_t *cfg);
 uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
                           float dist_delta_mm, float motion_accel_g);
 
+/* Sensor chip re-initialised after a fault: keep the calibration and the
+ * run's hump results, drop the filter, hump in progress and lift latch. */
+void     imu_logic_sensor_restart(imu_logic_t *s);
+
 /* START / RESET command: new run, clear the highest hump (B4-FR10). */
 void     imu_logic_reset_run(imu_logic_t *s);
 

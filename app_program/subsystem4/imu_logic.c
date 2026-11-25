@@ -59,6 +59,36 @@ void imu_logic_init(imu_logic_t *s, const imu_config_t *cfg)
     s->rise_age = s->spin_age = 1e3f;   /* nothing seen yet */
 }
 
+/* After the sensor chip is re-initialised (frozen readings), the mounting
+ * is unchanged, so the boot calibration still holds.  Recalibrating here
+ * would happen while the car may be driving or on the hump and would bake
+ * that tilt into the reference.  Keep the calibration and this run's hump
+ * results (FR5: highest hump since boot); drop everything built on the bad
+ * data: the filter, a hump in progress, the lift detector and the LIFTED
+ * latch.  The filter restarts level; a new hump must start from flat. */
+void imu_logic_sensor_restart(imu_logic_t *s)
+{
+    if (!s->calibrated) {               /* fault during calibration: start over */
+        imu_config_t cfg = s->cfg;
+        imu_logic_init(s, &cfg);
+        return;
+    }
+    imu_logic_t keep = *s;
+    imu_logic_init(s, &keep.cfg);
+    s->calibrated = true;
+    s->t        = keep.t;
+    s->pitch0   = keep.pitch0;
+    s->roll0    = keep.roll0;
+    memcpy(s->rot, keep.rot, sizeof(s->rot));
+    s->rot_ok   = keep.rot_ok;
+    s->scale    = keep.scale;
+    s->filt.fwd = 0.0f; s->filt.side = 0.0f; s->filt.up = 1.0f;
+    s->highest_hump_peak_mm = keep.highest_hump_peak_mm;
+    s->current_hump_peak_mm = keep.current_hump_peak_mm;
+    s->hump_count           = keep.hump_count;
+    s->rearm_needed         = true;     /* next hump only after a flat reading */
+}
+
 void imu_logic_reset_run(imu_logic_t *s)
 {
     s->highest_hump_peak_mm = 0.0f;

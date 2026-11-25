@@ -19,7 +19,7 @@ void imu_logic_default_config(imu_config_t *c)
     c->hump_exit_deg          = 1.5f;
     c->hump_hold_s            = 0.10f;
     c->hump_timeout_s         = 10.0f;   /* a slow hand push kept the wheel on the hump ~5 s */
-    c->hump_lever_mm          = 98.0f;   /* calibrated 2026-10-31: wheel on the 11.5 mm hump -> total tilt 6.75 deg (S4-U18) */
+    c->hump_lever_mm          = 78.0f;   /* calibrated 2026-11-25 (S4-U18): right wheel on the 10 mm hump, car still -> total tilt 7.35 deg; 10 / sin(7.35) = 78 (was 98 from an assumed 11.5 mm hump at 6.75 deg) */
     c->tilt_deg               = 25.0f;
     /* Lift / overturn (12 Nov 2026).  First car test: a quick hand lift
      * peaked at +0.203 g (just over the first 0.20 g value) and a gentler

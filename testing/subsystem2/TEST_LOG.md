@@ -10,6 +10,9 @@ Define a test here before running it. Test IDs never change.
 
 | ID | What is tested | Requirement / interface | Method | Steps / how | Expected result |
 |---|---|---|---|---|---|
+| 2026-11-26 (indexed) | M13 | Unverified | SE08 | Partial | [0:31](https://youtu.be/IBY-M7DeD0M?t=31) | Dashboard Start/Stop and an onboard restart are shown in separate runs. Stop latency was not measured. |
+| 2026-11-26 (indexed) | M11 | Unverified | SE08 | Two example passes | [0:48](https://youtu.be/IBY-M7DeD0M?t=48) | Opposite bends shown. The video does not establish all repetitions or the speed comparison. |
+| 2026-11-26 (indexed) | M12 | Unverified | SE08 | Return-line run observed | [2:00](https://youtu.be/IBY-M7DeD0M?t=120) | The robot pivots at the junction and returns along the incoming line. Missing-line trial not shown. |
 | S2-U01 | sample values stay within 0..100 | | auto | `subsystem2_test.c` | `[TEST] S2-U01 PASS` |
 | S2-U02 | free slots and free blocks within pool size | IF-02 | auto | `subsystem2_test.c` | `[TEST] S2-U02 PASS` |
 | S2-U03 | quadrature direction, stable input and impossible transition | B2-FR2 | auto, pure logic | `motion_logic_cases.h`, host or TEST=1 | +4/-4 per complete x4 cycle; impossible transition flagged |

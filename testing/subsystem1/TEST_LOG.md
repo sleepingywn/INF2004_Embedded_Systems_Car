@@ -24,3 +24,5 @@ Add a new row for every run. Never edit or delete old rows.
 | Date | Test ID | Commit | Tester | Result | Log / evidence | Notes |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | S1-U01 | `abc1234` | | PASS / FAIL | `logs/YYYY-MM-DD_….txt` | |
+| 2026-11-26 (indexed) | B1-01 / B1-10 | Unverified | SE08 | Startup observed | [0:00](https://youtu.be/IBY-M7DeD0M?t=0) | Dashboard comes online. Team confirmed battery-only operation; boot-ID continuity and tilt response are unverified. |
+| 2026-11-26 (indexed) | B1-07 | `ee763d4` (dashboard) | SE08 | PASS (4/4, host) | [0:20](https://youtu.be/IBY-M7DeD0M?t=20) | Recorded dashboard decoder tests. Uses simulated packets. |

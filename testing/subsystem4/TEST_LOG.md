@@ -10,6 +10,9 @@ Define a test here before running it. Test IDs never change.
 
 | ID | What is tested | Requirement / interface | Method | Steps / how | Expected result |
 |---|---|---|---|---|---|
+| 2026-11-26 (indexed) | S4-U12 | Unverified | SE08 | Hump events observed | [2:46](https://youtu.be/IBY-M7DeD0M?t=166) | Dashboard advances to one hump and 13 mm. Separate USB footage reports a 9.9 mm peak. |
+| 2026-11-26 (indexed) | S4-U10 | Unverified | SE08 | Lift and overturn stops observed | [3:29](https://youtu.be/IBY-M7DeD0M?t=209) | Serial stop reports accompany the lift and the overturn ([3:54](https://youtu.be/IBY-M7DeD0M?t=234)). |
+| 2026-11-26 (indexed) | S4-U19 | Unverified | SE08 | Partial | [3:41](https://youtu.be/IBY-M7DeD0M?t=221) | Serial heading reaches +82 degrees. A measured reference angle is unavailable. |
 | S4-U01 | `flg_terrain` and `mtx_terrain` exist | IF-06, IF-07 | auto | `subsystem4_test.c` | `[TEST] S4-U01 PASS` |
 | S4-U02 | terrain_task runs every 20 ms (≥ 140 cycles in 3 s) | timing (C03) | auto | `subsystem4_test.c` | `[TEST] S4-U02 PASS` |
 | S4-U03 | no overruns | timing (C03) | auto | `subsystem4_test.c` | `[TEST] S4-U03 PASS` |

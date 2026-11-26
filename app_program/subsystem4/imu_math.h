@@ -6,7 +6,7 @@
  *  sqrtf / atan2f / sinf are not available.  These replacements are
  *  self-contained, so subsystem 4 does not have to change the shared
  *  makefile.  Checked against libm on the laptop
- *  (testing/subsystem4/imu_sim/math_check.c):
+ *  (testing/subsystem4/checks/math_check.c):
  *    imu_sqrtf   relative error < 1e-6
  *    imu_atan2f  error < 1e-5 rad (0.001 deg)
  *    imu_sinf    error < 1e-6

@@ -33,7 +33,7 @@ The ordinary command FIFO and safety state are included in the updated footprint
 
 The route, adaptive steering, IR handoff, barcode replay, remote control, flash journal and telemetry suites passed. The dashboard passed 33 tests. Ubuntu GCC passed 16 synthetic lift/run-reset checks, terrain packing and math checks. Its synthetic full-width hump measured 18.9 mm for a 19.9 mm input. The Windows GCC lift suite reproduced an existing failure on both revisions. Case 7 missed the simulated 0.03 g slow lift with stationary wheels under the Windows noise sequence. Real pickup sensitivity is still open.
 
-Physical wheel calibration, maximum 2 ms release jitter, 20 ms STOP-to-safe-output latency, 5-degree turn accuracy, watchdog reset and stopping distance require instrumented robot trials. A zero-duty host assertion establishes the software command only. The target linker emitted the existing RWX LOAD-segment warning on both builds. Run commands for the host suites and Ubuntu terrain simulators are in [BARR_C_SIMULATION.md](BARR_C_SIMULATION.md).
+Physical wheel calibration, maximum 2 ms release jitter, 20 ms STOP-to-safe-output latency, 5-degree turn accuracy, watchdog reset and stopping distance require instrumented robot trials. A zero-duty host assertion establishes the software command only. The target linker emitted the existing RWX LOAD-segment warning on both builds. See the [A0 build command](../../build_make/BUILD_A0.md) and [terrain test instructions](../subsystem4/README.md).
 
 ## Submitted Tribunal 1 follow-up
 

@@ -1,8 +1,7 @@
 /* lift_check.c - laptop check of the lift / overturn detector (imu_logic.c).
  *   gcc -O2 -Wall -I../../../app_program/subsystem4 -o lift_check lift_check.c \
  *       ../../../app_program/subsystem4/imu_logic.c -lm && ./lift_check
- * Synthetic 50 Hz data in car axes (g).  Lift = 0.15 g check OR slow-lift sum. The real hump pass is checked with
- *   ./imu_sim --g ../logs/2026-10-31_A8_hump_pass.csv   (no LIFTED expected)
+ * Synthetic 50 Hz data in car axes (g).  Lift = 0.15 g check OR slow-lift sum.
  */
 #include <assert.h>
 #include <math.h>

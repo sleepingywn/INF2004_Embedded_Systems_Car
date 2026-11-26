@@ -6,7 +6,7 @@
  *
  * It does NOT talk to any hardware. It only receives numbers.
  * That is what lets the same file run:
- *   - on a laptop with phone-recorded data   (imu_sim.c)
+ *   - on a laptop with test inputs          (lift_check.c)
  *   - on the Pico with real GY-511 readings  (drv_gy511.c, terrain task)
  *
  * Units used everywhere in this file:

@@ -35,7 +35,7 @@
  *  the lock and copied in one assignment.
  *
  *  Plain C (no kernel calls), so the laptop test can check it too:
- *  testing/subsystem4/imu_sim/pack_check.c
+ *  testing/subsystem4/checks/pack_check.c
  */
 
 #ifndef TERRAIN_PACK_H

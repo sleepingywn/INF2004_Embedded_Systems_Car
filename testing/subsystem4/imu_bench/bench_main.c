@@ -7,7 +7,7 @@
  * Keys (type into the serial monitor):
  *   h  help                 s  I2C scan
  *   n  normal status view   r  raw axis view (for axis mapping)
- *   c  CSV log (copy into a .csv and replay with ./imu_sim --g file.csv)
+ *   c  CSV log (capture the output to a .csv file)
  *   m  toggle "pretend moving" (hump detection only runs while moving)
  *   z  restart: recalibrate (keep still 2 s) and clear the run
  */

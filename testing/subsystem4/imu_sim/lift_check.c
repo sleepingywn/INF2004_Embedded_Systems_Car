@@ -16,6 +16,7 @@ static float noise(void) { return ((float)rand() / RAND_MAX - 0.5f) * 0.02f; }
 static imu_logic_t s;
 static unsigned lifted_events, by_tilt_events;
 static float t;
+static unsigned noise_seed = 7;
 
 static void start(void)
 {
@@ -24,7 +25,7 @@ static void start(void)
     imu_logic_init(&s, &cfg);
     lifted_events = by_tilt_events = 0;
     t = 0.0f;
-    srand(7);
+    srand(noise_seed);
     for (int i = 0; i < 110; i++) {            /* 2.2 s still and level: calibrate */
         imu_accel_t a = {noise(), noise(), 1.0f + noise()};
         imu_logic_update(&s, a, 0.02f, 0.0f, 0.0f);
@@ -41,8 +42,10 @@ static void step(float pitch_deg, float up_extra_g, float dist_mm)
     if (ev & IMU_EVT_LIFTED) {
         lifted_events++;
         if (s.lift_by_tilt) by_tilt_events++;
-        printf("  [%6.2f s] LIFTED %s up %+.2f g tilt %.1f deg\n", t,
+        if (noise_seed == 7) {
+            printf("  [%6.2f s] LIFTED %s up %+.2f g tilt %.1f deg\n", t,
                s.lift_by_tilt ? "(overturned)" : "(lifted)", s.lift_peak_up_g, s.tilt_total_deg);
+        }
     }
     t += 0.02f;
 }
@@ -232,5 +235,28 @@ int main(void)
     assert(s.hump_state == HUMP_FLAT && s.hump_count == 1 && s.highest_hump_peak_mm == 9.0f);
     assert(s.current_hump_peak_mm == 0.0f && !s.rearm_needed && s.calibrated);
     puts("PASS 17: interrupted hump cannot complete on reacquisition of wheel feedback");
+    for (noise_seed = 0; noise_seed < 4096; ++noise_seed) {
+        start();
+        hold(0.3f, 0, 0.03f, 0);
+        hold(0.3f, 0, -0.03f, 0);
+        assert(lifted_events == 1 && !by_tilt_events);
+        start();
+        hold(0.3f, 0, 0.012f, 0);
+        hold(0.3f, 0, -0.012f, 0);
+        hold(0.5f, 0, 0, 0);
+        assert(lifted_events == 0);
+    }
+    puts("PASS 18: 4096 native noise seeds distinguish stationary 0.03 g and 0.012 g pulses");
+    noise_seed = 7;
+    start();
+    hold(0.10f, 0, 0.03f, 0);
+    hold(0.30f, 0, -0.03f, 0);
+    assert(lifted_events == 0);
+    start();
+    s.wheels_moving = true;
+    hold(0.30f, 0, 0.03f, 0.66f);
+    hold(0.30f, 0, -0.03f, 0.66f);
+    assert(lifted_events == 0);
+    puts("PASS 19: short stationary rise and moving-wheel pulse do not trigger a lift");
     return 0;
 }

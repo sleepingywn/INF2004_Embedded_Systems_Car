@@ -8,6 +8,9 @@
 
 #define RAD2DEG (57.29578f)
 #define DEG2RAD (0.01745329f)
+#define SLOW_LIFT_PHASE_G (0.017f)
+#define SLOW_LIFT_RISE_S (0.20f)
+#define SLOW_LIFT_MAX_SAMPLE_S (0.04f)
 
 void imu_logic_default_config(imu_config_t *c)
 {
@@ -280,6 +283,7 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
     bool lifting = up_avg - 1.0f > c->lift_up_g;
     s->lift_timer = lifting ? s->lift_timer + dt_s : 0.0f;
 
+    float median_extra_g = 0.0f;
     /* slow lift: leaky sum of median-of-3 |a| - 1 (orientation-free:
        tilting the car in the hand does not change |a|; the median drops
        one-sample jolts) */
@@ -290,6 +294,7 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
             d = ((x > y) ? ((y > z) ? y : (x > z) ? z : x)
                          : ((x > z) ? x : (y > z) ? z : y)) - 1.0f;
         }
+        median_extra_g = d;
         if (d >  c->lift_vel_clip_g) d =  c->lift_vel_clip_g;
         if (d < -c->lift_vel_clip_g) d = -c->lift_vel_clip_g;
         float k = (c->lift_vel_tau_s > dt_s) ? dt_s / c->lift_vel_tau_s : 1.0f;
@@ -479,11 +484,22 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
         if (dr > dev) dev = dr;
         s->handle_timer = (s->rest_valid && dev > c->handle_deg) ? s->handle_timer + dt_s : 0.0f;
     }
+    bool stationary_sample = !moving && !s->wheels_moving && dt_s <= SLOW_LIFT_MAX_SAMPLE_S;
+    bool slow_rise_complete = stationary_sample && s->slow_rise_s >= SLOW_LIFT_RISE_S;
+    if (stationary_sample && median_extra_g > SLOW_LIFT_PHASE_G) {
+        if (!slow_rise_complete) {
+            s->slow_rise_s += dt_s;
+        }
+    } else {
+        s->slow_rise_s = 0.0f;
+    }
     if (!s->lifted) {
         bool still = s->rest_timer >= 0.3f || s->rest_valid;   /* wheels still >= 0.3 s */
         float rise_trigger = (still ? c->lift_vel_still_g_s : c->lift_vel_g_s)
                              + c->lift_vel_noise_k * s->mag_noise;
-        bool by_rise = s->lift_timer >= c->lift_hold_s || s->lift_vel > rise_trigger;
+        bool braked_rise = still && slow_rise_complete &&
+                           median_extra_g < -SLOW_LIFT_PHASE_G;
+        bool by_rise = braked_rise || s->lift_timer >= c->lift_hold_s || s->lift_vel > rise_trigger;
         bool by_handle = s->handle_timer >= c->handle_hold_s;
         /* wheels have just become still (0.3 s) after a recent rise */
         bool by_stop = rest_before < 0.3f && s->rest_timer >= 0.3f &&

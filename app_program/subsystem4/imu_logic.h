@@ -151,6 +151,7 @@ typedef struct {
     float        mag_hist[3];       /* last 3 |a| samples (slow lift)      */
     float        mag_prev, mag_noise;  /* vibration: mean |a| change per sample */
     uint32_t     up_n;
+    float        slow_rise_s;               /* consecutive stationary-wheel rise (s) */
     float        lift_timer, overturn_timer, clear_timer;
 } imu_logic_t;
 

@@ -68,16 +68,7 @@ terrain runner builds fresh binaries in a temporary directory and includes the
 recorded A8 replay. Run it with native Windows GCC and Ubuntu GCC to exercise
 both simulated noise sequences. The dashboard suite contains 33 tests.
 
-## What still needs the robot
-
-| Requirement | Evidence to collect on the final image |
-|---|---|
-| Motor calibration and navigation accuracy | Measure each wheel under load against the ±10% speed target within 1 s. Record ten trials for the 1 m distance and lateral error targets (≤20 mm) and the 90°/180° turn target (≤5°). Geometry remains provisional with `MOTION_CALIBRATED=0`. |
-| Real-time control and stopping | Measure the 20 ms control period and ≤2 ms jitter under simultaneous sensing and Wi-Fi load. Time a valid STOP to safe motor outputs (≤20 ms). Measure wheel coast separately. Verify the 250 ms watchdog, reset and safe restart on the board. |
-| Encoder integrity | Inject or independently count 10,000 reference pulses per wheel up to the proposed 2 kHz rate and compare missed and extra counts. |
-| Track and barcode reliability | Record a complete course run, completion time, bends, crossings, recovery, and each mapped action. Count correct, missed and wrong decodes across lighting, approach angles and speeds. |
-| IMU and terrain | Compare per-run hump peaks with measured heights. Check stationary slow pickups, ordinary bumps, battery-only sampling, and recovery after a real I²C fault. Both software hosts missed the 4 mm one-sided synthetic hump. |
-| Wireless and resource limits | Verify battery-powered MQTT on the private hotspot, timestamp gaps and reconnects under motion, time STOP/lease loss at the wheels, and measure task stack headroom and queue pressure under concurrent load. |
+## Assessment scope
 
 The assessment scope covers Buddies 1–4. Buddy 5 obstacle avoidance and IMU
 collision detection were removed from the team's scope. Previous robot footage

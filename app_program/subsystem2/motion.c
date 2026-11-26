@@ -987,7 +987,7 @@ static void apply_velocity(int16_t left, int16_t right, uint32_t now, uint16_t d
 static route_odometry_t route_odo;
 static struct {
     route_phase_t phase;
-    char armed;            /* mapped action for the next junction, 0 = none */
+    uint8_t armed : 3;            /* mapped action for the next junction, 0 = none */
     char doing;            /* letter of the running manoeuvre */
     bool junction_candidate, exit_candidate;
     uint32_t junction_since_ms, exit_since_ms, pivot_sweep_ms;
@@ -1285,7 +1285,7 @@ static bool route_step(uint32_t now, const line_msg_t *line, uint32_t line_ms,
         }
         if ((uint32_t)(line_ms - route.junction_since_ms) < ROUTE_JUNCTION_CONFIRM_MS) return false;
         if (line_trial.adaptive.mode != LINE_ADAPT_CROSSING) return false;
-        route.doing = route.armed;
+        route.doing = (char)('A' + route.armed - 1u);
         route.armed = 0;
         route.junction_candidate = false;
         route_event(ROUTE_EV_JUNCTION, route.doing, (int)a, (int)b, 0, 0);
@@ -1460,7 +1460,7 @@ static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool 
         route_event(ROUTE_EV_NOT_ARMED, chosen, route.phase != ROUTE_IDLE ? 1 : 2, 0, 0, 0);
         return;
     }
-    route.armed = chosen;
+    route.armed = (uint8_t)(chosen - 'A' + 1);
     route.junction_candidate = false;
     if (chosen >= 'A' && chosen <= 'D') state.barcode = (unsigned)(chosen - 'A' + 1);
     route_event(ROUTE_EV_ARMED, chosen, 0, 0, 0, 0);
@@ -1940,6 +1940,9 @@ void motion_task(INT stacd, void *exinf)
             }
         }
 #if MOTION_LINE_REMOTE
+        /* GP20 starts an onboard run that must survive loss of MQTT. A dashboard
+         * Start grants a lease to its operator. Binding policy to the admitted
+         * source prevents a later mode edit from removing that operator's lease. */
         if(owner_flags.active_valid && active.source==MOTION_NETWORK &&
            (active.epoch!=remote_epoch || active.id!=remote_id || control_expired(now,remote_renewed,remote_started))) {
             end_request(MOTION_EXPIRED);++state.epoch;

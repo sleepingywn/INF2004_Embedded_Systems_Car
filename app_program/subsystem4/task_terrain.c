@@ -258,18 +258,23 @@ LOCAL float wheel_travel_mm(float dt)
 	if (MOTION_LEFT_COUNTS_REV == 0 || MOTION_RIGHT_COUNTS_REV == 0 ||
 	    MOTION_TRACK_WIDTH_MM == 0 || motion_get_status(&m) != E_OK ||
         !m.raw_valid || (UW)(motion_now_ms() - m.time_ms) > 100u) {
+        if (S4_PRETEND_SPEED_MM_S == 0) imu_logic_wheel_gap(&logic);
         wheel_have = FALSE;
         wheel_speed_mm_s = wheel_turn_dps = 0.0f;
 		wheel_ok = FALSE;
 		return 0.0f;
 	}
+	/* This profile has verified count direction but provisional wheel geometry.
+     * S4 can estimate travel from paired counts; publishing that estimate as
+     * calibrated B2 mm/s would misstate its accuracy on a loaded wheel. */
 	const float	mm_per_count_l = (float)MOTION_LEFT_CIRCUMFERENCE_UM * 0.001f
 					/ (float)MOTION_LEFT_COUNTS_REV;
 	const float	mm_per_count_r = (float)MOTION_RIGHT_CIRCUMFERENCE_UM * 0.001f
 					/ (float)MOTION_RIGHT_COUNTS_REV;
 
 	if (!wheel_have || m.epoch != wheel_prev_epoch ||
-        (UW)(m.time_ms - wheel_prev_ms) > 100u) {			/* first sample: just remember */
+        (UW)(m.time_ms - wheel_prev_ms) > 100u) {			/* establish a new baseline */
+        if (S4_PRETEND_SPEED_MM_S == 0) imu_logic_wheel_gap(&logic);
 		wheel_prev_l = m.left_count;
 		wheel_prev_r = m.right_count;
 		wheel_have = TRUE;
@@ -407,6 +412,8 @@ LOCAL void publish(BOOL fault, UW acquired_ms)
 	v.roll_deg     = logic.roll_deg;
 	v.turn_dps     = wheel_turn_dps;	/* from subsystem 2's wheel counts */
 	v.turn_valid   = wheel_ok ? true : false;
+	/* A stale encoder invalidates wheel-derived yaw. Pitch, roll and the lift
+	 * interlock still have a fresh accelerometer measurement when parked. */
 	v.cur_peak_mm  = logic.current_hump_peak_mm;
 	v.high_peak_mm = logic.highest_hump_peak_mm;
 	v.hump_state   = (uint8_t)logic.hump_state;
@@ -655,6 +662,9 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 					float tp = logic.pitch_deg < 0 ? -logic.pitch_deg : logic.pitch_deg;
 					float tr = logic.roll_deg  < 0 ? -logic.roll_deg  : logic.roll_deg;
 					record_event(S4_EV_TILT, (W)((tp > tr ? tp : tr) * 10.0f));
+					/* A sustained slope can cross the tilt-report threshold.
+					 * Lift/overturn has its own acceleration, angle and dwell
+					 * checks below before it requests a motor stop. */
 				}
 				if (ev & IMU_EVT_LIFTED) {
 					/* Stop first, record after: the stop is the point. */
@@ -696,6 +706,9 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		    got && !fault && logic.calibrated && !logic.lifted ? sample_motion_ms : 0u,
 		    __ATOMIC_RELEASE);
 		publish(fault || !got, acquired_ms);
+		/* The first failed read already inhibits terrain-dependent drive.
+		 * Five consecutive failures trigger device recovery, so one missed
+		 * transfer does not reset a working sensor during the next read. */
 		drain_legacy_if03();
 
 		if (s4_status_print && s4_diag.cycles % PRINT_EVERY == 0 && logic.calibrated) {

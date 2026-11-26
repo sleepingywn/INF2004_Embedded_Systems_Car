@@ -2,6 +2,7 @@
 #define CONTROL_WIRE_H
 #include <stdint.h>
 #include <stdbool.h>
+#include "../subsystem2/route_actions.h"
 /* Separate versioned channel: independent of telemetry v1/v2.
  * Command RC/1: op, boot, connection generation, id, issued uptime, epoch.
  * Status RS/1: flags, boot, generation, sequence, uptime, epoch, ack id,
@@ -21,7 +22,7 @@ enum { CONTROL_NONE, CONTROL_QUEUED, CONTROL_RUNNING, CONTROL_REJECTED,
        CONTROL_STOPPED, CONTROL_FINISHED, CONTROL_LINK_LOST, CONTROL_TIMED_OUT };
 enum { CONTROL_SUPPORTED=1, CONTROL_ARMED=2, CONTROL_ACTIVE=4,
        CONTROL_MOTION_FRESH=8, CONTROL_CONNECTED=16 };
-typedef struct { uint32_t boot,session,id,issued,epoch; uint8_t op; uint32_t revision; uint8_t mapping[26]; } control_command_t;
+typedef struct { uint32_t boot,session,id,issued,epoch; uint8_t op; uint32_t revision; route_actions_t mapping; } control_command_t;
 static inline uint32_t control_u32(const uint8_t *p) {
  return (uint32_t)p[0]|((uint32_t)p[1]<<8)|((uint32_t)p[2]<<16)|((uint32_t)p[3]<<24);
 }
@@ -35,7 +36,11 @@ static inline bool control_decode(const uint8_t *b,unsigned n,control_command_t 
  *c=(control_command_t){.op=b[3],.boot=control_u32(b+4),.session=control_u32(b+8),
  .id=control_u32(b+12),.issued=control_u32(b+16),.epoch=control_u32(b+20)};
  if(c->op==CONTROL_MAPPING){c->revision=control_u32(b+24);
-  for(unsigned i=0;i<26;++i){if(b[28+i]>4)return false;c->mapping[i]=b[28+i];}}
+  for(unsigned i=0;i<ROUTE_MAP_COUNT;++i)
+      if(!route_action_set(&c->mapping,i,b[28+i]))return false;
+  /* RC/2 and RS/2 have fixed byte offsets and lengths. Existing dashboards
+   * reject a shorter frame. Expand only at these boundaries; queued commands
+   * and the live route table carry three-bit actions. */}
  return c->id!=0;
 }
 static inline bool control_fresh(const control_command_t *c,uint32_t boot,uint32_t session,

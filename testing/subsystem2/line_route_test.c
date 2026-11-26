@@ -23,6 +23,12 @@ void motor_watchdog_feed(void) { ++watchdog_feeds; }
 volatile uint32_t s4_hump_seen_ms;   /* S4 hump hint (s4_hump_hint.h): never set in these tests */
 #undef memset
 #undef memcpy
+static void set_test_mapping(char letter, unsigned value)
+{
+    route_actions_t actions = active_actions;
+    assert(route_action_set(&actions, (unsigned)(letter-'A'), value));
+    route_mapping_apply(&actions);
+}
 
 /* ---------------- Part 1: pure route logic ---------------- */
 static bc_msg_t make_code(const char *character, bool reverse, unsigned narrow, unsigned wide)
@@ -263,8 +269,8 @@ ER tk_wai_flg(ID a, UINT b, UINT c, UINT *d, int e)
         assert(route.phase==ROUTE_IDLE && line_trial.adaptive.mode==LINE_ADAPT_JUNCTION);
         assert(line_trial.adaptive.last_right_target>line_trial.adaptive.last_left_target);
         if (scenario==3) {
-            assert(route.armed=='D');
-            route_mapping['D'-'A']=2;
+            assert(route.armed==4u);
+            set_test_mapping('D',2);
             assert(route_mapping_code('D')=='B');
         }
         if (scenario==5) assert(!route.armed);
@@ -275,7 +281,7 @@ ER tk_wai_flg(ID a, UINT b, UINT c, UINT *d, int e)
 }
 static void reset_owner(int which, uint32_t until)
 {
-    route_mapping['D'-'A']=4;
+    set_test_mapping('D',4);
     c_steered=c_searched=false;
     scenario = which; stop_at_ms = until;
     clock_ms = flag_bits = 0; out_left = out_right = 0; fake_raw = (encoder_raw_t){0};

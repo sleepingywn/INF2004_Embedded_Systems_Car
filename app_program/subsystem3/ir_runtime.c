@@ -266,6 +266,9 @@ static void process_frame(const ir_raw_frame_t *frame)
     }
 #endif
     ER error = motion_ir_bridge_sample(&bridge, normalized, true, frame->sampled_ms, owner.epoch);
+    /* Each ADC frame reaches the bridge at acquisition rate. Sending only
+     * the latest raw triple to the slower motor loop could skip narrow bars;
+     * the bridge retains widths while B2 decides which letter and manoeuvre. */
 #if MOTION_LINE_ROUTE
     bc_ext_sample(raw[IR_CH_BARCODE]);
 #endif

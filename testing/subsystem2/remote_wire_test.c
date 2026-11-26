@@ -33,7 +33,7 @@ int main(void){
  control_put(b+20,9);
  uint8_t settings[54]={'R','C',2,4};memcpy(settings+4,b+4,20);control_put(settings+24,17);
  for(unsigned i=0;i<26;++i)settings[28+i]=i%5;
- assert(control_decode(settings,54,&c)&&c.revision==17&&c.mapping[24]==4);
+ assert(control_decode(settings,54,&c)&&c.revision==17&&route_action_at(&c.mapping,24)==4);
  assert(!control_decode(settings,53,&c)&&!control_decode(settings,55,&c));
  settings[53]=5;assert(!control_decode(settings,54,&c));settings[53]=0;
  assert(s1_control_offer(settings,54,16));assert(s1_control_offer(b,24,16));assert(s1_control_take(&c,16,0,9,true)&&c.op==CONTROL_STOP);

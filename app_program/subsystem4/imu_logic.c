@@ -217,6 +217,17 @@ static void abort_hump(imu_logic_t *s)
     s->enter_timer = s->desc_timer = s->exit_timer = s->state_timer = 0.0f;
 }
 
+void imu_logic_wheel_gap(imu_logic_t *s)
+{
+    if (s->hump_state != HUMP_FLAT || s->enter_timer > 0.0f || s->pre_h_mm > 0.0f) {
+        if (s->hump_state != HUMP_FLAT) s->current_hump_peak_mm = 0.0f;
+        abort_hump(s);
+        s->pre_h_mm = 0.0f;
+    }
+    /* An unmeasured interval can hide the crest. Require a flat observation
+     * before counting a new hump. Completed peaks and the lift latch survive. */
+}
+
 uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
                           float dist_delta_mm, float motion_accel_g)
 {

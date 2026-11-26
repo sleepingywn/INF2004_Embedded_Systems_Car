@@ -174,6 +174,7 @@ void     imu_logic_sensor_restart(imu_logic_t *s);
 
 /* START / RESET command: new run, clear the highest hump (B4-FR10). */
 void     imu_logic_reset_run(imu_logic_t *s);
+void     imu_logic_wheel_gap(imu_logic_t *s);
 
 const char *imu_hump_state_name(hump_state_t st);
 

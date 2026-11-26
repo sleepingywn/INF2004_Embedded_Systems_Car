@@ -222,5 +222,15 @@ int main(void)
     assert(s.hump_count == 0 && s.highest_hump_peak_mm == 0 && s.pre_h_mm == 0);
     assert(s.hump_state == HUMP_FLAT && s.rearm_needed && s.calibrated && s.lifted);
     puts("PASS 16: run reset clears previous hump and preserves lift protection");
+    start();
+    s.highest_hump_peak_mm = 9.0f;
+    s.hump_count = 1;
+    s.hump_state = HUMP_DESCENDING;
+    s.current_hump_peak_mm = 18.0f;
+    imu_logic_wheel_gap(&s);
+    hold(1.0f, 0, 0, 0);
+    assert(s.hump_state == HUMP_FLAT && s.hump_count == 1 && s.highest_hump_peak_mm == 9.0f);
+    assert(s.current_hump_peak_mm == 0.0f && !s.rearm_needed && s.calibrated);
+    puts("PASS 17: interrupted hump cannot complete on reacquisition of wheel feedback");
     return 0;
 }

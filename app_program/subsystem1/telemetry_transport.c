@@ -1,6 +1,9 @@
 #include "subsystem1.h"
 #include "telemetry_transport.h"
 #define EVENT_CAPACITY 8u
+/* Eight pending events cost 768 payload bytes. On a longer outage the FIFO
+ * reports overflow; motor STOP and terrain interlocks use independent paths.
+ * A lossless outage duration requires a measured event rate and link trace. */
 static ID transport_mutex;
 static uint8_t latest[S1_FRAME_SIZE], events[EVENT_CAPACITY][S1_FRAME_SIZE];
 static uint32_t latest_ticket, event_ticket, dropped;

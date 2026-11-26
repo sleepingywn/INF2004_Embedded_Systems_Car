@@ -69,7 +69,7 @@ int main(void){
  setup();command(1,1);pressed=true;line_console_key(-1);test_poll();assert(remote.stage==3&&!button.started);
  setup();shared.status.updated_ms=0;clock_ms=1000;command(CONTROL_STOP,1);assert(remote.stage==3); /* STOP even with unavailable motion */
  setup();queued=(control_command_t){.op=4,.boot=123,.session=1,.id=1,.issued=clock_ms,.epoch=shared.status.epoch};
- queued.mapping[25]=4;available=true;test_poll();assert(mapping_pending&&remote.stage==3&&!settings_reboots&&!button.armed);
+ assert(route_action_set(&queued.mapping,25,4));available=true;test_poll();assert(mapping_pending&&remote.stage==3&&!settings_reboots&&!button.armed);
  test_poll();assert(!settings_reboots); /* no flash until STOP changes epoch */
  ++shared.status.epoch;shared.status.updated_ms=++clock_ms;test_poll();assert(settings_reboots==1&&!mapping_pending);
  setup();shared.status.state=MOTION_TRACING;queued.epoch=shared.status.epoch;queued.issued=clock_ms;available=true;test_poll();assert(mapping_pending && remote.stage==0 && !settings_reboots);
@@ -77,7 +77,7 @@ int main(void){
  shared.status.state=MOTION_IDLE;test_poll();assert(remote.stage==3&&!settings_reboots);
  ++shared.status.epoch;shared.status.updated_ms=++clock_ms;test_poll();assert(settings_reboots==1);
  setup();queued.revision=1;queued.epoch=shared.status.epoch;queued.issued=clock_ms;available=true;test_poll();assert(remote.ack==CONTROL_REJECTED&&!mapping_pending);
- setup();queued.revision=0;queued.mapping[3]=5;queued.epoch=shared.status.epoch;queued.issued=clock_ms;available=true;test_poll();assert(remote.ack==CONTROL_REJECTED&&!mapping_pending);
+ setup();queued.revision=0;queued.mapping.words[0]=5u << route_action_shift(3); /* corrupt the post-decode copy */queued.epoch=shared.status.epoch;queued.issued=clock_ms;available=true;test_poll();assert(remote.ack==CONTROL_REJECTED&&!mapping_pending);
  /* Completed local run: rearm gesture only; RESET waits for a fresh click. */
  setup();button=(line_button_t){.started=true};button_retry_allowed=true;
  button_retry_poll();clock_ms+=601;shared.status.updated_ms=clock_ms;observer_status=shared.status;

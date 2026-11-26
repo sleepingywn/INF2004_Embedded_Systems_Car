@@ -529,7 +529,12 @@ static void remote_poll(void)
            (m.state==MOTION_IDLE || m.state==MOTION_ERROR) &&
            !motion_left_duty(&m) && !motion_right_duty(&m)) {
             remote.stage=0;remote.owner=0;remote.ack=remote.stop_result;
-            if(mapping_pending){mapping_pending=false;route_settings_reboot(route_mapping);}
+            if (mapping_pending) {
+                uint8_t map[ROUTE_MAP_COUNT];
+                route_mapping_export(map);
+                mapping_pending=false;
+                route_settings_reboot(map);
+            }
         } else if((uint32_t)(now-remote.pending_ms)>=1000u) {
             /* Retain the stop guard and retry; do not claim a stopped motor. */
             remote.ack=CONTROL_TIMED_OUT;(void)motion_stop();
@@ -564,9 +569,8 @@ static void remote_poll(void)
                           !motion_left_duty(&m) && !motion_right_duty(&m);
                 if(fresh && !m.faults && (moving || (idle && m.ready)) &&
                    !button_pressed() && !button_reset_pending && !button_boot_pending && !boot_pending &&
-                   c.revision==route_mapping_revision && route_settings_valid(c.mapping)) {
-                    for(unsigned i=0;i<26;++i)
-                        __atomic_store_n(&route_mapping[i],c.mapping[i],__ATOMIC_RELAXED);
+                   c.revision==route_mapping_revision && route_actions_valid(&c.mapping)) {
+                    route_mapping_apply(&c.mapping);
                     ++route_mapping_revision;
                     route_mapping_persisted=false;
                     mapping_pending=true;
@@ -595,7 +599,7 @@ static void remote_poll(void)
     control_put(b+16,now);control_put(b+20,m.epoch);control_put(b+24,remote.ack_id);
     b[28]=remote.ack;b[29]=(uint8_t)m.state;b[30]=(uint8_t)m.faults;b[31]=remote.op;
     control_put(b+32,remote.owner);control_put(b+36,route_mapping_revision);
-    for(unsigned i=0;i<26;++i)b[40+i]=route_mapping[i];
+    route_mapping_export(b + 40);
     b[66]=route_mapping_persisted ? 1 : 0;
     b[67]=mapping_pending ? 1 : 0;
     (void)s1_control_status_offer(b);

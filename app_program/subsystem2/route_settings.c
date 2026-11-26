@@ -5,7 +5,29 @@
 #define SLOT0 0x1fe000u
 #define SLOT1 0x1ff000u
 #define PAGE 256u
-uint8_t route_mapping[26]={1,2,3,4,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2};
+/* A=right, B=left, C=straight, D=U-turn; Z (word 2, slot 5)=left. */
+static route_actions_t active_actions = {{1u | (2u<<3) | (3u<<6) | (4u<<9), 0u, 2u<<15}};
+
+void route_mapping_apply(const route_actions_t *actions)
+{
+    for (unsigned i = 0; i < ROUTE_ACTION_WORDS; ++i)
+        __atomic_store_n(&active_actions.words[i], actions->words[i], __ATOMIC_RELAXED);
+}
+
+uint8_t route_mapping_get(unsigned index)
+{
+    if (index >= ROUTE_MAP_COUNT) return 0u;
+    uint32_t word = __atomic_load_n(&active_actions.words[index / ROUTE_ACTIONS_PER_WORD],
+                                    __ATOMIC_RELAXED);
+    return (uint8_t)((word >> route_action_shift(index)) & 7u);
+}
+
+void route_mapping_export(uint8_t map[ROUTE_MAP_COUNT])
+{
+    for (unsigned i = 0; i < ROUTE_MAP_COUNT; ++i) map[i] = route_mapping_get(i);
+}
+/* The console is the sole runtime writer and exports the table itself.
+ * A concurrent motor decode reads exactly one letter and latches its action. */
 uint32_t route_mapping_revision;
 bool route_mapping_persisted;
 bool route_settings_valid(const uint8_t *m) {
@@ -39,6 +61,9 @@ static __attribute__((unused)) void make_record(uint8_t *p,const uint8_t *map,ui
     for(unsigned i=0;i<26;++i)p[8+i]=map[i];
     put32(p+36,crc(p,36));
 }
+/* MAP1 pages keep the deployed CRC and field offsets. Even a 10-byte table
+ * requires one 256-byte flash program; retaining MAP1 also allows rollback
+ * to firmware that already reads the robot's saved settings. */
 static __attribute__((unused)) void pack(uint8_t *p,const uint8_t *map) {
     for(unsigned i=0;i<13;++i)p[i]=map[i*2]|(map[i*2+1]<<4);
     p[13]=0xa7;uint32_t c=crc(p,14);p[14]=(uint8_t)c;p[15]=(uint8_t)(c>>8);
@@ -91,7 +116,10 @@ void route_settings_boot(void) {
         }
     }
     if(active>=0) {
-        for(unsigned i=0;i<26;++i)route_mapping[i]=slots[active][8+i];
+        route_actions_t actions = {0};
+        for (unsigned i = 0; i < ROUTE_MAP_COUNT; ++i)
+            (void)route_action_set(&actions, i, slots[active][8+i]);
+        route_mapping_apply(&actions);
         route_mapping_revision=get32(slots[active]+4);route_mapping_persisted=true;
     }
 }

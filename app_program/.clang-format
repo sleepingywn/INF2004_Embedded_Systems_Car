@@ -9,3 +9,4 @@ AllowShortLoopsOnASingleLine: false
 AllowShortBlocksOnASingleLine: Never
 IndentCaseLabels: true
 SortIncludes: Never
+InsertBraces: true

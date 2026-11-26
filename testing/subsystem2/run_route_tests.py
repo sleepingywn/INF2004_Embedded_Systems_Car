@@ -19,36 +19,36 @@ OWNER = ["-Wno-type-limits", "-Wno-sign-compare", "-Iinclude"]
 def main():
     with tempfile.TemporaryDirectory(prefix="robocar-route-") as temp:
         exe = str(Path(temp) / "route.exe")
-        subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem2/line_route_test.c",
+        subprocess.run(["gcc", *FLAGS, "app_program/subsystem2/motion_route_decode.c", *OWNER, "testing/subsystem2/line_route_test.c",
                         "app_program/subsystem2/motion_logic.c", "-o", exe], cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True)
         exe = str(Path(temp) / "line-barcode.exe")
-        subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem3/line_barcode_handoff_test.c",
+        subprocess.run(["gcc", *FLAGS, "app_program/subsystem2/motion_route_decode.c", *OWNER, "testing/subsystem3/line_barcode_handoff_test.c",
                         "app_program/subsystem3/sensor_line.c", "app_program/subsystem3/barcode_sense.c",
                         "-o", exe], cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True)
         # Barcode capture with 16-bit widths and the 1.5 s quiet time.
         exe = str(Path(temp) / "handoff.exe")
-        subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem2/ir_handoff_integration_test.c",
+        subprocess.run(["gcc", *FLAGS, "app_program/subsystem2/motion_route_decode.c", *OWNER, "testing/subsystem2/ir_handoff_integration_test.c",
                         "app_program/subsystem2/motion_logic.c", "app_program/subsystem3/sensor_line.c",
                         "app_program/subsystem3/barcode_sense.c", "-DROUTE_SETTINGS_HOST=1", "app_program/subsystem2/route_settings.c", "-o", exe], cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
         print("PASS route-profile IR handoff (16-bit barcode widths)")
         # Barcode black/white from the raw ADC (fixed cutoffs + relative bar end).
         exe = str(Path(temp) / "level.exe")
-        subprocess.run(["gcc", *FLAGS, "-Iapp_program/subsystem3", "testing/subsystem3/barcode_level_test.c",
+        subprocess.run(["gcc", *FLAGS, "app_program/subsystem2/motion_route_decode.c", "-Iapp_program/subsystem3", "testing/subsystem3/barcode_level_test.c",
                         "-o", exe, "-lm"], cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
         print("PASS barcode level rule (noisy Z traces, narrow bar, blurred gap)")
         # Every 29-element scan logged on the car: never a wrong letter.
         exe = str(Path(temp) / "replay.exe")
-        subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem3/barcode_replay_test.c", "-o", exe],
+        subprocess.run(["gcc", *FLAGS, "app_program/subsystem2/motion_route_decode.c", *OWNER, "testing/subsystem3/barcode_replay_test.c", "-o", exe],
                        cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
         print("PASS barcode replay (all logged track scans, no wrong letter)")
         # End-of-capture time scales with the barcode's element size (25 Nov).
         exe = str(Path(temp) / "quiet.exe")
-        subprocess.run(["gcc", *FLAGS, "-Iapp_program/subsystem3", "testing/subsystem3/barcode_quiet_test.c",
+        subprocess.run(["gcc", *FLAGS, "app_program/subsystem2/motion_route_decode.c", "-Iapp_program/subsystem3", "testing/subsystem3/barcode_quiet_test.c",
                         "app_program/subsystem3/barcode_sense.c", "-o", exe], cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True, stdout=subprocess.DEVNULL)
         print("PASS barcode quiet time (bigger barcode keeps all 29 elements)")

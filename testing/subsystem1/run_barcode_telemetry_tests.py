@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory(prefix='robocar-barcode-wire-') as d:
  subprocess.run(['node','-e',js,raw],cwd=ROOT,check=True)
  exe=str(Path(d)/'owner.exe')
  flags=['-std=c11','-Wall','-Wextra','-Werror','-Wno-type-limits','-Wno-sign-compare','-Iinclude','-DMOTION_LINE_DEMO=1','-DMOTION_LINE_CIRCUIT=1','-DMOTION_LINE_ADAPTIVE=1','-DMOTION_LINE_ROUTE=1','-DBARCODE_SLOW_SCAN=1','-DBARCODE_WIDE=1']
- subprocess.run(['gcc',*flags,'testing/subsystem2/barcode_telemetry_test.c','app_program/subsystem2/motion_logic.c','-o',exe],cwd=ROOT,check=True)
+ subprocess.run(['gcc',*flags,'testing/subsystem2/barcode_telemetry_test.c','app_program/subsystem2/motion_logic.c','app_program/subsystem2/motion_route_decode.c','-o',exe],cwd=ROOT,check=True)
  subprocess.run([exe],check=True)
  exe=str(Path(d)/'transport.exe')
  subprocess.run(['gcc','-std=c11','-Wall','-Wextra','-Werror','-DSUBSYSTEM1_H','-include','testing/subsystem1/transport_mock.h','testing/subsystem1/transport_test.c','app_program/subsystem1/telemetry_transport.c','-o',exe],cwd=ROOT,check=True)

@@ -1,3 +1,4 @@
+#include "../app_assert.h"
 #include "ir_acquisition.h"
 #include "../../config/config_device.h"
 #include "../../device/adc/sysdepend/rp2040/adc_sysdep.h"
@@ -13,9 +14,11 @@
 #define IR_FIFO_OVER (1u << 11)
 #define IR_FIFO_CONFIG ((1u << ADC_FCS_THRESH_POS) | (1u << 2) | ADC_FCS_EN)
 
-_Static_assert(IR_NUM_CH == 3u && IR_CH_BARCODE == 0u && IR_CH_LINE_A == 1u && IR_CH_LINE_B == 2u,
-               "ADC scan requires channels 0, 1, 2 in this order");
-_Static_assert(IR_ACQ_RING_SIZE == 64u, "Ring indices use six bits");
+APP_STATIC_ASSERT(adc_scan_channel_order,
+                  IR_NUM_CH == 3u && IR_CH_BARCODE == 0u &&
+                      IR_CH_LINE_A == 1u && IR_CH_LINE_B == 2u);
+APP_STATIC_ASSERT(ir_acquisition_ring_indices_use_six_bits,
+                  IR_ACQ_RING_SIZE == 64u);
 
 static ID ready_event;
 static volatile ir_raw_frame_t ring[IR_ACQ_RING_SIZE];
@@ -63,9 +66,11 @@ void ir_acquisition_stop(void)
     scan.active = false;
 }
 
-static void acquisition_fault(unsigned fault, ir_fault_reason_t reason, uint32_t detail)
+static void acquisition_fault(unsigned fault, ir_fault_reason_t reason,
+                              uint32_t detail)
 {
-    if (acquisition.first_fault_reason == IR_REASON_NONE) {
+    if (acquisition.first_fault_reason == IR_REASON_NONE)
+    {
         acquisition.first_fault_us = in_w(TIMER_TIMERAWL);
         acquisition.first_fault_reason = reason;
         acquisition.first_fault_detail = detail;
@@ -73,7 +78,8 @@ static void acquisition_fault(unsigned fault, ir_fault_reason_t reason, uint32_t
     }
     acquisition.faults |= fault;
     ir_acquisition_stop();
-    queue.tail = queue.head; /* no frames from before a fault escape afterwards */
+    queue.tail =
+        queue.head; /* no frames from before a fault escape afterwards */
     (void)tk_set_flg(ready_event, IR_ACQ_EVENT);
 }
 
@@ -81,7 +87,8 @@ static void arm_deadline(void)
 {
     out_w(TIMER_ALARM3, scan.deadline_us);
     /* RP2040 alarms compare for equality. A delayed write must not sleep for
-     * a full 32-bit timer wrap. Force an immediate IRQ if the deadline passed. */
+     * a full 32-bit timer wrap. Force an immediate IRQ if the deadline passed.
+     */
     if ((uint32_t)(in_w(TIMER_TIMERAWL) - scan.deadline_us) < 0x80000000u)
     {
         set_w(TIMER_INTF, IR_TIMER_BIT);
@@ -103,25 +110,30 @@ static void timer_interrupt(UINT intno)
     {
         acquisition.max_lateness_us = late;
     }
-    if (late > IR_ACQ_MAX_JITTER_US) {
+    if (late > IR_ACQ_MAX_JITTER_US)
+    {
         acquisition_fault(IR_ACQ_TIMING, IR_REASON_LAUNCH_LATE, late);
         return;
     }
-    if (scan.active) {
-        acquisition_fault(IR_ACQ_TIMING, IR_REASON_SCAN_OVERLAP, now - scan.started_us);
+    if (scan.active)
+    {
+        acquisition_fault(IR_ACQ_TIMING, IR_REASON_SCAN_OVERLAP,
+                          now - scan.started_us);
         return;
     }
-    if (((in_w(ADC_CS) & ADC_CS_READY) == 0u) || ((in_w(ADC_FCS) & IR_FIFO_EMPTY) == 0u))
+    if (((in_w(ADC_CS) & ADC_CS_READY) == 0u) ||
+        ((in_w(ADC_FCS) & IR_FIFO_EMPTY) == 0u))
     {
         acquisition_fault(IR_ACQ_ADC, IR_REASON_ADC, in_w(ADC_FCS));
         return;
     }
     scan.frame.sampled_ms = scan.deadline_ms;
     scan.started_us = now;
-    #if IR_BARCODE_DIGITAL
+#if IR_BARCODE_DIGITAL
     /* Sample D0 once at the same 1 kHz deadline as the analogue line pair.
      * Store synthetic white/black endpoints, not an ADC measurement. */
-    scan.frame.barcode = (((in_w(GPIO_IN) >> 26) & 1u) == IR_BARCODE_BLACK_LEVEL) ? 4095u : 0u;
+    scan.frame.barcode =
+        (((in_w(GPIO_IN) >> 26) & 1u) == IR_BARCODE_BLACK_LEVEL) ? 4095u : 0u;
     scan.channel = IR_CH_LINE_A;
 #else
     scan.channel = IR_CH_BARCODE;
@@ -129,7 +141,8 @@ static void timer_interrupt(UINT intno)
     scan.active = true;
     scan.deadline_us += IR_ACQ_PERIOD_US;
     ++scan.deadline_ms; /* full millisecond clock, independent of raw-us wrap */
-    out_w(ADC_CS, ADC_CS_EN | ADC_CS_STRAT_ONCE | ((uint32_t)scan.channel << ADC_CS_AINSEL_POS));
+    out_w(ADC_CS, ADC_CS_EN | ADC_CS_STRAT_ONCE |
+                      ((uint32_t)scan.channel << ADC_CS_AINSEL_POS));
     arm_deadline();
 }
 
@@ -147,9 +160,11 @@ static void adc_interrupt(UINT intno)
     uint32_t elapsed = in_w(TIMER_TIMERAWL) - scan.started_us;
     if (((value & IR_FIFO_ERROR) != 0u) || (elapsed > IR_ACQ_MAX_JITTER_US))
     {
-        acquisition_fault(((value & IR_FIFO_ERROR) != 0u) ? IR_ACQ_ADC : IR_ACQ_TIMING,
-                          ((value & IR_FIFO_ERROR) != 0u) ? IR_REASON_ADC : IR_REASON_SCAN_TIMEOUT,
-                          ((value & IR_FIFO_ERROR) != 0u) ? value : elapsed);
+        acquisition_fault(
+            ((value & IR_FIFO_ERROR) != 0u) ? IR_ACQ_ADC : IR_ACQ_TIMING,
+            ((value & IR_FIFO_ERROR) != 0u) ? IR_REASON_ADC
+                                            : IR_REASON_SCAN_TIMEOUT,
+            ((value & IR_FIFO_ERROR) != 0u) ? value : elapsed);
         return;
     }
     switch (scan.channel)
@@ -167,8 +182,8 @@ static void adc_interrupt(UINT intno)
     if (scan.channel < IR_CH_LINE_B)
     {
         ++scan.channel;
-        out_w(ADC_CS,
-              ADC_CS_EN | ADC_CS_STRAT_ONCE | ((uint32_t)scan.channel << ADC_CS_AINSEL_POS));
+        out_w(ADC_CS, ADC_CS_EN | ADC_CS_STRAT_ONCE |
+                          ((uint32_t)scan.channel << ADC_CS_AINSEL_POS));
         return;
     }
     scan.active = false;
@@ -198,7 +213,8 @@ static ER prepare_adc(void)
     set_w(RESETS_RESET, RESETS_RESET_ADC);
     clr_w(RESETS_RESET, RESETS_RESET_ADC);
     unsigned attempts = 10000u;
-    while (((in_w(RESETS_RESET_DONE) & RESETS_RESET_ADC) == 0u) && (attempts > 0u))
+    while (((in_w(RESETS_RESET_DONE) & RESETS_RESET_ADC) == 0u) &&
+           (attempts > 0u))
     {
         --attempts;
     }
@@ -206,7 +222,7 @@ static ER prepare_adc(void)
     {
         return E_SYS;
     }
-    #if IR_BARCODE_DIGITAL
+#if IR_BARCODE_DIGITAL
     out_w(GPIO_OE_CLR, 1u << 26); /* input only; never drive the sensor */
     out_w(GPIO_CTRL(26), GPIO_CTRL_FUNCSEL_SIO);
     clr_w(GPIO(26), GPIO_PUE | GPIO_PDE);
@@ -217,7 +233,8 @@ static ER prepare_adc(void)
         out_w(GPIO_CTRL(pin), GPIO_CTRL_FUNCSEL_NULL);
         clr_w(GPIO(pin), GPIO_IE | GPIO_PUE | GPIO_PDE);
     }
-    out_w(ADC_DIV, 0); /* 48 MHz ADC clock supplied by BSP; one-shot conversions */
+    out_w(ADC_DIV,
+          0); /* 48 MHz ADC clock supplied by BSP; one-shot conversions */
     out_w(ADC_FCS, IR_FIFO_CONFIG);
     out_w(ADC_CS, ADC_CS_EN);
     attempts = 10000u;
@@ -242,7 +259,8 @@ ER ir_acquisition_start(ID event)
      * again is idempotent and preserves a running counter. */
     clr_w(RESETS_RESET, RESETS_RESET_TIMER);
     unsigned attempts = 10000u;
-    while (((in_w(RESETS_RESET_DONE) & RESETS_RESET_TIMER) == 0u) && (attempts > 0u))
+    while (((in_w(RESETS_RESET_DONE) & RESETS_RESET_TIMER) == 0u) &&
+           (attempts > 0u))
     {
         --attempts;
     }

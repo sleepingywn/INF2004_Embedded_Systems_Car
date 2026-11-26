@@ -1,9 +1,45 @@
 #include "motion_logic.h"
+#include "line_adaptive_config.h"
+#include "line_crossing.h"
 #include <limits.h>
 #include <stddef.h>
 #if defined(BARCODE_RELAXED_WIDTHS) && !defined(BARCODE_TERMINAL)
 #error "Relaxed barcode widths are standalone-test only"
 #endif
+
+const line_crossing_config_t line_crossing_config = {
+    .mark_ms = 1800,
+    .mark_counts = 400,
+    .total_ms = 3500,
+    .total_counts = 900,
+    .clear_ms = 60,
+    .speed = 300,
+    .heading_gain = 2,
+    .heading_limit = 50,
+};
+
+const line_adaptive_config_t line_adaptive_config = {
+    .cruise = 450,
+    .minimum_rolling = 250,
+    .maximum = 600,
+    .search_speed = 350,
+    .kp_milli = 3500,
+    .kd_milli = 40,
+    .max_steering = 400,
+    .filter_ms = 40,
+    .derivative_ms = 80,
+    .seen_enter = 20,
+    .seen_leave = 10,
+    .black = 75,
+    .confirm_ms = 60,
+    .pause_confirm_ms = 60,
+    .uncertainty_counts = 120,
+    .bend_hold_counts = 40,
+    .first_sweep_counts = 240,
+    .opposite_sweep_counts = 320,
+    .recovery_counts = 1000,
+    .recovery_ms = 1500,
+};
 
 void motion_pid_reset(motion_pid_t *pid)
 {
@@ -12,8 +48,9 @@ void motion_pid_reset(motion_pid_t *pid)
     pid->primed = 0;
 }
 
-int16_t motion_pid_step(motion_pid_t *pid, int16_t target, int16_t actual, uint16_t dt_ms,
-                        uint16_t kp, uint16_t ki, uint16_t kd, uint16_t limit)
+int16_t motion_pid_step(motion_pid_t *pid, int16_t target, int16_t actual,
+                        uint16_t dt_ms, uint16_t kp, uint16_t ki, uint16_t kd,
+                        uint16_t limit)
 {
     int32_t error = (int32_t)target - actual;
     int64_t integral;
@@ -24,7 +61,8 @@ int16_t motion_pid_step(motion_pid_t *pid, int16_t target, int16_t actual, uint1
         motion_pid_reset(pid);
         return 0;
     }
-    integral = motion_bits_decode(pid->integral_bits, 21u) + (int64_t)ki * error * dt_ms / 1000;
+    integral = motion_bits_decode(pid->integral_bits, 21u) +
+               (int64_t)ki * error * dt_ms / 1000;
     if (integral > bound)
     {
         integral = bound;
@@ -36,11 +74,13 @@ int16_t motion_pid_step(motion_pid_t *pid, int16_t target, int16_t actual, uint1
     output = (int64_t)kp * error + integral;
     if (pid->primed != 0u)
     {
-        output += (int64_t)kd * (error - motion_bits_decode(pid->error_bits, 13u)) * 1000 / dt_ms;
+        output += (int64_t)kd *
+                  (error - motion_bits_decode(pid->error_bits, 13u)) * 1000 /
+                  dt_ms;
     }
     /* Conditional integration: do not accumulate into output saturation. */
-    if (((output <= bound) && (output >= -bound)) || ((output > bound) && (error < 0)) ||
-        ((output < -bound) && (error > 0)))
+    if (((output <= bound) && (output >= -bound)) ||
+        ((output > bound) && (error < 0)) || ((output < -bound) && (error > 0)))
     {
         pid->integral_bits = (uint32_t)motion_bits_encode(integral, 21u);
     }
@@ -73,15 +113,17 @@ int8_t motion_quadrature_delta(uint8_t previous, uint8_t current)
 {
     /* A is bit 1, B bit 0. 00 -> 10 -> 11 -> 01 is positive.
      * Value 2 denotes an impossible two-bit transition, not two counts. */
-    static const int8_t transitions[16] = {0, -1, 1, 2, 1, 0, 2, -1, -1, 2, 0, 1, 2, 1, -1, 0};
+    static const int8_t transitions[16] = {0,  -1, 1, 2, 1, 0, 2,  -1,
+                                           -1, 2,  0, 1, 2, 1, -1, 0};
     return transitions[((previous & 3u) << 2) | (current & 3u)];
 }
 
-bool motion_line_targets(int8_t error, uint16_t cruise, uint16_t maximum, uint16_t gain_q10,
-                         int16_t *left, int16_t *right)
+bool motion_line_targets(int8_t error, uint16_t cruise, uint16_t maximum,
+                         uint16_t gain_q10, int16_t *left, int16_t *right)
 {
-    if ((left == NULL) || (right == NULL) || (error < -100) || (error > 100) || (cruise == 0u) ||
-        (cruise >= maximum) || (maximum > 2047u) || (gain_q10 == 0u))
+    if ((left == NULL) || (right == NULL) || (error < -100) || (error > 100) ||
+        (cruise == 0u) || (cruise >= maximum) || (maximum > 2047u) ||
+        (gain_q10 == 0u))
     {
         return false;
     }
@@ -133,10 +175,14 @@ uint16_t motion_code39_pattern(const bc_width_t *widths)
 #ifdef BARCODE_RELAXED_WIDTHS
     /* Rank only: preserve a unique split into six short and three long.
      * Equal widths at the boundary cannot identify exactly three wide. */
-    if (sorted[5] == sorted[6]) return 0;
+    if (sorted[5] == sorted[6])
+    {
+        return 0;
+    }
 #else
-    if ((2u * sorted[6] < 3u * sorted[5]) || (2u * sorted[8] > 7u * sorted[0]) ||
-        (sorted[5] > 2u * sorted[0]) || (2u * sorted[8] > 3u * sorted[6]))
+    if ((2u * sorted[6] < 3u * sorted[5]) ||
+        (2u * sorted[8] > 7u * sorted[0]) || (sorted[5] > 2u * sorted[0]) ||
+        (2u * sorted[8] > 3u * sorted[6]))
     {
         return 0;
     }
@@ -161,10 +207,12 @@ static char decode_forward(const bc_width_t widths[29])
     /* Standard Code39 wide-element masks; see README_MOTION.md sources.
      * * = 010010100, A = 100001001, B = 001001001,
      * C = 101001000, D = 000011001, Z = 011010000. */
-    static const uint16_t patterns[5] = {0x109u, 0x049u, 0x148u, 0x019u, 0x0D0u};
+    static const uint16_t patterns[5] = {0x109u, 0x049u, 0x148u, 0x019u,
+                                         0x0D0u};
     static const char letters[5] = {'A', 'B', 'C', 'D', 'Z'};
     uint16_t middle;
-    if ((motion_code39_pattern(widths) != 0x094u) || (motion_code39_pattern(widths + 20) != 0x094u))
+    if ((motion_code39_pattern(widths) != 0x094u) ||
+        (motion_code39_pattern(widths + 20) != 0x094u))
     {
         return '\0';
     }
@@ -201,8 +249,8 @@ char motion_code39_decode(const bc_msg_t *message)
 {
     bc_width_t reversed[29];
     char command;
-    if ((message == NULL) || (message->hdr.count != 29u) || (message->hdr.overflow != 0u) ||
-        (message->hdr.reserved != 0u))
+    if ((message == NULL) || (message->hdr.count != 29u) ||
+        (message->hdr.overflow != 0u) || (message->hdr.reserved != 0u))
     {
         return '\0';
     }

@@ -1,23 +1,25 @@
+#include "../app_assert.h"
 #include "drv_motor.h"
 #include "motion_config.h"
 #include "../../config/config_device.h"
 #include "../../device/i2c/sysdepend/rp2040/i2c_cnf_sysdep.h"
 
 #if USE_PTMR
-#error "Motion owns PWM slices 4/5; review physical-timer allocation before enabling USE_PTMR"
+#error "USE_PTMR conflicts with motor PWM slices 4/5"
 #endif
 #define MOTOR_PIN_CONFLICT(p) (((p) >= 8) && ((p) <= 11))
-#if DEVCNF_USE_IIC &&                                                                              \
-    (MOTOR_PIN_CONFLICT(DEVCNF_I2C0_SDA_PIN) || MOTOR_PIN_CONFLICT(DEVCNF_I2C0_SCL_PIN) ||         \
-     MOTOR_PIN_CONFLICT(DEVCNF_I2C1_SDA_PIN) || MOTOR_PIN_CONFLICT(DEVCNF_I2C1_SCL_PIN))
+#if DEVCNF_USE_IIC && (MOTOR_PIN_CONFLICT(DEVCNF_I2C0_SDA_PIN) ||              \
+                       MOTOR_PIN_CONFLICT(DEVCNF_I2C0_SCL_PIN) ||              \
+                       MOTOR_PIN_CONFLICT(DEVCNF_I2C1_SDA_PIN) ||              \
+                       MOTOR_PIN_CONFLICT(DEVCNF_I2C1_SCL_PIN))
 #error "I2C pin configuration conflicts with motor GPIO8..11"
 #endif
 
 #define MOTOR_SLICE_LEFT 4u
 #define MOTOR_SLICE_RIGHT 5u
-_Static_assert(MOTION_LEFT_A == 8u && MOTION_LEFT_B == 9u && MOTION_RIGHT_A == 10u &&
-                   MOTION_RIGHT_B == 11u,
-               "This driver owns the fixed Robo Pico motor connections");
+APP_STATIC_ASSERT(motor_pwm_pin_allocation,
+                  MOTION_LEFT_A == 8u && MOTION_LEFT_B == 9u &&
+                      MOTION_RIGHT_A == 10u && MOTION_RIGHT_B == 11u);
 #define MOTOR_REG(slice, offset) (PWM_BASE + (slice) * 0x14u + (offset))
 
 #if MOTION_LINE_ROUTE
@@ -33,8 +35,8 @@ void barcode_buzzer_set(bool sounding)
 
 /* RP2040 WATCHDOG and PSM registers. Startup configured a 1 us tick.
  * RP2040-E1 decrements LOAD twice per tick. Reset PWM and both processors. */
-#define MOTOR_WD_CTRL  0x40058000u
-#define MOTOR_WD_LOAD  0x40058004u
+#define MOTOR_WD_CTRL 0x40058000u
+#define MOTOR_WD_LOAD 0x40058004u
 #define MOTOR_WD_SCRATCH4 0x4005801cu
 #define MOTOR_WD_SELECT 0x40010008u
 #define MOTOR_WD_RESET_DOMAINS 0x1fffcu
@@ -64,8 +66,10 @@ void motor_hw_stop(void)
 
 ER motor_hw_init(void)
 {
-    const UINT pins[4] = {MOTION_LEFT_A, MOTION_LEFT_B, MOTION_RIGHT_A, MOTION_RIGHT_B};
-    const UW divider16 = (TMCLK_MHz * 1000000u * 16u) / (MOTION_PWM_HZ * (MOTION_PWM_TOP + 1u));
+    const UINT pins[4] = {MOTION_LEFT_A, MOTION_LEFT_B, MOTION_RIGHT_A,
+                          MOTION_RIGHT_B};
+    const UW divider16 =
+        (TMCLK_MHz * 1000000u * 16u) / (MOTION_PWM_HZ * (MOTION_PWM_TOP + 1u));
     for (unsigned i = 0; i < 4u; ++i)
     {
         gpio_set_val(pins[i], 0);
@@ -75,7 +79,8 @@ ER motor_hw_init(void)
      * its competing physical-timer driver. Never reset a running PWM block. */
     clr_w(RESETS_RESET, RESETS_RESET_PWM);
     unsigned attempts = 10000u;
-    while (((in_w(RESETS_RESET_DONE) & RESETS_RESET_PWM) == 0u) && (attempts > 0u))
+    while (((in_w(RESETS_RESET_DONE) & RESETS_RESET_PWM) == 0u) &&
+           (attempts > 0u))
     {
         --attempts;
     }

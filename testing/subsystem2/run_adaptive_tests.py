@@ -16,7 +16,7 @@ CHECKS = {
     "pause-settling": ["testing/subsystem2/line_pause_settling_test.c", *LOGIC],
     "crossing": ["testing/subsystem2/line_crossing_test.c", *LOGIC],
     "v2-steering": ["testing/subsystem2/line_adaptive_baseline_test.c", *LOGIC],
-    "continuity": ["testing/subsystem2/line_adaptive_continuity_test.c"],
+    "continuity": ["testing/subsystem2/line_adaptive_continuity_test.c", *LOGIC],
     "controller": ["testing/subsystem2/line_adaptive_test.c", *LOGIC],
     "owner": [*OWNER, "testing/subsystem2/line_adaptive_owner_test.c", *LOGIC],
     "handoff": [*OWNER, "testing/subsystem2/ir_handoff_integration_test.c", *LOGIC,

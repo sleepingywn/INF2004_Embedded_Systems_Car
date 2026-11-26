@@ -50,7 +50,7 @@ static void logic_tests(void)
     unsigned n = sizeof code39_table / sizeof code39_table[0];
     for (unsigned i = 0; i < n; i++)
         for (int r = 0; r < 2; r++) {
-            bc_msg_t m = make_code(code39_table[i].p, r, 100, 300);
+            bc_msg_t m = make_code(code39_table[i].pattern, r, 100, 300);
             assert(route_code39_decode(&m) == code39_table[i].code);
         }
     /* 16-bit widths needed: the big barcode's wide gaps exceed 255 ms. */

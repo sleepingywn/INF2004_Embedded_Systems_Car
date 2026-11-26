@@ -2,7 +2,8 @@
 #define MOTION_LOGIC_CASES_H
 /* Shared host/on-target pure-logic cases. No peripheral or motor calls. */
 #include "motion_logic.h"
-#define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
+#define memset                                                                 \
+    __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
 #define memcpy __builtin_memcpy
 #define memcmp __builtin_memcmp
 
@@ -16,7 +17,8 @@ static bool motion_case_quadrature(void)
         forward += motion_quadrature_delta(clockwise[i], clockwise[i + 1u]);
         reverse += motion_quadrature_delta(clockwise[i + 1u], clockwise[i]);
     }
-    return (forward == 4) && (reverse == -4) && (motion_quadrature_delta(0, 3) == 2) &&
+    return (forward == 4) && (reverse == -4) &&
+           (motion_quadrature_delta(0, 3) == 2) &&
            (motion_quadrature_delta(2, 2) == 0);
 }
 
@@ -24,7 +26,8 @@ static bool motion_case_wrap(void)
 {
     return (motion_count_delta(3u, UINT32_MAX - 1u) == 5) &&
            (motion_count_delta(UINT32_MAX - 1u, 3u) == -5) &&
-           (motion_count_delta(100u, 100u) == 0) && (motion_count_delta(99u, 100u) == -1);
+           (motion_count_delta(100u, 100u) == 0) &&
+           (motion_count_delta(99u, 100u) == -1);
 }
 
 static bool motion_case_pid(void)
@@ -46,10 +49,12 @@ static bool motion_case_pid(void)
     {
         return false;
     }
-    return (motion_pid_step(&pid, 100, 0, 0, 1024, 1024, 1024, 200) == 0) && (pid.primed == 0u);
+    return (motion_pid_step(&pid, 100, 0, 0, 1024, 1024, 1024, 200) == 0) &&
+           (pid.primed == 0u);
 }
 
-static void motion_case_barcode_fixture(bc_msg_t *barcode, const char *character)
+static void motion_case_barcode_fixture(bc_msg_t *barcode,
+                                        const char *character)
 {
     /* Independent run-width fixture: *=nwnnwnwnn, ten samples per narrow,
      * 25 per wide, two ten-sample inter-character spaces. */
@@ -67,7 +72,8 @@ static void motion_case_barcode_fixture(bc_msg_t *barcode, const char *character
 
 static bool motion_case_barcodes(void)
 {
-    const char *patterns[4] = {"211112112", "112112112", "212112111", "111122112"};
+    const char *patterns[4] = {"211112112", "112112112", "212112111",
+                               "111122112"};
     bc_msg_t barcode;
     for (unsigned character = 0; character < 4u; ++character)
     {
@@ -110,11 +116,13 @@ static bool motion_case_barcodes(void)
 }
 static bool motion_case_packing(void)
 {
-    const int64_t values[7] = {0, -1, 2047, -2047, -8388607, -8388607000LL, 8388607000LL};
+    const int64_t values[7] = {
+        0, -1, 2047, -2047, -8388607, -8388607000LL, 8388607000LL};
     const unsigned widths[7] = {9u, 9u, 12u, 12u, 24u, 34u, 34u};
     for (unsigned i = 0; i < 7u; ++i)
     {
-        if (motion_bits_decode(motion_bits_encode(values[i], widths[i]), widths[i]) != values[i])
+        if (motion_bits_decode(motion_bits_encode(values[i], widths[i]),
+                               widths[i]) != values[i])
         {
             return false;
         }
@@ -127,15 +135,18 @@ static bool motion_case_steering(void)
 {
     int16_t left = 0;
     int16_t right = 0;
-    if (!motion_line_targets(50, 100, 200, 1024, &left, &right) || left != 50 || right != 150)
+    if (!motion_line_targets(50, 100, 200, 1024, &left, &right) || left != 50 ||
+        right != 150)
     {
         return false;
     }
-    if (!motion_line_targets(-50, 100, 200, 1024, &left, &right) || left != 150 || right != 50)
+    if (!motion_line_targets(-50, 100, 200, 1024, &left, &right) ||
+        left != 150 || right != 50)
     {
         return false;
     }
-    if (!motion_line_targets(100, 180, 200, 1024, &left, &right) || left != 160 || right != 200)
+    if (!motion_line_targets(100, 180, 200, 1024, &left, &right) ||
+        left != 160 || right != 200)
     {
         return false;
     }

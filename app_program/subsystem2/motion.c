@@ -17,7 +17,8 @@
 #include "drv_encoder.h"
 #include "../subsystem4/s4_hump_hint.h"
 #include <limits.h>
-#define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
+#define memset                                                                 \
+    __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
 #define memcpy __builtin_memcpy
 #if TK_SUPPORT_SMP
 #include <tk/smp.h>
@@ -106,7 +107,7 @@ static struct
     uint32_t barcode_ms;
     uint32_t barcode_epoch;
     uint32_t rejected_requests;
-    uint32_t remote_epoch,remote_id,remote_renewed,remote_started;
+    uint32_t remote_epoch, remote_id, remote_renewed, remote_started;
     bool pending : 1;
     bool processing : 1;
     bool renewal : 1;
@@ -129,61 +130,88 @@ static motion_pid_t pid[2];
 static line_follow_t line_trial;
 /* Owner-only recording; the observer gets a copy only after motion stops.
  * Recording performs no locks, allocation or USB writes in the motor loop. */
-static struct line_history {
+static struct line_history
+{
     motion_line_trace_sample_t samples[MOTION_LINE_TRACE_SAMPLES];
-    uint32_t epoch,id,last_ms;
-    unsigned next,count;
-} line_history,observer_line_history;
-static bool line_history_dirty,observer_line_history_available;
-static void line_history_clear(uint32_t epoch,uint32_t id)
+    uint32_t epoch, id, last_ms;
+    unsigned next, count;
+} line_history, observer_line_history;
+static bool line_history_dirty, observer_line_history_available;
+static void line_history_clear(uint32_t epoch, uint32_t id)
 {
-    line_history.epoch=epoch;line_history.id=id;
-    line_history.next=line_history.count=0;
-    line_history_dirty=true;
+    line_history.epoch = epoch;
+    line_history.id = id;
+    line_history.next = line_history.count = 0;
+    line_history_dirty = true;
 }
-static void line_history_record(uint32_t now,const line_msg_t *line,uint32_t sampled_ms,
-                                uint32_t epoch,bool have_line,line_step_t result)
+static void line_history_record(uint32_t now, const line_msg_t *line,
+                                uint32_t sampled_ms, uint32_t epoch,
+                                bool have_line, line_step_t result)
 {
-    bool overlap_transition=false;
-    if(have_line && line && line_history.count) {
-        unsigned previous=(line_history.next+MOTION_LINE_TRACE_SAMPLES-1u)%MOTION_LINE_TRACE_SAMPLES;
-        overlap_transition=(line->state==LINE_BOTH_BLACK)!=
-            (line_history.samples[previous].state==LINE_BOTH_BLACK);
+    bool overlap_transition = false;
+    if (have_line && line && line_history.count)
+    {
+        unsigned previous =
+            (line_history.next + MOTION_LINE_TRACE_SAMPLES - 1u) %
+            MOTION_LINE_TRACE_SAMPLES;
+        overlap_transition =
+            (line->state == LINE_BOTH_BLACK) !=
+            (line_history.samples[previous].state == LINE_BOTH_BLACK);
     }
 #if MOTION_LINE_ADAPTIVE
-    if(line_history.count) {
-        unsigned previous=(line_history.next+MOTION_LINE_TRACE_SAMPLES-1u)%MOTION_LINE_TRACE_SAMPLES;
-        overlap_transition=overlap_transition || line_history.samples[previous].adaptive_mode!=line_trial.adaptive.mode;
+    if (line_history.count)
+    {
+        unsigned previous =
+            (line_history.next + MOTION_LINE_TRACE_SAMPLES - 1u) %
+            MOTION_LINE_TRACE_SAMPLES;
+        overlap_transition = overlap_transition ||
+                             line_history.samples[previous].adaptive_mode !=
+                                 line_trial.adaptive.mode;
     }
 #endif
     /* A short overlap can begin and clear between ordinary 100ms samples. */
-    if(result==LINE_STEP_OK && line_history.count && now-line_history.last_ms<100u && !overlap_transition)return;
-    motion_line_trace_sample_t *s=&line_history.samples[line_history.next];
-    *s=(motion_line_trace_sample_t){
-        .elapsed_ms=now-line_trial.started_ms,.age_ms=have_line ? now-sampled_ms:UINT32_MAX,
-        .speed_left_cps=line_trial.speed.left.filtered_milli_cps/1000,
-        .speed_right_cps=line_trial.speed.right.filtered_milli_cps/1000,
-        .target_left_cps=(uint16_t)line_trial.speed.left.target_cps,
-        .target_right_cps=(uint16_t)line_trial.speed.right.target_cps,
-        .duty_left=motion_left_duty(&state),.duty_right=motion_right_duty(&state),
-        .error=have_line ? (int8_t)line->err:0,.steering=line_trial.steering_error,
-        .tight_direction=line_trial.tight.direction,
-        .search_phase=line_trial.search.phase,
-        .levels=line_trial.observed_levels,.adaptive_mode=(uint8_t)line_trial.adaptive.mode,
-        .stop_reason=(uint8_t)line_trial.adaptive.stop_reason,
-        .state=have_line ? (uint8_t)line->state:255u,.step=(uint8_t)result,
-        .flags=(have_line ? 2u:0u) | (have_line && epoch==state.epoch ? 4u:0u) |
-               (have_line && line->fault ? 8u:0u)};
-    line_history.next=(line_history.next+1u)%MOTION_LINE_TRACE_SAMPLES;
-    if(line_history.count<MOTION_LINE_TRACE_SAMPLES)++line_history.count;
-    line_history.last_ms=now;line_history_dirty=true;
+    if (result == LINE_STEP_OK && line_history.count &&
+        now - line_history.last_ms < 100u && !overlap_transition)
+    {
+        return;
+    }
+    motion_line_trace_sample_t *s = &line_history.samples[line_history.next];
+    *s = (motion_line_trace_sample_t){
+        .elapsed_ms = now - line_trial.started_ms,
+        .age_ms = have_line ? now - sampled_ms : UINT32_MAX,
+        .speed_left_cps = line_trial.speed.left.filtered_milli_cps / 1000,
+        .speed_right_cps = line_trial.speed.right.filtered_milli_cps / 1000,
+        .target_left_cps = (uint16_t)line_trial.speed.left.target_cps,
+        .target_right_cps = (uint16_t)line_trial.speed.right.target_cps,
+        .duty_left = motion_left_duty(&state),
+        .duty_right = motion_right_duty(&state),
+        .error = have_line ? (int8_t)line->err : 0,
+        .steering = line_trial.steering_error,
+        .tight_direction = line_trial.tight.direction,
+        .search_phase = line_trial.search.phase,
+        .levels = line_trial.observed_levels,
+        .adaptive_mode = (uint8_t)line_trial.adaptive.mode,
+        .stop_reason = (uint8_t)line_trial.adaptive.stop_reason,
+        .state = have_line ? (uint8_t)line->state : 255u,
+        .step = (uint8_t)result,
+        .flags = (have_line ? 2u : 0u) |
+                 (have_line && epoch == state.epoch ? 4u : 0u) |
+                 (have_line && line->fault ? 8u : 0u)};
+    line_history.next = (line_history.next + 1u) % MOTION_LINE_TRACE_SAMPLES;
+    if (line_history.count < MOTION_LINE_TRACE_SAMPLES)
+    {
+        ++line_history.count;
+    }
+    line_history.last_ms = now;
+    line_history_dirty = true;
 }
 static bool line_usb_connected(void)
 {
 #if MOTION_LINE_CIRCUIT
-    return true; /* explicit untethered profile; still bounded by TTL and faults */
+    return true; /* explicit untethered profile; still bounded by TTL and faults
+                  */
 #elif TM_CONSOLE_USB_CDC
-    return tm_usb_state()==3u;
+    return tm_usb_state() == 3u;
 #else
     return false;
 #endif
@@ -236,23 +264,36 @@ static bool calibrated(void)
 {
     return (MOTION_CALIBRATED != 0) && (MOTION_ENCODERS_VERIFIED != 0) &&
            ((MOTION_LEFT_MOTOR_SIGN == 1) || (MOTION_LEFT_MOTOR_SIGN == -1)) &&
-           ((MOTION_RIGHT_MOTOR_SIGN == 1) || (MOTION_RIGHT_MOTOR_SIGN == -1)) &&
-           ((MOTION_LEFT_ENCODER_SIGN == 1) || (MOTION_LEFT_ENCODER_SIGN == -1)) &&
-           ((MOTION_RIGHT_ENCODER_SIGN == 1) || (MOTION_RIGHT_ENCODER_SIGN == -1)) &&
-           (MOTION_LEFT_COUNTS_REV > 0u) && (MOTION_LEFT_COUNTS_REV <= 1000000u) &&
-           (MOTION_RIGHT_COUNTS_REV > 0u) && (MOTION_RIGHT_COUNTS_REV <= 1000000u) &&
-           (MOTION_LEFT_CIRCUMFERENCE_UM > 0u) && (MOTION_LEFT_CIRCUMFERENCE_UM <= 1000000u) &&
-           (MOTION_RIGHT_CIRCUMFERENCE_UM > 0u) && (MOTION_RIGHT_CIRCUMFERENCE_UM <= 1000000u) &&
+           ((MOTION_RIGHT_MOTOR_SIGN == 1) ||
+            (MOTION_RIGHT_MOTOR_SIGN == -1)) &&
+           ((MOTION_LEFT_ENCODER_SIGN == 1) ||
+            (MOTION_LEFT_ENCODER_SIGN == -1)) &&
+           ((MOTION_RIGHT_ENCODER_SIGN == 1) ||
+            (MOTION_RIGHT_ENCODER_SIGN == -1)) &&
+           (MOTION_LEFT_COUNTS_REV > 0u) &&
+           (MOTION_LEFT_COUNTS_REV <= 1000000u) &&
+           (MOTION_RIGHT_COUNTS_REV > 0u) &&
+           (MOTION_RIGHT_COUNTS_REV <= 1000000u) &&
+           (MOTION_LEFT_CIRCUMFERENCE_UM > 0u) &&
+           (MOTION_LEFT_CIRCUMFERENCE_UM <= 1000000u) &&
+           (MOTION_RIGHT_CIRCUMFERENCE_UM > 0u) &&
+           (MOTION_RIGHT_CIRCUMFERENCE_UM <= 1000000u) &&
            (MOTION_TRACK_WIDTH_MM > 0u) && (MOTION_TRACK_WIDTH_MM <= 1000u) &&
            (MOTION_MAX_SPEED_MM_S > 0u) && (MOTION_MAX_SPEED_MM_S <= 2047u) &&
-           (MOTION_CRUISE_MM_S > 0u) && (MOTION_CRUISE_MM_S <= MOTION_MAX_SPEED_MM_S) &&
-           (MOTION_TURN_MM_S > 0u) && (MOTION_TURN_MM_S <= MOTION_MAX_SPEED_MM_S) &&
+           (MOTION_CRUISE_MM_S > 0u) &&
+           (MOTION_CRUISE_MM_S <= MOTION_MAX_SPEED_MM_S) &&
+           (MOTION_TURN_MM_S > 0u) &&
+           (MOTION_TURN_MM_S <= MOTION_MAX_SPEED_MM_S) &&
            (MOTION_DUTY_LIMIT > 0u) && (MOTION_DUTY_LIMIT <= 1000u) &&
-           (MOTION_POSITION_TOLERANCE_MM > 0u) && (MOTION_POSITION_TOLERANCE_MM <= 100u) &&
-           (MOTION_STALL_MS >= MOTION_PERIOD_MS) && (MOTION_STALL_MS <= 30000u) &&
-           (MOTION_INPUT_MAX_AGE_MS >= 10u) && (MOTION_INPUT_MAX_AGE_MS < 16384u) &&
-           (MOTION_MANOEUVRE_TIMEOUT_MS > 0u) && (MOTION_MANOEUVRE_TIMEOUT_MS <= 30000u) &&
-           (MOTION_REVERSE_REST_MS >= MOTION_PERIOD_MS) && (MOTION_REVERSE_REST_MS <= 1000u) &&
+           (MOTION_POSITION_TOLERANCE_MM > 0u) &&
+           (MOTION_POSITION_TOLERANCE_MM <= 100u) &&
+           (MOTION_STALL_MS >= MOTION_PERIOD_MS) &&
+           (MOTION_STALL_MS <= 30000u) && (MOTION_INPUT_MAX_AGE_MS >= 10u) &&
+           (MOTION_INPUT_MAX_AGE_MS < 16384u) &&
+           (MOTION_MANOEUVRE_TIMEOUT_MS > 0u) &&
+           (MOTION_MANOEUVRE_TIMEOUT_MS <= 30000u) &&
+           (MOTION_REVERSE_REST_MS >= MOTION_PERIOD_MS) &&
+           (MOTION_REVERSE_REST_MS <= 1000u) &&
            (MOTION_STALL_MS > MOTION_REVERSE_REST_MS + MOTION_PERIOD_MS) &&
            (MOTION_PID_KP_Q10 > 0u) && (MOTION_PID_KP_Q10 <= 65535u) &&
            (MOTION_PID_KI_Q10 <= 65535u) && (MOTION_PID_KD_Q10 <= 65535u) &&
@@ -262,16 +303,18 @@ static bool calibrated(void)
 
 static void publish_observer_status(void)
 {
-    if (status_mutex > 0 && tk_loc_mtx(status_mutex, TMO_POL) == E_OK) {
+    if (status_mutex > 0 && tk_loc_mtx(status_mutex, TMO_POL) == E_OK)
+    {
         observer_status = state;
 #if MOTION_LINE_ROUTE
         observer_barcode_status = barcode_status;
 #endif
         observer_diagnostics = diagnostics;
-        observer_line_history_available=!owner_flags.active_valid;
-        if(observer_line_history_available && line_history_dirty) {
-            observer_line_history=line_history;
-            line_history_dirty=false;
+        observer_line_history_available = !owner_flags.active_valid;
+        if (observer_line_history_available && line_history_dirty)
+        {
+            observer_line_history = line_history;
+            line_history_dirty = false;
         }
         tk_unl_mtx(status_mutex);
     }
@@ -280,36 +323,75 @@ static void publish_observer_status(void)
 #if MOTION_LINE_ROUTE
 ER motion_get_barcode_status(motion_barcode_status_t *out)
 {
-    if(!out || status_mutex<=0)return E_OBJ;
-    ER e=tk_loc_mtx(status_mutex,TMO_POL);if(e<E_OK)return e;
-    *out=observer_barcode_status;tk_unl_mtx(status_mutex);return E_OK;
+    if (!out || status_mutex <= 0)
+    {
+        return E_OBJ;
+    }
+    ER e = tk_loc_mtx(status_mutex, TMO_POL);
+    if (e < E_OK)
+    {
+        return e;
+    }
+    *out = observer_barcode_status;
+    tk_unl_mtx(status_mutex);
+    return E_OK;
 }
 #endif
-ER motion_get_line_trace(unsigned index,motion_line_trace_entry_t *out)
+ER motion_get_line_trace(unsigned index, motion_line_trace_entry_t *out)
 {
-    if(!out)return E_PAR;
-    if(status_mutex<=0)return E_OBJ;
-    ER e=tk_loc_mtx(status_mutex,TMO_POL);
-    if(e<E_OK)return e;
-    if(!observer_line_history_available)e=E_OBJ;
-    else if(index>=observer_line_history.count)e=E_NOEXS;
-    else {
-        unsigned first=(observer_line_history.next+MOTION_LINE_TRACE_SAMPLES-
-                        observer_line_history.count)%MOTION_LINE_TRACE_SAMPLES;
-        *out=(motion_line_trace_entry_t){
-            .sample=observer_line_history.samples[(first+index)%MOTION_LINE_TRACE_SAMPLES],
-            .epoch=observer_line_history.epoch,.id=observer_line_history.id,
-            .count=(uint16_t)observer_line_history.count};
+    if (!out)
+    {
+        return E_PAR;
     }
-    tk_unl_mtx(status_mutex);return e;
+    if (status_mutex <= 0)
+    {
+        return E_OBJ;
+    }
+    ER e = tk_loc_mtx(status_mutex, TMO_POL);
+    if (e < E_OK)
+    {
+        return e;
+    }
+    if (!observer_line_history_available)
+    {
+        e = E_OBJ;
+    }
+    else if (index >= observer_line_history.count)
+    {
+        e = E_NOEXS;
+    }
+    else
+    {
+        unsigned first =
+            (observer_line_history.next + MOTION_LINE_TRACE_SAMPLES -
+             observer_line_history.count) %
+            MOTION_LINE_TRACE_SAMPLES;
+        *out = (motion_line_trace_entry_t){
+            .sample = observer_line_history
+                          .samples[(first + index) % MOTION_LINE_TRACE_SAMPLES],
+            .epoch = observer_line_history.epoch,
+            .id = observer_line_history.id,
+            .count = (uint16_t)observer_line_history.count};
+    }
+    tk_unl_mtx(status_mutex);
+    return e;
 }
 
 ER motion_get_diagnostics(motion_diagnostics_t *out)
 {
-    if (!out) return E_PAR;
-    if (status_mutex <= 0) return E_OBJ;
+    if (!out)
+    {
+        return E_PAR;
+    }
+    if (status_mutex <= 0)
+    {
+        return E_OBJ;
+    }
     ER e = tk_loc_mtx(status_mutex, TMO_POL);
-    if (e < E_OK) return e;
+    if (e < E_OK)
+    {
+        return e;
+    }
     *out = observer_diagnostics;
     tk_unl_mtx(status_mutex);
     return E_OK;
@@ -338,15 +420,31 @@ ER motion_get_status(motion_status_t *status)
 
 ER motion_get_ir_status(motion_status_t *status)
 {
-    if (status == NULL) return E_PAR;
-    if (status_mutex <= 0) return E_OBJ;
-    ER error = E_TMOUT;
-    for (unsigned attempt = 0; attempt < 50u; ++attempt) {
-        error = tk_loc_mtx(status_mutex, TMO_POL);
-        if (error != E_TMOUT) break;
+    if (status == NULL)
+    {
+        return E_PAR;
     }
-    if (error == E_TMOUT) error = tk_loc_mtx(status_mutex, 2);
-    if (error < E_OK) return error;
+    if (status_mutex <= 0)
+    {
+        return E_OBJ;
+    }
+    ER error = E_TMOUT;
+    for (unsigned attempt = 0; attempt < 50u; ++attempt)
+    {
+        error = tk_loc_mtx(status_mutex, TMO_POL);
+        if (error != E_TMOUT)
+        {
+            break;
+        }
+    }
+    if (error == E_TMOUT)
+    {
+        error = tk_loc_mtx(status_mutex, 2);
+    }
+    if (error < E_OK)
+    {
+        return error;
+    }
     *status = observer_status;
     tk_unl_mtx(status_mutex);
     return E_OK;
@@ -387,8 +485,9 @@ ER motion_set_fault(motion_fault_source_t source, bool asserted)
 
 static bool valid_request(const motion_request_t *request)
 {
-    if ((request->version != MOTION_SCHEMA) || (request->reserved != 0u) || (request->id == 0u) ||
-        (request->ttl_ms < 2u) || (request->ttl_ms > 30000u) || (request->command > MOTION_LINE_TRACE))
+    if ((request->version != MOTION_SCHEMA) || (request->reserved != 0u) ||
+        (request->id == 0u) || (request->ttl_ms < 2u) ||
+        (request->ttl_ms > 30000u) || (request->command > MOTION_LINE_TRACE))
     {
         return false;
     }
@@ -396,32 +495,42 @@ static bool valid_request(const motion_request_t *request)
     int32_t right = motion_request_right(request);
     if (request->command == MOTION_RESET)
     {
-        return (request->source == MOTION_LOCAL) && (motion_request_value(request) == 0) &&
-               (left == 0) && (right == 0);
+        return (request->source == MOTION_LOCAL) &&
+               (motion_request_value(request) == 0) && (left == 0) &&
+               (right == 0);
     }
     if (request->command == MOTION_BENCH)
     {
-        return (request->source == MOTION_LOCAL) && (motion_request_value(request) == 0) &&
-               (request->ttl_ms <= MOTION_BENCH_TIME_MAX_MS) && (left >= -MOTION_BENCH_DUTY_MAX) &&
-               (left <= MOTION_BENCH_DUTY_MAX) && (right >= -MOTION_BENCH_DUTY_MAX) &&
+        return (request->source == MOTION_LOCAL) &&
+               (motion_request_value(request) == 0) &&
+               (request->ttl_ms <= MOTION_BENCH_TIME_MAX_MS) &&
+               (left >= -MOTION_BENCH_DUTY_MAX) &&
+               (left <= MOTION_BENCH_DUTY_MAX) &&
+               (right >= -MOTION_BENCH_DUTY_MAX) &&
                (right <= MOTION_BENCH_DUTY_MAX);
     }
-    if(request->command==MOTION_LINE_TRACE) {
+    if (request->command == MOTION_LINE_TRACE)
+    {
         return MOTION_LINE_DEMO && MOTION_ENCODERS_VERIFIED &&
-               MOTION_LEFT_ENCODER_SIGN==-1 && MOTION_RIGHT_ENCODER_SIGN==1 &&
-               MOTION_LEFT_MOTOR_SIGN==-1 && MOTION_RIGHT_MOTOR_SIGN==1 &&
-               (request->source==MOTION_LOCAL || (MOTION_LINE_REMOTE && request->source==MOTION_NETWORK)) && motion_request_value(request)==0 &&
-               left==0 && right==0 && request->ttl_ms>=2*MOTION_PERIOD_MS &&
-               request->ttl_ms<=LINE_FOLLOW_MAX_MS;
+               MOTION_LEFT_ENCODER_SIGN == -1 &&
+               MOTION_RIGHT_ENCODER_SIGN == 1 && MOTION_LEFT_MOTOR_SIGN == -1 &&
+               MOTION_RIGHT_MOTOR_SIGN == 1 &&
+               (request->source == MOTION_LOCAL ||
+                (MOTION_LINE_REMOTE && request->source == MOTION_NETWORK)) &&
+               motion_request_value(request) == 0 && left == 0 && right == 0 &&
+               request->ttl_ms >= 2 * MOTION_PERIOD_MS &&
+               request->ttl_ms <= LINE_FOLLOW_MAX_MS;
     }
     /* Other network commands remain disabled. Buddy1 can publish status
      * and assert faults; an agreed local controller admits mission requests. */
-    if (!calibrated() || (request->source == MOTION_TERRAIN) || (request->source == MOTION_NETWORK))
+    if (!calibrated() || (request->source == MOTION_TERRAIN) ||
+        (request->source == MOTION_NETWORK))
     {
         return false;
     }
     int32_t maximum = MOTION_MAX_SPEED_MM_S;
-    if ((left < -maximum) || (left > maximum) || (right < -maximum) || (right > maximum))
+    if ((left < -maximum) || (left > maximum) || (right < -maximum) ||
+        (right > maximum))
     {
         return false;
     }
@@ -429,14 +538,16 @@ static bool valid_request(const motion_request_t *request)
     {
         case MOTION_DISTANCE:
             return (motion_request_value(request) != 0) &&
-                   (motion_request_value(request) >= -524287) && (left > 0) && (right == 0);
+                   (motion_request_value(request) >= -524287) && (left > 0) &&
+                   (right == 0);
         case MOTION_TURN:
             return (motion_request_value(request) >= -180) &&
-                   (motion_request_value(request) <= 180) && (motion_request_value(request) != 0) &&
-                   (left > 0) && (right == 0);
-        case MOTION_FOLLOW:
-            return (motion_request_value(request) == 0) && (left > 0) && (left < maximum) &&
+                   (motion_request_value(request) <= 180) &&
+                   (motion_request_value(request) != 0) && (left > 0) &&
                    (right == 0);
+        case MOTION_FOLLOW:
+            return (motion_request_value(request) == 0) && (left > 0) &&
+                   (left < maximum) && (right == 0);
         case MOTION_VELOCITY:
             return motion_request_value(request) == 0;
         default:
@@ -444,15 +555,16 @@ static bool valid_request(const motion_request_t *request)
     }
 }
 
-ER motion_request_init(motion_request_t *request, motion_command_t command, motion_source_t source,
-                       uint32_t epoch, uint32_t id, uint32_t ttl_ms, int32_t value, int32_t left,
+ER motion_request_init(motion_request_t *request, motion_command_t command,
+                       motion_source_t source, uint32_t epoch, uint32_t id,
+                       uint32_t ttl_ms, int32_t value, int32_t left,
                        int32_t right)
 {
     if ((request == NULL) || ((unsigned)command > MOTION_LINE_TRACE) ||
-        ((unsigned)source > MOTION_TERRAIN) || (id == 0u) || (ttl_ms < 2u) || (ttl_ms > 30000u) ||
-        (value < -524287) || (value > 524287) ||
-        ((command == MOTION_TURN) && ((value < -180) || (value > 180))) || (left < -2047) ||
-        (left > 2047) || (right < -2047) || (right > 2047))
+        ((unsigned)source > MOTION_TERRAIN) || (id == 0u) || (ttl_ms < 2u) ||
+        (ttl_ms > 30000u) || (value < -524287) || (value > 524287) ||
+        ((command == MOTION_TURN) && ((value < -180) || (value > 180))) ||
+        (left < -2047) || (left > 2047) || (right < -2047) || (right > 2047))
     {
         return E_PAR;
     }
@@ -493,10 +605,12 @@ ER motion_submit(const motion_request_t *request)
         return error;
     }
     const motion_status_t *status = &shared.status;
-    bool id_new = (request->epoch != status->request_epoch) || (request->id > status->request_id);
-    bool idle = (status->state == MOTION_IDLE) || (status->state == MOTION_ERROR);
-    if (!status->ready || shared.pending || shared.processing || !idle || !id_new ||
-        (request->epoch != status->epoch) ||
+    bool id_new = (request->epoch != status->request_epoch) ||
+                  (request->id > status->request_id);
+    bool idle =
+        (status->state == MOTION_IDLE) || (status->state == MOTION_ERROR);
+    if (!status->ready || shared.pending || shared.processing || !idle ||
+        !id_new || (request->epoch != status->epoch) ||
         !fresh(motion_now_ms(), request->issued_ms, request->ttl_ms - 1u))
     {
         ++shared.rejected_requests;
@@ -504,10 +618,15 @@ ER motion_submit(const motion_request_t *request)
         return E_OBJ;
     }
 #if MOTION_LINE_REMOTE
-    if(request->source==MOTION_NETWORK &&
-       (request->command!=MOTION_LINE_TRACE || shared.remote_epoch!=request->epoch ||
-        shared.remote_id!=request->id || control_expired(motion_now_ms(),shared.remote_renewed,shared.remote_started))) {
-        tk_unl_mtx(mailbox_mutex);return E_OBJ;
+    if (request->source == MOTION_NETWORK &&
+        (request->command != MOTION_LINE_TRACE ||
+         shared.remote_epoch != request->epoch ||
+         shared.remote_id != request->id ||
+         control_expired(motion_now_ms(), shared.remote_renewed,
+                         shared.remote_started)))
+    {
+        tk_unl_mtx(mailbox_mutex);
+        return E_OBJ;
     }
 #endif
     shared.request = *request;
@@ -517,24 +636,44 @@ ER motion_submit(const motion_request_t *request)
     return tk_set_flg(events, WAKE_BIT);
 }
 
-ER motion_remote_watch(uint32_t epoch,uint32_t id,uint32_t renewed_ms,uint32_t started_ms)
+ER motion_remote_watch(uint32_t epoch, uint32_t id, uint32_t renewed_ms,
+                       uint32_t started_ms)
 {
 #if MOTION_LINE_REMOTE
-    if(!id || mailbox_mutex<=0)return E_OBJ;
-    ER e=lock_mailbox();if(e<E_OK)return e;
-    if(shared.status.epoch!=epoch){tk_unl_mtx(mailbox_mutex);return E_OBJ;}
-    shared.remote_epoch=epoch;shared.remote_id=id;
-    shared.remote_renewed=renewed_ms;shared.remote_started=started_ms;
-    tk_unl_mtx(mailbox_mutex);return E_OK;
+    if (!id || mailbox_mutex <= 0)
+    {
+        return E_OBJ;
+    }
+    ER e = lock_mailbox();
+    if (e < E_OK)
+    {
+        return e;
+    }
+    if (shared.status.epoch != epoch)
+    {
+        tk_unl_mtx(mailbox_mutex);
+        return E_OBJ;
+    }
+    shared.remote_epoch = epoch;
+    shared.remote_id = id;
+    shared.remote_renewed = renewed_ms;
+    shared.remote_started = started_ms;
+    tk_unl_mtx(mailbox_mutex);
+    return E_OK;
 #else
-    (void)epoch;(void)id;(void)renewed_ms;(void)started_ms;return E_OBJ;
+    (void)epoch;
+    (void)id;
+    (void)renewed_ms;
+    (void)started_ms;
+    return E_OBJ;
 #endif
 }
 
-ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source, uint32_t issued_ms,
-                uint16_t ttl_ms)
+ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source,
+                uint32_t issued_ms, uint16_t ttl_ms)
 {
-    if ((ttl_ms < 2u) || (ttl_ms > 30000u) || ((unsigned)source > MOTION_TERRAIN))
+    if ((ttl_ms < 2u) || (ttl_ms > 30000u) ||
+        ((unsigned)source > MOTION_TERRAIN))
     {
         return E_PAR;
     }
@@ -547,7 +686,8 @@ ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source, uint32_t is
     {
         return error;
     }
-    if (shared.pending || shared.processing || (shared.status.result != MOTION_ACCEPTED) ||
+    if (shared.pending || shared.processing ||
+        (shared.status.result != MOTION_ACCEPTED) ||
         (epoch != shared.status.epoch) || (id != shared.status.request_id) ||
         (source != shared.status.source) ||
         ((shared.request.command != MOTION_FOLLOW) &&
@@ -567,15 +707,18 @@ ER motion_renew(uint32_t epoch, uint32_t id, motion_source_t source, uint32_t is
     return tk_set_flg(events, WAKE_BIT);
 }
 
-ER motion_publish_line(const line_msg_t *line, uint32_t sampled_ms, uint32_t epoch)
+ER motion_publish_line(const line_msg_t *line, uint32_t sampled_ms,
+                       uint32_t epoch)
 {
-    return motion_publish_line_observed(line,0,sampled_ms,epoch);
+    return motion_publish_line_observed(line, 0, sampled_ms, epoch);
 }
 
-ER motion_publish_line_observed(const line_msg_t *line,uint16_t levels,uint32_t sampled_ms,uint32_t epoch)
+ER motion_publish_line_observed(const line_msg_t *line, uint16_t levels,
+                                uint32_t sampled_ms, uint32_t epoch)
 {
-    if ((line == NULL) || (line->err < -100) || (line->err > 100) || (line->state > LINE_FAULT) ||
-        (line->t_ms != (sampled_ms & 0x7fffu)) || (levels && !line_levels_valid(levels)))
+    if ((line == NULL) || (line->err < -100) || (line->err > 100) ||
+        (line->state > LINE_FAULT) || (line->t_ms != (sampled_ms & 0x7fffu)) ||
+        (levels && !line_levels_valid(levels)))
     {
         return E_PAR;
     }
@@ -612,7 +755,8 @@ ER motion_publish_line_observed(const line_msg_t *line,uint16_t levels,uint32_t 
     return tk_set_flg(events, WAKE_BIT);
 }
 
-ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t epoch)
+ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms,
+                          uint32_t epoch)
 {
     if ((barcode == NULL) || (barcode->hdr.count > BC_MAX_ELEMS))
     {
@@ -627,7 +771,7 @@ ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t
     {
         return error;
     }
-    debug_rx.barcode = *barcode;          /* keep a copy even if rejected */
+    debug_rx.barcode = *barcode; /* keep a copy even if rejected */
     debug_rx.barcode_ms = sampled_ms;
     ++debug_rx.barcode_count;
     if (epoch != shared.status.epoch)
@@ -650,8 +794,8 @@ ER motion_publish_barcode(const bc_msg_t *barcode, uint32_t sampled_ms, uint32_t
 
 static void reset_control(void)
 {
-    line_trial=(line_follow_t){0};
-    diagnostics.line_active=0;
+    line_trial = (line_follow_t){0};
+    diagnostics.line_active = 0;
     motion_pid_reset(&pid[0]);
     motion_pid_reset(&pid[1]);
     previous_duty[0].bits = previous_duty[1].bits = 0;
@@ -668,9 +812,11 @@ static void end_request(unsigned result)
     if (owner_flags.active_valid)
     {
         output_rest_until =
-            motion_now_ms() +
-            ((state.state == MOTION_PULSING) ? MOTION_BENCH_TIME_MAX_MS :
-             (active.command==MOTION_LINE_TRACE ? 500u : MOTION_REVERSE_REST_MS));
+            motion_now_ms() + ((state.state == MOTION_PULSING)
+                                   ? MOTION_BENCH_TIME_MAX_MS
+                                   : (active.command == MOTION_LINE_TRACE
+                                          ? 500u
+                                          : MOTION_REVERSE_REST_MS));
     }
     reset_control();
     if (owner_flags.active_valid)
@@ -697,7 +843,8 @@ static void fault_stop(unsigned fault)
 
 static void timeout_stop(unsigned reason, uint32_t interval)
 {
-    if (!diagnostics.timeout_reason) {
+    if (!diagnostics.timeout_reason)
+    {
         diagnostics.timeout_reason = (uint8_t)reason;
         diagnostics.first_timeout_ms = motion_now_ms();
         diagnostics.first_timeout_interval_ms = interval;
@@ -710,7 +857,8 @@ static void begin_turn(int angle, uint32_t now)
 {
     /* Positive angle = left/CCW. Each wheel travels track*pi*angle/360.
      * 355/113 approximates pi; calibration/slip dominates this rounding. */
-    int64_t arc_um = (int64_t)MOTION_TRACK_WIDTH_MM * 1000 * angle * 355 / (360 * 113);
+    int64_t arc_um =
+        (int64_t)MOTION_TRACK_WIDTH_MM * 1000 * angle * 355 / (360 * 113);
     wheels[0].start_bits = wheels[0].distance_bits;
     wheels[1].start_bits = wheels[1].distance_bits;
     wheels[0].target_bits = (uint32_t)motion_bits_encode(-arc_um, 30u);
@@ -725,7 +873,8 @@ static void begin_turn(int angle, uint32_t now)
 }
 
 static void admit(const motion_request_t *request, uint32_t now, UINT flags,
-                  const line_msg_t *line,uint32_t line_ms,uint32_t line_epoch,bool have_line)
+                  const line_msg_t *line, uint32_t line_ms, uint32_t line_epoch,
+                  bool have_line)
 {
     if (owner_flags.active_valid)
     {
@@ -748,7 +897,8 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags,
             return;
         }
         /* The generation counters preserve a stop/fault arriving while reset
-         * clears its event bit. It will be handled on the next wake, not lost. */
+         * clears its event bit. It will be handled on the next wake, not lost.
+         */
         if ((generation_add(&stop_generation, 0) != handled_stop_generation) ||
             (generation_add(&fault_generation, 0) != handled_fault_generation))
         {
@@ -763,9 +913,9 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags,
         owner_flags.stop_seen = false;
         tk_clr_flg(events, ~STOP_BIT);
         reset_control();
-        diagnostics.line_failure_flags=0;
-        diagnostics.encoder_failure=(motion_encoder_failure_t){0};
-        line_history_clear(state.epoch,request->id);
+        diagnostics.line_failure_flags = 0;
+        diagnostics.encoder_failure = (motion_encoder_failure_t){0};
+        line_history_clear(state.epoch, request->id);
         if (owner_flags.encoder_ready)
         {
             encoder_hw_snapshot(&previous_counts);
@@ -781,11 +931,14 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags,
     }
     if ((state.faults != 0u) || ((flags & (STOP_BIT | SOURCE_BITS)) != 0u) ||
         !owner_flags.motor_ready ||
-        (request->command==MOTION_LINE_TRACE ?
-            (!s4_drive_ready() || !owner_flags.encoder_ready || !state.raw_valid ||
-             !fresh(now,state.time_ms,LINE_FOLLOW_INPUT_AGE_MS) || !line_usb_connected() ||
-             !line_follow_usable(line,now,line_ms,state.epoch,line_epoch,have_line)) :
-            ((request->command != MOTION_BENCH) && !state.valid)) ||
+        (request->command == MOTION_LINE_TRACE
+             ? (!s4_drive_ready() || !owner_flags.encoder_ready ||
+                !state.raw_valid ||
+                !fresh(now, state.time_ms, LINE_FOLLOW_INPUT_AGE_MS) ||
+                !line_usb_connected() ||
+                !line_follow_usable(line, now, line_ms, state.epoch, line_epoch,
+                                    have_line))
+             : ((request->command != MOTION_BENCH) && !state.valid)) ||
         ((output_rest_until != 0u) && (output_rest_until != now) &&
          ((uint32_t)(output_rest_until - now) < 0x80000000u)))
     {
@@ -804,32 +957,36 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags,
             state.state = MOTION_PULSING;
             motor_hw_write((int16_t)motion_request_left(request),
                            (int16_t)motion_request_right(request));
-            state.left_duty_bits = (uint16_t)motion_bits_encode(motion_request_left(request), 11u);
-            state.right_duty_bits =
-                (uint16_t)motion_bits_encode(motion_request_right(request), 11u);
+            state.left_duty_bits =
+                (uint16_t)motion_bits_encode(motion_request_left(request), 11u);
+            state.right_duty_bits = (uint16_t)motion_bits_encode(
+                motion_request_right(request), 11u);
             break;
         case MOTION_DISTANCE:
             state.state = MOTION_TRAVELLING;
             wheels[0].target_bits = wheels[1].target_bits =
-                (uint32_t)motion_bits_encode((int64_t)motion_request_value(request) * 1000, 30u);
+                (uint32_t)motion_bits_encode(
+                    (int64_t)motion_request_value(request) * 1000, 30u);
             break;
         case MOTION_TURN:
             begin_turn(motion_request_value(request), now);
             break;
         case MOTION_LINE_TRACE:
             s4_request_run_reset();
-            state.state=MOTION_TRACING;
+            state.state = MOTION_TRACING;
 #if MOTION_LINE_ADAPTIVE
-            last_barcode_ms=now; /* never replay a pre-start route capture */
+            last_barcode_ms = now; /* never replay a pre-start route capture */
 #endif
 #if MOTION_LINE_ROUTE
             route_reset();
 #endif
-            line_follow_begin(&line_trial,state.left_count,state.right_count,state.invalid_edges,state.time_ms,now);
-            diagnostics.line_active=1;diagnostics.line_step=LINE_STEP_WAIT;
-            diagnostics.line_failure_flags=0;
-            diagnostics.encoder_failure=(motion_encoder_failure_t){0};
-            line_history_clear(state.epoch,request->id);
+            line_follow_begin(&line_trial, state.left_count, state.right_count,
+                              state.invalid_edges, state.time_ms, now);
+            diagnostics.line_active = 1;
+            diagnostics.line_step = LINE_STEP_WAIT;
+            diagnostics.line_failure_flags = 0;
+            diagnostics.encoder_failure = (motion_encoder_failure_t){0};
+            line_history_clear(state.epoch, request->id);
             break;
         case MOTION_FOLLOW:
             state.state = MOTION_TRACING;
@@ -881,7 +1038,8 @@ static bool update_odometry(uint32_t now)
     const int signs[2] = {MOTION_LEFT_ENCODER_SIGN, MOTION_RIGHT_ENCODER_SIGN};
     const uint32_t circumferences[2] = {MOTION_LEFT_CIRCUMFERENCE_UM,
                                         MOTION_RIGHT_CIRCUMFERENCE_UM};
-    const uint32_t revolutions[2] = {MOTION_LEFT_COUNTS_REV, MOTION_RIGHT_COUNTS_REV};
+    const uint32_t revolutions[2] = {MOTION_LEFT_COUNTS_REV,
+                                     MOTION_RIGHT_COUNTS_REV};
     int32_t speeds[2];
     for (unsigned i = 0; i < 2u; ++i)
     {
@@ -892,10 +1050,13 @@ static bool update_odometry(uint32_t now)
         int64_t numerator = (int64_t)deltas[i] * signs[i] * circumferences[i] +
                             motion_bits_decode(wheels[i].fraction_bits, 21u);
         int64_t travel = numerator / revolutions[i];
-        wheels[i].fraction_bits = (uint32_t)motion_bits_encode(numerator % revolutions[i], 21u);
-        int64_t next_distance = motion_bits_decode(wheels[i].distance_bits, 34u) + travel;
+        wheels[i].fraction_bits =
+            (uint32_t)motion_bits_encode(numerator % revolutions[i], 21u);
+        int64_t next_distance =
+            motion_bits_decode(wheels[i].distance_bits, 34u) + travel;
         int64_t velocity = travel / sample_dt; /* um/ms == mm/s */
-        if ((velocity < -2047) || (velocity > 2047) || (next_distance < -INT64_C(8388607000)) ||
+        if ((velocity < -2047) || (velocity > 2047) ||
+            (next_distance < -INT64_C(8388607000)) ||
             (next_distance > INT64_C(8388607000)))
         {
             fault_stop(MOTION_FAULT_RANGE);
@@ -906,10 +1067,10 @@ static bool update_odometry(uint32_t now)
     }
     state.left_speed_bits = (uint16_t)motion_bits_encode(speeds[0], 12u);
     state.right_speed_bits = (uint16_t)motion_bits_encode(speeds[1], 12u);
-    state.left_distance_bits =
-        (uint32_t)motion_bits_encode(motion_bits_decode(wheels[0].distance_bits, 34u) / 1000, 24u);
-    state.right_distance_bits =
-        (uint32_t)motion_bits_encode(motion_bits_decode(wheels[1].distance_bits, 34u) / 1000, 24u);
+    state.left_distance_bits = (uint32_t)motion_bits_encode(
+        motion_bits_decode(wheels[0].distance_bits, 34u) / 1000, 24u);
+    state.right_distance_bits = (uint32_t)motion_bits_encode(
+        motion_bits_decode(wheels[1].distance_bits, 34u) / 1000, 24u);
     state.valid = (state.faults == 0u);
     return state.valid != 0u;
 }
@@ -927,7 +1088,8 @@ static int16_t limit_speed(int64_t speed)
     return (int16_t)speed;
 }
 
-static void apply_velocity(int16_t left, int16_t right, uint32_t now, uint16_t dt)
+static void apply_velocity(int16_t left, int16_t right, uint32_t now,
+                           uint16_t dt)
 {
     const int16_t targets[2] = {left, right};
     const int16_t measured[2] = {(int16_t)motion_left_speed(&state),
@@ -949,23 +1111,28 @@ static void apply_velocity(int16_t left, int16_t right, uint32_t now, uint16_t d
                 fault_stop(MOTION_FAULT_STALL);
                 return;
             }
-            duty[i] = motion_pid_step(&pid[i], targets[i], measured[i], dt, MOTION_PID_KP_Q10,
-                                      MOTION_PID_KI_Q10, MOTION_PID_KD_Q10, MOTION_DUTY_LIMIT);
+            duty[i] = motion_pid_step(&pid[i], targets[i], measured[i], dt,
+                                      MOTION_PID_KP_Q10, MOTION_PID_KI_Q10,
+                                      MOTION_PID_KD_Q10, MOTION_DUTY_LIMIT);
             /* Do not reverse electrically just to slow down: brake until the
              * commanded travel direction requires a reversal. */
-            if (((targets[i] > 0) && (duty[i] < 0)) || ((targets[i] < 0) && (duty[i] > 0)))
+            if (((targets[i] > 0) && (duty[i] < 0)) ||
+                ((targets[i] < 0) && (duty[i] > 0)))
             {
                 duty[i] = 0;
             }
             duty[i] = (int16_t)(duty[i] * signs[i]);
         }
-        if (((motion_bits_decode(previous_duty[i].bits, 11u) > 0) && (duty[i] < 0)) ||
-            ((motion_bits_decode(previous_duty[i].bits, 11u) < 0) && (duty[i] > 0)))
+        if (((motion_bits_decode(previous_duty[i].bits, 11u) > 0) &&
+             (duty[i] < 0)) ||
+            ((motion_bits_decode(previous_duty[i].bits, 11u) < 0) &&
+             (duty[i] > 0)))
         {
             reverse_until[i] = now + MOTION_REVERSE_REST_MS;
             motion_pid_reset(&pid[i]);
         }
-        if ((reverse_until[i] != 0u) && ((uint32_t)(reverse_until[i] - now) < 0x80000000u) &&
+        if ((reverse_until[i] != 0u) &&
+            ((uint32_t)(reverse_until[i] - now) < 0x80000000u) &&
             (reverse_until[i] != now))
         {
             duty[i] = 0;
@@ -985,16 +1152,17 @@ static void apply_velocity(int16_t left, int16_t right, uint32_t now, uint16_t d
 /* ===== Barcode routing (see motion_route.h) ============================== */
 #define ROUTE_LOG_SIZE 32u
 static route_odometry_t route_odo;
-static struct {
+static struct
+{
     route_phase_t phase;
-    uint8_t armed : 3;            /* mapped action for the next junction, 0 = none */
-    char doing;            /* letter of the running manoeuvre */
+    uint8_t armed : 3; /* mapped action for the next junction, 0 = none */
+    char doing;        /* letter of the running manoeuvre */
     bool junction_candidate, exit_candidate;
     uint32_t junction_since_ms, exit_since_ms, pivot_sweep_ms;
     bool pivot_slow, pivot_sweep_started;
-    uint32_t phase_ms;     /* motion_now_ms() when the phase began */
+    uint32_t phase_ms; /* motion_now_ms() when the phase began */
     uint32_t origin_left, origin_right; /* forward counts */
-    uint32_t step_ms;      /* encoder time of the last speed step */
+    uint32_t step_ms; /* encoder time of the last speed step */
     uint32_t goal;
     speed_control_t speed;
 } route;
@@ -1006,19 +1174,28 @@ static volatile uint32_t route_bc_sequence;
 static void route_event(uint8_t kind, char code, int a, int b, int c, int d)
 {
     uint32_t head = route_log_head;
-    if (head - route_log_tail >= ROUTE_LOG_SIZE) return; /* full: drop newest */
+    if (head - route_log_tail >= ROUTE_LOG_SIZE)
+    {
+        return; /* full: drop newest */
+    }
     motion_route_event_t *e = &route_log[head % ROUTE_LOG_SIZE];
     e->ms = motion_now_ms();
     e->kind = kind;
     e->code = code;
-    e->v[0] = (int16_t)a; e->v[1] = (int16_t)b; e->v[2] = (int16_t)c; e->v[3] = (int16_t)d;
+    e->v[0] = (int16_t)a;
+    e->v[1] = (int16_t)b;
+    e->v[2] = (int16_t)c;
+    e->v[3] = (int16_t)d;
     __sync_synchronize();
     route_log_head = head + 1u;
 }
 bool motion_route_next_event(motion_route_event_t *event)
 {
     uint32_t tail = route_log_tail;
-    if (tail == route_log_head || event == NULL) return false;
+    if (tail == route_log_head || event == NULL)
+    {
+        return false;
+    }
     __sync_synchronize();
     *event = route_log[tail % ROUTE_LOG_SIZE];
     __sync_synchronize();
@@ -1030,26 +1207,35 @@ bool motion_route_barcode(motion_route_barcode_t *out, uint32_t *last_sequence)
     /* Snapshot without a lock: copy, then accept only if no new capture was
      * written meanwhile (the writer bumps the sequence after writing). */
     uint32_t seq = route_bc_sequence;
-    if (out == NULL || last_sequence == NULL || seq == *last_sequence) return false;
+    if (out == NULL || last_sequence == NULL || seq == *last_sequence)
+    {
+        return false;
+    }
     __sync_synchronize();
     *out = route_bc;
     __sync_synchronize();
-    if (route_bc_sequence != seq) return false;
+    if (route_bc_sequence != seq)
+    {
+        return false;
+    }
     *last_sequence = seq;
     return true;
 }
 static uint32_t route_fwd_left(void)
 {
-    return MOTION_LEFT_ENCODER_SIGN < 0 ? 0u - state.left_count : state.left_count;
+    return MOTION_LEFT_ENCODER_SIGN < 0 ? 0u - state.left_count
+                                        : state.left_count;
 }
 static uint32_t route_fwd_right(void)
 {
-    return MOTION_RIGHT_ENCODER_SIGN < 0 ? 0u - state.right_count : state.right_count;
+    return MOTION_RIGHT_ENCODER_SIGN < 0 ? 0u - state.right_count
+                                         : state.right_count;
 }
 /* One row per control step, including the final settled-line check. The
  * motion task only appends. Atomic fields allow a USB read across rollover
  * to the next turn; the reader discards that row if the turn ID changed. */
-#define PIVOT_TRACE_ROWS ((2u * ROUTE_TURN_TIMEOUT_MS + ROUTE_SETTLE_MS) / MOTION_PERIOD_MS + 5u)
+#define PIVOT_TRACE_ROWS                                                       \
+    ((2u * ROUTE_TURN_TIMEOUT_MS + ROUTE_SETTLE_MS) / MOTION_PERIOD_MS + 5u)
 static motion_pivot_sample_t pivot_rows[PIVOT_TRACE_ROWS];
 static uint32_t pivot_turn, pivot_count, pivot_started;
 static uint8_t pivot_failure;
@@ -1057,19 +1243,28 @@ static uint8_t pivot_failure;
 static void pivot_trace_begin(uint32_t now)
 {
     __atomic_store_n(&pivot_count, 0u, __ATOMIC_SEQ_CST);
-    __atomic_store_n(&pivot_turn, __atomic_load_n(&pivot_turn, __ATOMIC_RELAXED) + 1u, __ATOMIC_SEQ_CST);
+    __atomic_store_n(&pivot_turn,
+                     __atomic_load_n(&pivot_turn, __ATOMIC_RELAXED) + 1u,
+                     __ATOMIC_SEQ_CST);
     pivot_started = now;
     pivot_failure = 0;
 }
-static void pivot_trace_append(uint32_t now, uint16_t levels, uint8_t line_state,
-                               bool edge, bool settling)
+static void pivot_trace_append(uint32_t now, uint16_t levels,
+                               uint8_t line_state, bool edge, bool settling)
 {
     unsigned i = __atomic_load_n(&pivot_count, __ATOMIC_RELAXED);
-    if (i >= PIVOT_TRACE_ROWS) return;
+    if (i >= PIVOT_TRACE_ROWS)
+    {
+        return;
+    }
     motion_pivot_sample_t *row = &pivot_rows[i];
     __atomic_store_n(&row->elapsed_ms, now - pivot_started, __ATOMIC_RELAXED);
-    __atomic_store_n(&row->left_counts, motion_count_delta(route_fwd_left(), route.origin_left), __ATOMIC_RELAXED);
-    __atomic_store_n(&row->right_counts, motion_count_delta(route.origin_right, route_fwd_right()), __ATOMIC_RELAXED);
+    __atomic_store_n(&row->left_counts,
+                     motion_count_delta(route_fwd_left(), route.origin_left),
+                     __ATOMIC_RELAXED);
+    __atomic_store_n(&row->right_counts,
+                     motion_count_delta(route.origin_right, route_fwd_right()),
+                     __ATOMIC_RELAXED);
     __atomic_store_n(&row->levels, levels, __ATOMIC_RELAXED);
     __atomic_store_n(&row->state, line_state, __ATOMIC_RELAXED);
     __atomic_store_n(&row->edge, edge, __ATOMIC_RELAXED);
@@ -1082,15 +1277,20 @@ bool motion_pivot_sample(unsigned index, motion_pivot_sample_t *sample,
 {
     *turn = __atomic_load_n(&pivot_turn, __ATOMIC_SEQ_CST);
     *count = __atomic_load_n(&pivot_count, __ATOMIC_ACQUIRE);
-    if (index >= *count) return false;
+    if (index >= *count)
+    {
+        return false;
+    }
     const motion_pivot_sample_t *row = &pivot_rows[index];
     sample->elapsed_ms = __atomic_load_n(&row->elapsed_ms, __ATOMIC_RELAXED);
     sample->left_counts = __atomic_load_n(&row->left_counts, __ATOMIC_RELAXED);
-    sample->right_counts = __atomic_load_n(&row->right_counts, __ATOMIC_RELAXED);
+    sample->right_counts =
+        __atomic_load_n(&row->right_counts, __ATOMIC_RELAXED);
     sample->levels = __atomic_load_n(&row->levels, __ATOMIC_RELAXED);
     sample->state = __atomic_load_n(&row->state, __ATOMIC_RELAXED);
     sample->edge = __atomic_load_n(&row->edge, __ATOMIC_RELAXED);
-    sample->settled_phase = __atomic_load_n(&row->settled_phase, __ATOMIC_RELAXED);
+    sample->settled_phase =
+        __atomic_load_n(&row->settled_phase, __ATOMIC_RELAXED);
     sample->reason = __atomic_load_n(&row->reason, __ATOMIC_RELAXED);
     __atomic_thread_fence(__ATOMIC_SEQ_CST);
     return *turn == __atomic_load_n(&pivot_turn, __ATOMIC_ACQUIRE);
@@ -1101,10 +1301,12 @@ static void route_reset(void)
     route.armed = route.doing = 0;
     route.junction_candidate = route.exit_candidate = false;
 }
-static void route_write(unsigned left_duty, unsigned right_duty, int right_direction)
+static void route_write(unsigned left_duty, unsigned right_duty,
+                        int right_direction)
 {
     int16_t ld = (int16_t)((int)left_duty * MOTION_LEFT_MOTOR_SIGN);
-    int16_t rd = (int16_t)((int)right_duty * MOTION_RIGHT_MOTOR_SIGN * right_direction);
+    int16_t rd =
+        (int16_t)((int)right_duty * MOTION_RIGHT_MOTOR_SIGN * right_direction);
     motor_hw_write(ld, rd);
     state.left_duty_bits = (uint16_t)motion_bits_encode(ld, 11u);
     state.right_duty_bits = (uint16_t)motion_bits_encode(rd, 11u);
@@ -1128,7 +1330,8 @@ static void route_begin_motion(route_phase_t phase, uint32_t now)
     route.speed.left.kp_milli = route.speed.right.kp_milli = 120;
     route.speed.left.ki_milli = route.speed.right.ki_milli = 480;
     route.speed.left.minimum = route.speed.right.minimum = 0;
-    route.speed.left.integral_floor_milli = route.speed.right.integral_floor_milli = -200000;
+    route.speed.left.integral_floor_milli =
+        route.speed.right.integral_floor_milli = -200000;
     route.origin_left = route_fwd_left();
     route.origin_right = route_fwd_right();
     route.step_ms = state.time_ms;
@@ -1137,29 +1340,38 @@ static void route_begin_motion(route_phase_t phase, uint32_t now)
     route.pivot_sweep_started = false;
     route.phase = phase;
     route.phase_ms = now;
-    route.goal = phase == ROUTE_STRAIGHT ? ROUTE_STRAIGHT_COUNTS :
-                 phase == ROUTE_PIVOT ? ROUTE_PIVOT_MAX_COUNTS : 0u;
-    if (phase == ROUTE_ARC_RIGHT || phase == ROUTE_ARC_LEFT) {
+    route.goal = phase == ROUTE_STRAIGHT ? ROUTE_STRAIGHT_COUNTS
+                 : phase == ROUTE_PIVOT  ? ROUTE_PIVOT_MAX_COUNTS
+                                         : 0u;
+    if (phase == ROUTE_ARC_RIGHT || phase == ROUTE_ARC_LEFT)
+    {
         /* Bias the inner wheel before the first speed-control update. */
-        wheel_speed_t *inner = phase == ROUTE_ARC_RIGHT ? &route.speed.right : &route.speed.left;
+        wheel_speed_t *inner =
+            phase == ROUTE_ARC_RIGHT ? &route.speed.right : &route.speed.left;
         inner->duty = START_DUTY * 3u / 4u;
     }
-    route_write(route.speed.left.duty, route.speed.right.duty, phase == ROUTE_PIVOT ? -1 : 1);
+    route_write(route.speed.left.duty, route.speed.right.duty,
+                phase == ROUTE_PIVOT ? -1 : 1);
 }
 /* Bench W1: keep the running motor power when V5 takes over a moving car. */
 static void route_carry(wheel_speed_t *to, const wheel_speed_t *from)
 {
-    if (!from->duty) return;
+    if (!from->duty)
+    {
+        return;
+    }
     to->duty = from->duty;
     to->filtered_milli_cps = from->filtered_milli_cps;
-    to->integral_milli = from->integral_milli < to->integral_floor_milli ?
-                         to->integral_floor_milli : from->integral_milli;
+    to->integral_milli = from->integral_milli < to->integral_floor_milli
+                             ? to->integral_floor_milli
+                             : from->integral_milli;
 }
 static void route_start_line_controller(uint32_t now, bool carry)
 {
-    line_follow_begin(&line_trial, state.left_count, state.right_count, state.invalid_edges,
-                      state.time_ms, now);
-    if (carry) {
+    line_follow_begin(&line_trial, state.left_count, state.right_count,
+                      state.invalid_edges, state.time_ms, now);
+    if (carry)
+    {
         route_carry(&line_trial.speed.left, &route.speed.left);
         route_carry(&line_trial.speed.right, &route.speed.right);
     }
@@ -1181,51 +1393,71 @@ static void route_v5_begin(uint32_t now, bool carry)
 /* Speed-controlled arc / straight / pivot step. */
 static void route_drive(uint32_t now, bool line_edge, uint32_t line_ms)
 {
-    const bool arc = route.phase == ROUTE_ARC_RIGHT || route.phase == ROUTE_ARC_LEFT;
+    const bool arc =
+        route.phase == ROUTE_ARC_RIGHT || route.phase == ROUTE_ARC_LEFT;
     const int right_direction = route.phase == ROUTE_PIVOT ? -1 : 1;
-    uint32_t limit = route.phase == ROUTE_PIVOT ? 2u * ROUTE_TURN_TIMEOUT_MS : ROUTE_TURN_TIMEOUT_MS;
-    if ((uint32_t)(now - route.phase_ms) >= limit) {
+    uint32_t limit = route.phase == ROUTE_PIVOT ? 2u * ROUTE_TURN_TIMEOUT_MS
+                                                : ROUTE_TURN_TIMEOUT_MS;
+    if ((uint32_t)(now - route.phase_ms) >= limit)
+    {
         route_fail(arc ? 16 : 13, MOTION_FAULT_TIMEOUT);
         return;
     }
-    if (!state.raw_valid) {
+    if (!state.raw_valid)
+    {
         route_fail(3, MOTION_FAULT_ENCODER);
         return;
     }
-    int32_t total[2] = {motion_count_delta(route_fwd_left(), route.origin_left),
-                        motion_count_delta(route_fwd_right(), route.origin_right) * right_direction};
+    int32_t total[2] = {
+        motion_count_delta(route_fwd_left(), route.origin_left),
+        motion_count_delta(route_fwd_right(), route.origin_right) *
+            right_direction};
     bool reached[2];
-    for (unsigned w = 0; w < 2u; ++w) {
+    for (unsigned w = 0; w < 2u; ++w)
+    {
         reached[w] = route.goal != 0u && total[w] >= (int32_t)route.goal;
     }
     bool leg_done = reached[0] && reached[1];
-    if (route.phase == ROUTE_PIVOT) {
-        if (!route.pivot_slow && (total[0] >= (int32_t)ROUTE_PIVOT_SLOW_COUNTS ||
-                                  total[1] >= (int32_t)ROUTE_PIVOT_SLOW_COUNTS)) {
+    if (route.phase == ROUTE_PIVOT)
+    {
+        if (!route.pivot_slow &&
+            (total[0] >= (int32_t)ROUTE_PIVOT_SLOW_COUNTS ||
+             total[1] >= (int32_t)ROUTE_PIVOT_SLOW_COUNTS))
+        {
             route.pivot_slow = true;
         }
-        if (!route.pivot_sweep_started && (total[0] >= (int32_t)ROUTE_PIVOT_SWEEP_START_COUNTS ||
-                                          total[1] >= (int32_t)ROUTE_PIVOT_SWEEP_START_COUNTS)) {
+        if (!route.pivot_sweep_started &&
+            (total[0] >= (int32_t)ROUTE_PIVOT_SWEEP_START_COUNTS ||
+             total[1] >= (int32_t)ROUTE_PIVOT_SWEEP_START_COUNTS))
+        {
             route.pivot_sweep_started = true;
             route.pivot_sweep_ms = now;
         }
         if (reached[0] || reached[1] ||
-            (route.pivot_sweep_started && now - route.pivot_sweep_ms >= ROUTE_PIVOT_SWEEP_MS)) {
+            (route.pivot_sweep_started &&
+             now - route.pivot_sweep_ms >= ROUTE_PIVOT_SWEEP_MS))
+        {
             route_fail(19, MOTION_FAULT_IR);
             return;
         }
         leg_done = false;
         if (!line_edge || total[0] < (int32_t)ROUTE_PIVOT_FIND_COUNTS ||
-                          total[1] < (int32_t)ROUTE_PIVOT_FIND_COUNTS) {
+            total[1] < (int32_t)ROUTE_PIVOT_FIND_COUNTS)
+        {
             route.exit_candidate = false;
-        } else if (!route.exit_candidate) {
+        }
+        else if (!route.exit_candidate)
+        {
             route.exit_candidate = true;
             route.exit_since_ms = line_ms;
-        } else {
+        }
+        else
+        {
             leg_done = line_ms - route.exit_since_ms >= ROUTE_PIVOT_CONFIRM_MS;
         }
     }
-    if (leg_done) {
+    if (leg_done)
+    {
         route_motors_off();
         route_event(ROUTE_EV_LEG_DONE, route.doing, total[0], total[1], 0, 0);
         route.phase = ROUTE_SETTLE_AFTER;
@@ -1233,209 +1465,311 @@ static void route_drive(uint32_t now, bool line_edge, uint32_t line_ms)
         return;
     }
     uint32_t dt = state.time_ms - route.step_ms;
-    if (dt < CONTROL_MIN_US / 1000u) return; /* keep the current output */
+    if (dt < CONTROL_MIN_US / 1000u)
+    {
+        return; /* keep the current output */
+    }
     int32_t left_target, right_target;
-    if (arc) {
+    if (arc)
+    {
         const bool right = route.phase == ROUTE_ARC_RIGHT;
         left_target = right ? ROUTE_ARC_OUTER_CPS : ROUTE_ARC_INNER_CPS;
         right_target = right ? ROUTE_ARC_INNER_CPS : ROUTE_ARC_OUTER_CPS;
-    } else {
-        int32_t target = route.pivot_slow ? ROUTE_PIVOT_SLOW_CPS : ROUTE_LEG_CPS;
+    }
+    else
+    {
+        int32_t target =
+            route.pivot_slow ? ROUTE_PIVOT_SLOW_CPS : ROUTE_LEG_CPS;
         int32_t trim_limit = target / 2 < 60 ? target / 2 : 60;
-        int32_t trim = clamp_i64(((int64_t)total[0] - total[1]) * 2, -trim_limit, trim_limit);
+        int32_t trim = clamp_i64(((int64_t)total[0] - total[1]) * 2,
+                                 -trim_limit, trim_limit);
         left_target = reached[0] ? 0 : target - (trim > 0 ? trim : 0);
         right_target = reached[1] ? 0 : target + (trim < 0 ? trim : 0);
     }
-    if (!speed_control_targets_step_policy(&route.speed, total[0], total[1], dt * 1000u,
-                                    left_target, right_target, true, NULL)) {
+    if (!speed_control_targets_step_policy(&route.speed, total[0], total[1],
+                                           dt * 1000u, left_target,
+                                           right_target, true, NULL))
+    {
         route_fail(3, MOTION_FAULT_ENCODER);
         return;
     }
     route.step_ms = state.time_ms;
     route_write(route.speed.left.duty, route.speed.right.duty, right_direction);
 }
-static bool route_line_fresh(uint32_t now, const line_msg_t *line, uint32_t line_ms,
-                             uint32_t line_epoch, bool have_line)
+static bool route_line_fresh(uint32_t now, const line_msg_t *line,
+                             uint32_t line_ms, uint32_t line_epoch,
+                             bool have_line)
 {
-    return have_line && line_epoch == state.epoch && fresh(now, line_ms, ROUTE_LINE_FRESH_MS) &&
-           !line->fault && line->state != LINE_FAULT && line->state != LINE_CALIBRATING;
+    return have_line && line_epoch == state.epoch &&
+           fresh(now, line_ms, ROUTE_LINE_FRESH_MS) && !line->fault &&
+           line->state != LINE_FAULT && line->state != LINE_CALIBRATING;
 }
 /* Called first in the LINE_TRACE control step. True: route owns the motors
  * this step and V5 must not run. */
 static bool route_step(uint32_t now, const line_msg_t *line, uint32_t line_ms,
                        uint32_t line_epoch, bool have_line, uint16_t levels)
 {
-    const bool line_ok = route_line_fresh(now, line, line_ms, line_epoch, have_line);
+    const bool line_ok =
+        route_line_fresh(now, line, line_ms, line_epoch, have_line);
     const unsigned a = line_levels_valid(levels) ? line_level_left(levels) : 0u;
-    const unsigned b = line_levels_valid(levels) ? line_level_right(levels) : 0u;
-    bool line_edge = line_ok && line_levels_valid(levels) &&
+    const unsigned b =
+        line_levels_valid(levels) ? line_level_right(levels) : 0u;
+    bool line_edge =
+        line_ok && line_levels_valid(levels) &&
         (line->state == LINE_ON || line->state == LINE_EDGE_ONLY) &&
-        ((a >= ROUTE_EXIT_MIN_DARKNESS && (int)a - (int)b >= ROUTE_EXIT_MIN_CONTRAST) ||
-         (b >= ROUTE_EXIT_MIN_DARKNESS && (int)b - (int)a >= ROUTE_EXIT_MIN_CONTRAST));
-    switch (route.phase) {
-    case ROUTE_IDLE:
-        if (!route.armed || !line_ok || line->state != LINE_BOTH_BLACK) {
+        ((a >= ROUTE_EXIT_MIN_DARKNESS &&
+          (int)a - (int)b >= ROUTE_EXIT_MIN_CONTRAST) ||
+         (b >= ROUTE_EXIT_MIN_DARKNESS &&
+          (int)b - (int)a >= ROUTE_EXIT_MIN_CONTRAST));
+    switch (route.phase)
+    {
+        case ROUTE_IDLE:
+            if (!route.armed || !line_ok || line->state != LINE_BOTH_BLACK)
+            {
+                route.junction_candidate = false;
+                return false;
+            }
+            if (!route.junction_candidate)
+            {
+                route.junction_candidate = true;
+                route.junction_since_ms = line_ms;
+                return false;
+            }
+            if ((uint32_t)(line_ms - route.junction_since_ms) <
+                ROUTE_JUNCTION_CONFIRM_MS)
+            {
+                return false;
+            }
+            if (line_trial.adaptive.mode != LINE_ADAPT_CROSSING)
+            {
+                return false;
+            }
+            route.doing = (char)('A' + route.armed - 1u);
+            route.armed = 0;
             route.junction_candidate = false;
-            return false;
+            route_event(ROUTE_EV_JUNCTION, route.doing, (int)a, (int)b, 0, 0);
+            if (route_first_phase(route.doing) == ROUTE_SETTLE_BEFORE)
+            {
+                route_motors_off();
+                route.phase = ROUTE_SETTLE_BEFORE;
+                route.phase_ms = now;
+            }
+            else
+            {
+                route_begin_motion(route_first_phase(route.doing), now);
+            }
+            return true;
+        case ROUTE_ARC_RIGHT:
+        case ROUTE_ARC_LEFT:
+        {
+            if (!line_ok)
+            {
+                if (!have_line ||
+                    (uint32_t)(now - line_ms) > ROUTE_LINE_FRESH_MS ||
+                    line->fault)
+                {
+                    route_fail(18, MOTION_FAULT_IR);
+                    return true;
+                }
+            }
+            else
+            {
+                const bool right = route.phase == ROUTE_ARC_RIGHT;
+                int32_t left_total =
+                    motion_count_delta(route_fwd_left(), route.origin_left);
+                int32_t right_total =
+                    motion_count_delta(route_fwd_right(), route.origin_right);
+                bool sighting =
+                    line_levels_valid(levels) &&
+                    route_exit_sighting(right, left_total, right_total, a, b,
+                                        line->state == LINE_BOTH_BLACK);
+                if (!sighting)
+                {
+                    route.exit_candidate = false;
+                }
+                else if (!route.exit_candidate)
+                {
+                    route.exit_candidate = true;
+                    route.exit_since_ms = line_ms;
+                }
+                else if ((uint32_t)(line_ms - route.exit_since_ms) >=
+                         ROUTE_EXIT_CONFIRM_MS)
+                {
+                    char doing = route.doing;
+                    route_v5_begin(now, true);
+                    route_event(ROUTE_EV_EXIT, doing, (int)a, (int)b,
+                                (int)line->err, right ? 1 : 0);
+                    return true;
+                }
+            }
+            route_drive(now, false, line_ms);
+            return true;
         }
-        if (!route.junction_candidate) {
-            route.junction_candidate = true;
-            route.junction_since_ms = line_ms;
-            return false;
-        }
-        if ((uint32_t)(line_ms - route.junction_since_ms) < ROUTE_JUNCTION_CONFIRM_MS) return false;
-        if (line_trial.adaptive.mode != LINE_ADAPT_CROSSING) return false;
-        route.doing = (char)('A' + route.armed - 1u);
-        route.armed = 0;
-        route.junction_candidate = false;
-        route_event(ROUTE_EV_JUNCTION, route.doing, (int)a, (int)b, 0, 0);
-        if (route_first_phase(route.doing) == ROUTE_SETTLE_BEFORE) {
-            route_motors_off();
-            route.phase = ROUTE_SETTLE_BEFORE;
-            route.phase_ms = now;
-        } else {
-            route_begin_motion(route_first_phase(route.doing), now);
-        }
-        return true;
-    case ROUTE_ARC_RIGHT:
-    case ROUTE_ARC_LEFT: {
-        if (!line_ok) {
-            if (!have_line || (uint32_t)(now - line_ms) > ROUTE_LINE_FRESH_MS || line->fault) {
+        case ROUTE_PIVOT:
+            if (!line_ok || !line_levels_valid(levels))
+            {
+                route_fail(18, MOTION_FAULT_IR);
+            }
+            else
+            {
+                route_drive(now, line_edge, line_ms);
+            }
+            pivot_trace_append(now, levels, line->state, line_edge, false);
+            return true;
+        case ROUTE_STRAIGHT:
+        case ROUTE_STRAIGHT_GUIDED:
+        {
+            if (!line_ok || !line_levels_valid(levels))
+            {
                 route_fail(18, MOTION_FAULT_IR);
                 return true;
             }
-        } else {
-            const bool right = route.phase == ROUTE_ARC_RIGHT;
-            int32_t left_total = motion_count_delta(route_fwd_left(), route.origin_left);
-            int32_t right_total = motion_count_delta(route_fwd_right(), route.origin_right);
-            bool sighting = line_levels_valid(levels) &&
-                route_exit_sighting(right, left_total, right_total, a, b, line->state == LINE_BOTH_BLACK);
-            if (!sighting) {
+            if (!state.raw_valid)
+            {
+                route_fail(3, MOTION_FAULT_ENCODER);
+                return true;
+            }
+            if (now - route.phase_ms >= ROUTE_TURN_TIMEOUT_MS)
+            {
+                route_fail(13, MOTION_FAULT_TIMEOUT);
+                return true;
+            }
+            int32_t left =
+                motion_count_delta(route_fwd_left(), route.origin_left);
+            int32_t right =
+                motion_count_delta(route_fwd_right(), route.origin_right);
+            int64_t travel = ((int64_t)left + right) / 2;
+            if (!line_edge)
+            {
                 route.exit_candidate = false;
-            } else if (!route.exit_candidate) {
+            }
+            else if (!route.exit_candidate)
+            {
                 route.exit_candidate = true;
                 route.exit_since_ms = line_ms;
-            } else if ((uint32_t)(line_ms - route.exit_since_ms) >= ROUTE_EXIT_CONFIRM_MS) {
-                char doing = route.doing;
-                route_v5_begin(now, true);
-                route_event(ROUTE_EV_EXIT, doing, (int)a, (int)b, (int)line->err, right ? 1 : 0);
+            }
+            bool clear = route.exit_candidate &&
+                         line_ms - route.exit_since_ms >= ROUTE_EXIT_CONFIRM_MS;
+            if (route.phase == ROUTE_STRAIGHT)
+            {
+                if (!clear && travel < (int32_t)ROUTE_STRAIGHT_CLEAR_COUNTS)
+                {
+                    route_drive(now, false, line_ms);
+                    return true;
+                }
+                int8_t direction = line_trial.adaptive.last_direction;
+                route_start_line_controller(now, true);
+                route.phase = ROUTE_STRAIGHT_GUIDED;
+                if (!clear)
+                {
+                    /* Relative wheel counts start at zero on controller
+                     * handover. Enter the bounded sweep immediately; C already
+                     * advanced. */
+                    line_trial.adaptive.seeking_exit = true;
+                    line_trial.adaptive.uncertain = true;
+                    line_trial.adaptive.uncertain_ms = now;
+                    line_trial.adaptive.phase = 1;
+                    line_trial.adaptive.search_direction =
+                        direction ? direction : 1;
+                }
                 return true;
             }
-        }
-        route_drive(now, false, line_ms);
-        return true;
-    }
-    case ROUTE_PIVOT:
-        if (!line_ok || !line_levels_valid(levels)) route_fail(18, MOTION_FAULT_IR);
-        else route_drive(now, line_edge, line_ms);
-        pivot_trace_append(now, levels, line->state, line_edge, false);
-        return true;
-    case ROUTE_STRAIGHT:
-    case ROUTE_STRAIGHT_GUIDED: {
-        if (!line_ok || !line_levels_valid(levels)) {
-            route_fail(18, MOTION_FAULT_IR);
-            return true;
-        }
-        if (!state.raw_valid) {
-            route_fail(3, MOTION_FAULT_ENCODER);
-            return true;
-        }
-        if (now - route.phase_ms >= ROUTE_TURN_TIMEOUT_MS) {
-            route_fail(13, MOTION_FAULT_TIMEOUT);
-            return true;
-        }
-        int32_t left = motion_count_delta(route_fwd_left(), route.origin_left);
-        int32_t right = motion_count_delta(route_fwd_right(), route.origin_right);
-        int64_t travel = ((int64_t)left + right) / 2;
-        if (!line_edge) {
-            route.exit_candidate = false;
-        } else if (!route.exit_candidate) {
-            route.exit_candidate = true;
-            route.exit_since_ms = line_ms;
-        }
-        bool clear = route.exit_candidate && line_ms - route.exit_since_ms >= ROUTE_EXIT_CONFIRM_MS;
-        if (route.phase == ROUTE_STRAIGHT) {
-            if (!clear && travel < (int32_t)ROUTE_STRAIGHT_CLEAR_COUNTS) {
-                route_drive(now, false, line_ms);
+            if (clear)
+            {
+                line_trial.adaptive.seeking_exit = false;
+            }
+            /* Average wheel travel measures chassis travel through corrections.
+             */
+            if (travel >= (int32_t)ROUTE_STRAIGHT_COUNTS &&
+                !line_trial.adaptive.seeking_exit)
+            {
+                route_event(ROUTE_EV_LEG_DONE, route.doing, left, right, 0, 0);
+                route_motors_off();
+                route.phase = ROUTE_SETTLE_AFTER;
+                route.phase_ms = now;
                 return true;
             }
-            int8_t direction = line_trial.adaptive.last_direction;
-            route_start_line_controller(now, true);
-            route.phase = ROUTE_STRAIGHT_GUIDED;
-            if (!clear) {
-                /* Relative wheel counts start at zero on controller handover.
-                 * Enter the bounded sweep immediately; C already advanced. */
-                line_trial.adaptive.seeking_exit = true;
-                line_trial.adaptive.uncertain = true;
-                line_trial.adaptive.uncertain_ms = now;
-                line_trial.adaptive.phase = 1;
-                line_trial.adaptive.search_direction = direction ? direction : 1;
-            }
-            return true;
+            return false; /* adaptive controller steers the remaining distance
+                           */
         }
-        if (clear) line_trial.adaptive.seeking_exit = false;
-        /* Average wheel travel measures chassis travel through corrections. */
-        if (travel >= (int32_t)ROUTE_STRAIGHT_COUNTS && !line_trial.adaptive.seeking_exit) {
-            route_event(ROUTE_EV_LEG_DONE, route.doing, left, right, 0, 0);
+        case ROUTE_SETTLE_BEFORE:
             route_motors_off();
-            route.phase = ROUTE_SETTLE_AFTER;
-            route.phase_ms = now;
+            if ((uint32_t)(now - route.phase_ms) >= ROUTE_SETTLE_MS)
+            {
+                route_begin_motion(
+                    route.doing == 'C' ? ROUTE_STRAIGHT : ROUTE_PIVOT, now);
+                if (route.phase == ROUTE_PIVOT)
+                {
+                    pivot_trace_begin(now);
+                    pivot_trace_append(now, levels, line->state, line_edge,
+                                       false);
+                }
+            }
+            return true;
+        case ROUTE_SETTLE_AFTER:
+        {
+            bool pivot = route.doing == 'D';
+            route_motors_off();
+            if ((uint32_t)(now - route.phase_ms) >= ROUTE_SETTLE_MS)
+            {
+                char doing = route.doing;
+                if (pivot && !line_edge)
+                {
+                    route_fail(19, MOTION_FAULT_IR);
+                }
+                else
+                {
+                    route_v5_begin(now, false);
+                    route_event(ROUTE_EV_RESUMED, doing, 0, 0, 0, 0);
+                }
+            }
+            if (pivot)
+            {
+                pivot_trace_append(now, levels, line->state, line_edge, true);
+            }
             return true;
         }
-        return false; /* adaptive controller steers the remaining distance */
+        default:
+            return false;
     }
-    case ROUTE_SETTLE_BEFORE:
-        route_motors_off();
-        if ((uint32_t)(now - route.phase_ms) >= ROUTE_SETTLE_MS) {
-            route_begin_motion(route.doing == 'C' ? ROUTE_STRAIGHT : ROUTE_PIVOT, now);
-            if (route.phase == ROUTE_PIVOT) {
-                pivot_trace_begin(now);
-                pivot_trace_append(now, levels, line->state, line_edge, false);
-            }
-        }
-        return true;
-    case ROUTE_SETTLE_AFTER: {
-        bool pivot = route.doing == 'D';
-        route_motors_off();
-        if ((uint32_t)(now - route.phase_ms) >= ROUTE_SETTLE_MS) {
-            char doing = route.doing;
-            if (pivot && !line_edge) {
-                route_fail(19, MOTION_FAULT_IR);
-            } else {
-                route_v5_begin(now, false);
-                route_event(ROUTE_EV_RESUMED, doing, 0, 0, 0, 0);
-            }
-        }
-        if (pivot) pivot_trace_append(now, levels, line->state, line_edge, true);
-        return true;
-    }
-    }
-    return false;
 }
 /* A capture arrived from S3 (any length). Decode, log, and arm when V5 is
  * running and nothing else is in progress. */
-static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool usable)
+static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms,
+                             bool usable)
 {
-    if (barcode->hdr.count < BC_MIN_ELEMS) return; /* below capture noise floor */
+    if (barcode->hdr.count < BC_MIN_ELEMS)
+    {
+        return; /* below capture noise floor */
+    }
     char by_time = route_code39_decode(barcode);
     bc_msg_t by_distance;
-    bool have_distance = route_distance_widths(&route_odo, barcode, barcode_ms, &by_distance);
+    bool have_distance =
+        route_distance_widths(&route_odo, barcode, barcode_ms, &by_distance);
     char by_dist = have_distance ? route_code39_decode(&by_distance) : '\0';
     char chosen = route_choose(by_dist, by_time);
     bool one_marker = false;
-    if (!chosen && have_distance) {
+    if (!chosen && have_distance)
+    {
         char agreed = route_one_marker_agreed(barcode, &by_distance);
-        if (agreed) { chosen = by_time = by_dist = agreed; one_marker = true; }
+        if (agreed)
+        {
+            chosen = by_time = by_dist = agreed;
+            one_marker = true;
+        }
     }
-    if (chosen && owner_flags.motor_ready) {
+    if (chosen && owner_flags.motor_ready)
+    {
         barcode_beep_start_ms = motion_now_ms();
         barcode_buzzer_set(true);
         barcode_beeping = true;
     }
     ++barcode_status.sequence;
-    barcode_status.sampled_ms=barcode_ms;barcode_status.epoch=state.epoch;
-    barcode_status.code=(uint8_t)chosen;barcode_status.elements=(uint8_t)barcode->hdr.count;
-    barcode_status.seen=1;
+    barcode_status.sampled_ms = barcode_ms;
+    barcode_status.epoch = state.epoch;
+    barcode_status.code = (uint8_t)chosen;
+    barcode_status.elements = (uint8_t)barcode->hdr.count;
+    barcode_status.seen = 1;
     route_bc.by_time = *barcode;
     route_bc.by_distance = have_distance ? by_distance : (bc_msg_t){0};
     route_bc.distance_valid = have_distance;
@@ -1447,28 +1781,44 @@ static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool 
     __sync_synchronize();
     route_bc.sequence = route_bc_sequence + 1u;
     route_bc_sequence = route_bc.sequence;
-    route_event(ROUTE_EV_BARCODE, chosen, barcode->hdr.count, by_dist, by_time, usable ? 1 : 0);
-    if (!usable) { ++state.rejected_barcodes; return; }
-    if (!chosen) return;
+    route_event(ROUTE_EV_BARCODE, chosen, barcode->hdr.count, by_dist, by_time,
+                usable ? 1 : 0);
+    if (!usable)
+    {
+        ++state.rejected_barcodes;
+        return;
+    }
+    if (!chosen)
+    {
+        return;
+    }
     char scanned = chosen;
-    chosen = route_mapping_code(scanned); /* retain original letter in barcode telemetry */
-    if (route.armed) {
+    chosen = route_mapping_code(
+        scanned); /* retain original letter in barcode telemetry */
+    if (route.armed)
+    {
         route_event(ROUTE_EV_NOT_ARMED, scanned, 3, 0, 0, 0);
         return;
     }
-    if (route.phase != ROUTE_IDLE || !route_letter_armable(chosen)) {
-        route_event(ROUTE_EV_NOT_ARMED, chosen, route.phase != ROUTE_IDLE ? 1 : 2, 0, 0, 0);
+    if (route.phase != ROUTE_IDLE || !route_letter_armable(chosen))
+    {
+        route_event(ROUTE_EV_NOT_ARMED, chosen,
+                    route.phase != ROUTE_IDLE ? 1 : 2, 0, 0, 0);
         return;
     }
     route.armed = (uint8_t)(chosen - 'A' + 1);
     route.junction_candidate = false;
-    if (chosen >= 'A' && chosen <= 'D') state.barcode = (unsigned)(chosen - 'A' + 1);
+    if (chosen >= 'A' && chosen <= 'D')
+    {
+        state.barcode = (unsigned)(chosen - 'A' + 1);
+    }
     route_event(ROUTE_EV_ARMED, chosen, 0, 0, 0, 0);
 }
 #endif
 
-static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint32_t line_ms,
-                         uint32_t line_epoch, bool have_line,uint16_t levels)
+static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line,
+                         uint32_t line_ms, uint32_t line_epoch, bool have_line,
+                         uint16_t levels)
 {
     if (!owner_flags.active_valid || (state.state == MOTION_PULSING))
     {
@@ -1482,92 +1832,184 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
         return;
     }
     output_rest_until = 0;
-    if(active.command==MOTION_LINE_TRACE) {
+    if (active.command == MOTION_LINE_TRACE)
+    {
 #if MOTION_LINE_ROUTE
-        if(route.phase!=ROUTE_IDLE && route_step(now,line,line_ms,line_epoch,have_line,levels))return;
-#endif
-        line_trial.observed_levels=levels; /* also record input if encoder snapshot is missing */
-#if MOTION_LINE_ADAPTIVE
-        line_trial.adaptive.on_hump=s4_hump_recent(now); /* tilted sensors read black on the hump */
-#endif
-        unsigned prior_pause_mask=line_pause_eligible(&line_trial);
-        line_step_t result=state.raw_valid ? line_follow_step_observed(&line_trial,
-            state.left_count,state.right_count,state.invalid_edges,state.time_ms,now,
-            line,line_ms,state.epoch,line_epoch,have_line,line_usb_connected(),levels) : LINE_STEP_ENCODER;
-        diagnostics.line_step=(uint8_t)result;
-        diagnostics.line_levels=levels;
-        diagnostics.line_adaptive_mode=(uint8_t)line_trial.adaptive.mode;
-        diagnostics.line_stop_reason=(uint8_t)line_trial.adaptive.stop_reason;
-        if(result==LINE_STEP_ROUTE_REQUIRED) {
-            motor_hw_stop();state.left_duty_bits=state.right_duty_bits=0;
-            line_history_record(now,line,line_ms,line_epoch,have_line,result);
-            end_request(MOTION_CANCELLED);return;
+        if (route.phase != ROUTE_IDLE &&
+            route_step(now, line, line_ms, line_epoch, have_line, levels))
+        {
+            return;
         }
-        diagnostics.line_tight_direction=line_trial.tight.direction;
-        diagnostics.line_search_phase=line_trial.search.phase;
-        if(result==LINE_STEP_DONE) {end_request(MOTION_COMPLETED);return;}
-        if(result==LINE_STEP_DISCONNECTED) {end_request(MOTION_CANCELLED);return;}
-        if(result==LINE_STEP_WAIT)return;
-        if(result!=LINE_STEP_OK) {
-            if(result==LINE_STEP_ENCODER) {
-                unsigned pause_mask=prior_pause_mask;
-                diagnostics.encoder_failure=(motion_encoder_failure_t){
-                    .reason=state.raw_valid ? line_trial.encoder_reject:LINE_ENCODER_RAW_MISSING,
-                    .speed_reason=state.raw_valid ? line_trial.speed_reject:0,
-                    .raw_valid=state.raw_valid,
-                    .raw_left=state.left_count,.raw_right=state.right_count,
-                    .previous_left=line_trial.origin_left-(uint32_t)line_trial.previous_total[0],
-                    .previous_right=line_trial.origin_right+(uint32_t)line_trial.previous_total[1],
-                    .origin_left=line_trial.origin_left,.origin_right=line_trial.origin_right,
-                    .initial_invalid=line_trial.invalid,.invalid=state.invalid_edges,
-                    .dt_ms=state.time_ms-line_trial.previous_ms,
-                    .speed_previous_left=line_trial.speed.previous_left,
-                    .speed_previous_right=line_trial.speed.previous_right,
-                    .target_left=line_trial.speed_reject ? line_trial.rejected_target_left:line_trial.speed.left.target_cps,
-                    .target_right=line_trial.speed_reject ? line_trial.rejected_target_right:line_trial.speed.right.target_cps,
-                    .delta_left=state.raw_valid ? clamp_i64(-(int64_t)motion_count_delta(state.left_count,
-                        line_trial.origin_left-(uint32_t)line_trial.previous_total[0]),INT32_MIN,INT32_MAX):0,
-                    .delta_right=state.raw_valid ? motion_count_delta(state.right_count,
-                        line_trial.origin_right+(uint32_t)line_trial.previous_total[1]):0,
-                    .prior_target_left=line_trial.speed.left.target_cps,.prior_target_right=line_trial.speed.right.target_cps,
-                    .prior_duty_left=(uint16_t)line_trial.speed.left.duty,.prior_duty_right=(uint16_t)line_trial.speed.right.duty,
-                    .pause_eligible=(uint8_t)pause_mask,.pause_budget=LINE_PAUSE_REVERSE_BUDGET,
-                    .pause_used_left=line_trial.pause_reverse_used[0],.pause_used_right=line_trial.pause_reverse_used[1],
-                    .pause_age_left_ms=(pause_mask&1u) ? now-line_trial.output_pause_ms[0]:UINT32_MAX,
-                    .pause_age_right_ms=(pause_mask&2u) ? now-line_trial.output_pause_ms[1]:UINT32_MAX,
-                    .settle_age_left_ms=line_trial.pause_reverse_used[0] ? now-line_trial.last_settle_ms[0]:UINT32_MAX,
-                    .settle_age_right_ms=line_trial.pause_reverse_used[1] ? now-line_trial.last_settle_ms[1]:UINT32_MAX};
+#endif
+        line_trial.observed_levels =
+            levels; /* also record input if encoder snapshot is missing */
+#if MOTION_LINE_ADAPTIVE
+        line_trial.adaptive.on_hump =
+            s4_hump_recent(now); /* tilted sensors read black on the hump */
+#endif
+        unsigned prior_pause_mask = line_pause_eligible(&line_trial);
+        line_step_t result =
+            state.raw_valid
+                ? line_follow_step_observed(
+                      &line_trial, state.left_count, state.right_count,
+                      state.invalid_edges, state.time_ms, now, line, line_ms,
+                      state.epoch, line_epoch, have_line, line_usb_connected(),
+                      levels)
+                : LINE_STEP_ENCODER;
+        diagnostics.line_step = (uint8_t)result;
+        diagnostics.line_levels = levels;
+        diagnostics.line_adaptive_mode = (uint8_t)line_trial.adaptive.mode;
+        diagnostics.line_stop_reason = (uint8_t)line_trial.adaptive.stop_reason;
+        if (result == LINE_STEP_ROUTE_REQUIRED)
+        {
+            motor_hw_stop();
+            state.left_duty_bits = state.right_duty_bits = 0;
+            line_history_record(now, line, line_ms, line_epoch, have_line,
+                                result);
+            end_request(MOTION_CANCELLED);
+            return;
+        }
+        diagnostics.line_tight_direction = line_trial.tight.direction;
+        diagnostics.line_search_phase = line_trial.search.phase;
+        if (result == LINE_STEP_DONE)
+        {
+            end_request(MOTION_COMPLETED);
+            return;
+        }
+        if (result == LINE_STEP_DISCONNECTED)
+        {
+            end_request(MOTION_CANCELLED);
+            return;
+        }
+        if (result == LINE_STEP_WAIT)
+        {
+            return;
+        }
+        if (result != LINE_STEP_OK)
+        {
+            if (result == LINE_STEP_ENCODER)
+            {
+                unsigned pause_mask = prior_pause_mask;
+                diagnostics.encoder_failure = (motion_encoder_failure_t){
+                    .reason = state.raw_valid ? line_trial.encoder_reject
+                                              : LINE_ENCODER_RAW_MISSING,
+                    .speed_reason =
+                        state.raw_valid ? line_trial.speed_reject : 0,
+                    .raw_valid = state.raw_valid,
+                    .raw_left = state.left_count,
+                    .raw_right = state.right_count,
+                    .previous_left = line_trial.origin_left -
+                                     (uint32_t)line_trial.previous_total[0],
+                    .previous_right = line_trial.origin_right +
+                                      (uint32_t)line_trial.previous_total[1],
+                    .origin_left = line_trial.origin_left,
+                    .origin_right = line_trial.origin_right,
+                    .initial_invalid = line_trial.invalid,
+                    .invalid = state.invalid_edges,
+                    .dt_ms = state.time_ms - line_trial.previous_ms,
+                    .speed_previous_left = line_trial.speed.previous_left,
+                    .speed_previous_right = line_trial.speed.previous_right,
+                    .target_left = line_trial.speed_reject
+                                       ? line_trial.rejected_target_left
+                                       : line_trial.speed.left.target_cps,
+                    .target_right = line_trial.speed_reject
+                                        ? line_trial.rejected_target_right
+                                        : line_trial.speed.right.target_cps,
+                    .delta_left =
+                        state.raw_valid
+                            ? clamp_i64(-(int64_t)motion_count_delta(
+                                            state.left_count,
+                                            line_trial.origin_left -
+                                                (uint32_t)line_trial
+                                                    .previous_total[0]),
+                                        INT32_MIN, INT32_MAX)
+                            : 0,
+                    .delta_right =
+                        state.raw_valid
+                            ? motion_count_delta(
+                                  state.right_count,
+                                  line_trial.origin_right +
+                                      (uint32_t)line_trial.previous_total[1])
+                            : 0,
+                    .prior_target_left = line_trial.speed.left.target_cps,
+                    .prior_target_right = line_trial.speed.right.target_cps,
+                    .prior_duty_left = (uint16_t)line_trial.speed.left.duty,
+                    .prior_duty_right = (uint16_t)line_trial.speed.right.duty,
+                    .pause_eligible = (uint8_t)pause_mask,
+                    .pause_budget = LINE_PAUSE_REVERSE_BUDGET,
+                    .pause_used_left = line_trial.pause_reverse_used[0],
+                    .pause_used_right = line_trial.pause_reverse_used[1],
+                    .pause_age_left_ms =
+                        (pause_mask & 1u) ? now - line_trial.output_pause_ms[0]
+                                          : UINT32_MAX,
+                    .pause_age_right_ms =
+                        (pause_mask & 2u) ? now - line_trial.output_pause_ms[1]
+                                          : UINT32_MAX,
+                    .settle_age_left_ms =
+                        line_trial.pause_reverse_used[0]
+                            ? now - line_trial.last_settle_ms[0]
+                            : UINT32_MAX,
+                    .settle_age_right_ms =
+                        line_trial.pause_reverse_used[1]
+                            ? now - line_trial.last_settle_ms[1]
+                            : UINT32_MAX};
             }
-            line_history_record(now,line,line_ms,line_epoch,have_line,result);
-            diagnostics.line_failure_flags=1u | (have_line ? 2u:0u) |
-                (have_line && line_epoch==state.epoch ? 4u:0u) |
-                (have_line && line->fault ? 8u:0u);
-            diagnostics.line_failure_state=have_line ? (uint8_t)line->state:255u;
-            diagnostics.line_failure_error=have_line ? (int8_t)line->err:0;
-            diagnostics.line_failure_age_ms=have_line ? now-line_ms:UINT32_MAX;
-            diagnostics.line_failure_elapsed_ms=now-line_trial.started_ms;
-            fault_stop((result==LINE_STEP_IR || result==LINE_STEP_CROSSING_EXHAUSTED || result==LINE_STEP_RECOVERY_EXHAUSTED || result==LINE_STEP_TIGHT_UNSEEN || result==LINE_STEP_SEARCH_TIMEOUT || result==LINE_STEP_OVERLAP_TIMEOUT) ? MOTION_FAULT_IR :
-                       result==LINE_STEP_STALL ? MOTION_FAULT_STALL :
-                       (result==LINE_STEP_TIME || result==LINE_STEP_TIGHT_TIMEOUT) ? MOTION_FAULT_TIMEOUT :
-                       (result==LINE_STEP_LIMIT || result==LINE_STEP_SEARCH_RANGE || result==LINE_STEP_OVERLAP_RANGE) ? MOTION_FAULT_RANGE : MOTION_FAULT_ENCODER);
+            line_history_record(now, line, line_ms, line_epoch, have_line,
+                                result);
+            diagnostics.line_failure_flags =
+                1u | (have_line ? 2u : 0u) |
+                (have_line && line_epoch == state.epoch ? 4u : 0u) |
+                (have_line && line->fault ? 8u : 0u);
+            diagnostics.line_failure_state =
+                have_line ? (uint8_t)line->state : 255u;
+            diagnostics.line_failure_error = have_line ? (int8_t)line->err : 0;
+            diagnostics.line_failure_age_ms =
+                have_line ? now - line_ms : UINT32_MAX;
+            diagnostics.line_failure_elapsed_ms = now - line_trial.started_ms;
+            fault_stop((result == LINE_STEP_IR ||
+                        result == LINE_STEP_CROSSING_EXHAUSTED ||
+                        result == LINE_STEP_RECOVERY_EXHAUSTED ||
+                        result == LINE_STEP_TIGHT_UNSEEN ||
+                        result == LINE_STEP_SEARCH_TIMEOUT ||
+                        result == LINE_STEP_OVERLAP_TIMEOUT)
+                           ? MOTION_FAULT_IR
+                       : result == LINE_STEP_STALL ? MOTION_FAULT_STALL
+                       : (result == LINE_STEP_TIME ||
+                          result == LINE_STEP_TIGHT_TIMEOUT)
+                           ? MOTION_FAULT_TIMEOUT
+                       : (result == LINE_STEP_LIMIT ||
+                          result == LINE_STEP_SEARCH_RANGE ||
+                          result == LINE_STEP_OVERLAP_RANGE)
+                           ? MOTION_FAULT_RANGE
+                           : MOTION_FAULT_ENCODER);
             return;
         }
 #if MOTION_LINE_ROUTE
         /* The idle route consumes only a crossing admitted on this sample. */
-        if(route.phase==ROUTE_IDLE && route_step(now,line,line_ms,line_epoch,have_line,levels))return;
+        if (route.phase == ROUTE_IDLE &&
+            route_step(now, line, line_ms, line_epoch, have_line, levels))
+        {
+            return;
+        }
 #endif
-        int16_t ld=(int16_t)line_trial.speed.left.duty*MOTION_LEFT_MOTOR_SIGN;
-        int16_t rd=(int16_t)line_trial.speed.right.duty*MOTION_RIGHT_MOTOR_SIGN;
-        motor_hw_write(ld,rd);
-        state.left_duty_bits=(uint16_t)motion_bits_encode(ld,11u);
-        state.right_duty_bits=(uint16_t)motion_bits_encode(rd,11u);
-        diagnostics.line_error=(int8_t)line->err;
-        diagnostics.line_steering_error=line_trial.steering_error;
-        diagnostics.line_speed_left_cps=(uint16_t)(line_trial.speed.left.filtered_milli_cps/1000);
-        diagnostics.line_speed_right_cps=(uint16_t)(line_trial.speed.right.filtered_milli_cps/1000);
-        diagnostics.line_target_left_cps=(uint16_t)line_trial.speed.left.target_cps;
-        diagnostics.line_target_right_cps=(uint16_t)line_trial.speed.right.target_cps;
-        line_history_record(now,line,line_ms,line_epoch,have_line,result);
+        int16_t ld =
+            (int16_t)line_trial.speed.left.duty * MOTION_LEFT_MOTOR_SIGN;
+        int16_t rd =
+            (int16_t)line_trial.speed.right.duty * MOTION_RIGHT_MOTOR_SIGN;
+        motor_hw_write(ld, rd);
+        state.left_duty_bits = (uint16_t)motion_bits_encode(ld, 11u);
+        state.right_duty_bits = (uint16_t)motion_bits_encode(rd, 11u);
+        diagnostics.line_error = (int8_t)line->err;
+        diagnostics.line_steering_error = line_trial.steering_error;
+        diagnostics.line_speed_left_cps =
+            (uint16_t)(line_trial.speed.left.filtered_milli_cps / 1000);
+        diagnostics.line_speed_right_cps =
+            (uint16_t)(line_trial.speed.right.filtered_milli_cps / 1000);
+        diagnostics.line_target_left_cps =
+            (uint16_t)line_trial.speed.left.target_cps;
+        diagnostics.line_target_right_cps =
+            (uint16_t)line_trial.speed.right.target_cps;
+        line_history_record(now, line, line_ms, line_epoch, have_line, result);
         return;
     }
     int16_t left = (int16_t)motion_request_left(&active);
@@ -1578,13 +2020,18 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
         int16_t speeds[2];
         for (unsigned i = 0; i < 2u; ++i)
         {
-            int64_t progress = motion_bits_decode(wheels[i].distance_bits, 34u) -
-                               motion_bits_decode(wheels[i].start_bits, 34u);
-            int64_t remaining = motion_bits_decode(wheels[i].target_bits, 30u) - progress;
-            int direction = (motion_bits_decode(wheels[i].target_bits, 30u) < 0) ? -1 : 1;
-            done[i] = direction * remaining <= (int64_t)MOTION_POSITION_TOLERANCE_MM * 1000;
-            int32_t speed =
-                owner_flags.turning_from_line ? MOTION_TURN_MM_S : motion_request_left(&active);
+            int64_t progress =
+                motion_bits_decode(wheels[i].distance_bits, 34u) -
+                motion_bits_decode(wheels[i].start_bits, 34u);
+            int64_t remaining =
+                motion_bits_decode(wheels[i].target_bits, 30u) - progress;
+            int direction =
+                (motion_bits_decode(wheels[i].target_bits, 30u) < 0) ? -1 : 1;
+            done[i] = direction * remaining <=
+                      (int64_t)MOTION_POSITION_TOLERANCE_MM * 1000;
+            int32_t speed = owner_flags.turning_from_line
+                                ? MOTION_TURN_MM_S
+                                : motion_request_left(&active);
             speeds[i] = done[i] ? 0 : (int16_t)(direction * speed);
         }
         if (done[0] && done[1])
@@ -1607,13 +2054,15 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
         right = speeds[1];
         if ((state.state == MOTION_TRAVELLING) && !done[0] && !done[1])
         {
-            int64_t mismatch = ((motion_bits_decode(wheels[0].distance_bits, 34u) -
-                                 motion_bits_decode(wheels[0].start_bits, 34u)) -
-                                (motion_bits_decode(wheels[1].distance_bits, 34u) -
-                                 motion_bits_decode(wheels[1].start_bits, 34u))) /
-                               1000;
+            int64_t mismatch =
+                ((motion_bits_decode(wheels[0].distance_bits, 34u) -
+                  motion_bits_decode(wheels[0].start_bits, 34u)) -
+                 (motion_bits_decode(wheels[1].distance_bits, 34u) -
+                  motion_bits_decode(wheels[1].start_bits, 34u))) /
+                1000;
             int64_t correction = mismatch * MOTION_STRAIGHT_KP_Q10 / 1024;
-            /* Bound correction to half speed; never reverse a straight wheel. */
+            /* Bound correction to half speed; never reverse a straight wheel.
+             */
             int32_t bound = motion_request_left(&active) / 2;
             if (correction > bound)
             {
@@ -1627,7 +2076,8 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
             right = limit_speed(right + correction);
         }
     }
-    else if ((state.state == MOTION_TRACING) || (state.state == MOTION_REACQUIRE))
+    else if ((state.state == MOTION_TRACING) ||
+             (state.state == MOTION_REACQUIRE))
     {
         if (!have_line || (line_epoch != state.epoch) ||
             !fresh(now, line_ms, MOTION_INPUT_MAX_AGE_MS) || line->fault ||
@@ -1658,9 +2108,11 @@ static void control_step(uint32_t now, uint16_t dt, const line_msg_t *line, uint
             return;
         }
         /* Buddy3 positive error = line to LEFT: reduce left, increase right.
-         * Keep mean speed fixed while bc_active; no acceleration requests here. */
-        if (!motion_line_targets((int8_t)line->err, (uint16_t)motion_request_left(&active),
-                                 MOTION_MAX_SPEED_MM_S, MOTION_LINE_KP_Q10, &left, &right))
+         * Keep mean speed fixed while bc_active; no acceleration requests here.
+         */
+        if (!motion_line_targets(
+                (int8_t)line->err, (uint16_t)motion_request_left(&active),
+                MOTION_MAX_SPEED_MM_S, MOTION_LINE_KP_Q10, &left, &right))
         {
             fault_stop(MOTION_FAULT_RANGE);
             return;
@@ -1707,7 +2159,10 @@ ER motion_init(void)
         return mailbox_mutex;
     }
     status_mutex = tk_cre_mtx(&mutex);
-    if (status_mutex < E_OK) return status_mutex;
+    if (status_mutex < E_OK)
+    {
+        return status_mutex;
+    }
     events = tk_cre_flg(&flag);
     if (events < E_OK)
     {
@@ -1727,7 +2182,8 @@ ER motion_init(void)
 
 ER motion_start(void)
 {
-    ID task = app_start_task((FP)motion_task, MOTION_PRIORITY, TP_PRC2, "motion_task");
+    ID task = app_start_task((FP)motion_task, MOTION_PRIORITY, TP_PRC2,
+                             "motion_task");
     if (task < E_OK)
     {
         return task;
@@ -1764,13 +2220,16 @@ void motion_task(INT stacd, void *exinf)
     {
         UINT wake;
         T_RFLG flags;
-        ER waited = tk_wai_flg(events, WAKE_BIT, TWF_ORW | TWF_BITCLR, &wake, MOTION_PERIOD_MS);
+        ER waited = tk_wai_flg(events, WAKE_BIT, TWF_ORW | TWF_BITCLR, &wake,
+                               MOTION_PERIOD_MS);
         if ((waited < E_OK) && (waited != E_TMOUT))
         {
             fault_stop(MOTION_FAULT_HANDOFF);
         }
 #if MOTION_LINE_ROUTE
-        if (barcode_beeping && motion_now_ms() - barcode_beep_start_ms >= BARCODE_BEEP_MS) {
+        if (barcode_beeping &&
+            motion_now_ms() - barcode_beep_start_ms >= BARCODE_BEEP_MS)
+        {
             barcode_buzzer_set(false);
             barcode_beeping = false;
         }
@@ -1781,25 +2240,38 @@ void motion_task(INT stacd, void *exinf)
             continue;
         }
         uint32_t now = motion_now_ms();
-        diagnostics.fault_sources = (uint8_t)((flags.flgptn & SOURCE_BITS) >> 8);
+        diagnostics.fault_sources =
+            (uint8_t)((flags.flgptn & SOURCE_BITS) >> 8);
         bool radio_initialized = true;
 #if TM_WIFI_CYW43
         T_CYW43_UTK_STATUS radio;
         cyw43_utk_get_status(&radio);
         radio_initialized = radio.init_complete != 0;
 #endif
-        if ((flags.flgptn & APP_READY_BIT) && !diagnostics.app_ready_ms) diagnostics.app_ready_ms = now;
-        if (radio_initialized && !diagnostics.radio_init_ms) diagnostics.radio_init_ms = now;
-        if (!state.ready) {
+        if ((flags.flgptn & APP_READY_BIT) && !diagnostics.app_ready_ms)
+        {
+            diagnostics.app_ready_ms = now;
+        }
+        if (radio_initialized && !diagnostics.radio_init_ms)
+        {
+            diagnostics.radio_init_ms = now;
+        }
+        if (!state.ready)
+        {
             motor_hw_stop();
             motion_startup_decision_t startup = motion_startup_decide(
-                startup_ms, now, (flags.flgptn & APP_READY_BIT) != 0u, radio_initialized);
+                startup_ms, now, (flags.flgptn & APP_READY_BIT) != 0u,
+                radio_initialized);
             if (startup.timeout)
+            {
                 timeout_stop(1, now - startup_ms);
-            if (!startup.release) {
+            }
+            if (!startup.release)
+            {
                 state.updated_ms = now;
                 ++state.sequence;
-                if (tk_loc_mtx(mailbox_mutex, TMO_POL) == E_OK) {
+                if (tk_loc_mtx(mailbox_mutex, TMO_POL) == E_OK)
+                {
                     shared.status = state;
                     publish_observer_status();
                     tk_unl_mtx(mailbox_mutex);
@@ -1811,10 +2283,14 @@ void motion_task(INT stacd, void *exinf)
             state.ready = 1;
             diagnostics.released_ms = now;
             /* Startup health transitions that have already cleared are not
-             * runtime failures. Asserted source bits are still checked below. */
+             * runtime failures. Asserted source bits are still checked below.
+             */
             handled_fault_generation = generation_add(&fault_generation, 0);
             last_update = previous_encoder_ms = now;
-            if (owner_flags.encoder_ready) encoder_hw_snapshot(&previous_counts);
+            if (owner_flags.encoder_ready)
+            {
+                encoder_hw_snapshot(&previous_counts);
+            }
         }
         UW new_fault_generation = generation_add(&fault_generation, 0);
         UW new_stop_generation = generation_add(&stop_generation, 0);
@@ -1836,22 +2312,29 @@ void motion_task(INT stacd, void *exinf)
                 state.state = MOTION_ERROR;
             }
         }
-        if (owner_flags.active_valid && active.command == MOTION_LINE_TRACE && !s4_drive_ready())
+        if (owner_flags.active_valid && active.command == MOTION_LINE_TRACE &&
+            !s4_drive_ready())
         {
             fault_stop(MOTION_FAULT_EXTERNAL);
         }
-        if (owner_flags.active_valid && !(MOTION_LINE_UNLIMITED && active.command==MOTION_LINE_TRACE) &&
+        if (owner_flags.active_valid &&
+            !(MOTION_LINE_UNLIMITED && active.command == MOTION_LINE_TRACE) &&
             ((uint32_t)(now - active.issued_ms) >= active.ttl_ms))
         {
-            if (state.state == MOTION_PULSING || active.command==MOTION_LINE_TRACE)
+            if (state.state == MOTION_PULSING ||
+                active.command == MOTION_LINE_TRACE)
             {
 #if MOTION_LINE_ROUTE
                 if (active.command == MOTION_LINE_TRACE)
-                    route_event(ROUTE_EV_TIME_LIMIT, route.doing, (int)route.phase, 0, 0, 0);
+                {
+                    route_event(ROUTE_EV_TIME_LIMIT, route.doing,
+                                (int)route.phase, 0, 0, 0);
+                }
 #endif
                 end_request(MOTION_COMPLETED);
             }
-            else if ((state.state == MOTION_TRAVELLING) || (state.state == MOTION_TURNING) ||
+            else if ((state.state == MOTION_TRAVELLING) ||
+                     (state.state == MOTION_TURNING) ||
                      (state.state == MOTION_REACQUIRE))
             {
                 timeout_stop(4, now - active.issued_ms);
@@ -1862,7 +2345,8 @@ void motion_task(INT stacd, void *exinf)
                 ++state.epoch;
             }
         }
-        if (owner_flags.turning_from_line && (now - manoeuvre_start > MOTION_MANOEUVRE_TIMEOUT_MS))
+        if (owner_flags.turning_from_line &&
+            (now - manoeuvre_start > MOTION_MANOEUVRE_TIMEOUT_MS))
         {
             timeout_stop(5, now - manoeuvre_start);
         }
@@ -1875,8 +2359,10 @@ void motion_task(INT stacd, void *exinf)
         bool pending = shared.pending;
         bool renewal = shared.renewal;
 #if MOTION_LINE_REMOTE
-        uint32_t remote_epoch=shared.remote_epoch,remote_id=shared.remote_id;
-        uint32_t remote_renewed=shared.remote_renewed,remote_started=shared.remote_started;
+        uint32_t remote_epoch = shared.remote_epoch,
+                 remote_id = shared.remote_id;
+        uint32_t remote_renewed = shared.remote_renewed,
+                 remote_started = shared.remote_started;
 #endif
         if (pending)
         {
@@ -1896,7 +2382,10 @@ void motion_task(INT stacd, void *exinf)
         tk_unl_mtx(mailbox_mutex);
 
         uint32_t dt = now - last_update;
-        if (dt > diagnostics.max_loop_ms) diagnostics.max_loop_ms = dt;
+        if (dt > diagnostics.max_loop_ms)
+        {
+            diagnostics.max_loop_ms = dt;
+        }
         if (dt >= MOTION_PERIOD_MS)
         {
             if (dt > 100u)
@@ -1907,9 +2396,15 @@ void motion_task(INT stacd, void *exinf)
             {
 #if MOTION_LINE_ROUTE
                 if (update_odometry(now) || state.raw_valid)
+                {
                     route_odo_add(&route_odo, state.time_ms,
-                                  (MOTION_LEFT_ENCODER_SIGN < 0 ? 0u - state.left_count : state.left_count) +
-                                  (MOTION_RIGHT_ENCODER_SIGN < 0 ? 0u - state.right_count : state.right_count));
+                                  (MOTION_LEFT_ENCODER_SIGN < 0
+                                       ? 0u - state.left_count
+                                       : state.left_count) +
+                                      (MOTION_RIGHT_ENCODER_SIGN < 0
+                                           ? 0u - state.right_count
+                                           : state.right_count));
+                }
 #else
                 (void)update_odometry(now);
 #endif
@@ -1924,7 +2419,8 @@ void motion_task(INT stacd, void *exinf)
         if (pending && renewal)
         {
             if (owner_flags.active_valid && (active.epoch == request.epoch) &&
-                (active.id == request.id) && (active.source == request.source) &&
+                (active.id == request.id) &&
+                (active.source == request.source) &&
                 fresh(now, request.issued_ms, request.ttl_ms - 1u))
             {
                 active.issued_ms = request.issued_ms;
@@ -1933,19 +2429,24 @@ void motion_task(INT stacd, void *exinf)
         }
         else if (pending)
         {
-            admit(&request, now, flags.flgptn, &line, line_ms, line_epoch, have_line);
+            admit(&request, now, flags.flgptn, &line, line_ms, line_epoch,
+                  have_line);
             if (state.result == MOTION_REJECTED)
             {
                 ++owner_rejections;
             }
         }
 #if MOTION_LINE_REMOTE
-        /* GP20 starts an onboard run that must survive loss of MQTT. A dashboard
-         * Start grants a lease to its operator. Binding policy to the admitted
-         * source prevents a later mode edit from removing that operator's lease. */
-        if(owner_flags.active_valid && active.source==MOTION_NETWORK &&
-           (active.epoch!=remote_epoch || active.id!=remote_id || control_expired(now,remote_renewed,remote_started))) {
-            end_request(MOTION_EXPIRED);++state.epoch;
+        /* GP20 starts an onboard run that must survive loss of MQTT. A
+         * dashboard Start grants a lease to its operator. Binding policy to the
+         * admitted source prevents a later mode edit from removing that
+         * operator's lease. */
+        if (owner_flags.active_valid && active.source == MOTION_NETWORK &&
+            (active.epoch != remote_epoch || active.id != remote_id ||
+             control_expired(now, remote_renewed, remote_started)))
+        {
+            end_request(MOTION_EXPIRED);
+            ++state.epoch;
         }
 #endif
         /* Do not admit a barcode from a failed/late line producer merely
@@ -1954,49 +2455,69 @@ void motion_task(INT stacd, void *exinf)
         {
 #if MOTION_LINE_ROUTE
             {
-                bool usable = owner_flags.active_valid && active.command==MOTION_LINE_TRACE &&
-                    fresh(now, barcode_ms, LINE_FOLLOW_INPUT_AGE_MS) && barcode_epoch == state.epoch &&
+                bool usable =
+                    owner_flags.active_valid &&
+                    active.command == MOTION_LINE_TRACE &&
+                    fresh(now, barcode_ms, LINE_FOLLOW_INPUT_AGE_MS) &&
+                    barcode_epoch == state.epoch &&
                     (uint32_t)(barcode_ms - last_barcode_ms) > 0u &&
                     (uint32_t)(barcode_ms - last_barcode_ms) < 0x80000000u;
-                if (usable) last_barcode_ms = barcode_ms;
+                if (usable)
+                {
+                    last_barcode_ms = barcode_ms;
+                }
                 route_on_barcode(&barcode, barcode_ms, usable);
             }
 #else
             char decoded = motion_barcode_decode(&barcode);
-            uint32_t capture_age=(MOTION_LINE_ADAPTIVE && active.command==MOTION_LINE_TRACE) ?
-                LINE_FOLLOW_INPUT_AGE_MS:MOTION_INPUT_MAX_AGE_MS;
-            bool fresh_capture = fresh(now, barcode_ms, capture_age) &&
-                                 (barcode_epoch == state.epoch) &&
-                                 ((uint32_t)(barcode_ms - last_barcode_ms) > 0u) &&
-                                 ((uint32_t)(barcode_ms - last_barcode_ms) < 0x80000000u);
+            uint32_t capture_age =
+                (MOTION_LINE_ADAPTIVE && active.command == MOTION_LINE_TRACE)
+                    ? LINE_FOLLOW_INPUT_AGE_MS
+                    : MOTION_INPUT_MAX_AGE_MS;
+            bool fresh_capture =
+                fresh(now, barcode_ms, capture_age) &&
+                (barcode_epoch == state.epoch) &&
+                ((uint32_t)(barcode_ms - last_barcode_ms) > 0u) &&
+                ((uint32_t)(barcode_ms - last_barcode_ms) < 0x80000000u);
 #if MOTION_LINE_ADAPTIVE
-            if (owner_flags.active_valid && active.command==MOTION_LINE_TRACE &&
-                fresh_capture && decoded && have_line && line_epoch==state.epoch &&
-                fresh(now,line_ms,LINE_FOLLOW_INPUT_AGE_MS) && !line.fault &&
-                line.state!=LINE_FAULT && line.state!=LINE_CALIBRATING && line.state!=LINE_LOST)
+            if (owner_flags.active_valid &&
+                active.command == MOTION_LINE_TRACE && fresh_capture &&
+                decoded && have_line && line_epoch == state.epoch &&
+                fresh(now, line_ms, LINE_FOLLOW_INPUT_AGE_MS) && !line.fault &&
+                line.state != LINE_FAULT && line.state != LINE_CALIBRATING &&
+                line.state != LINE_LOST)
             {
-                last_barcode_ms=barcode_ms;
-                state.barcode=(unsigned)(decoded-'A'+1);
+                last_barcode_ms = barcode_ms;
+                state.barcode = (unsigned)(decoded - 'A' + 1);
                 /* C agrees with the explicit straight trial policy. A/B/D
                  * require navigation not yet available in this count-domain
-                 * trial: stop rather than silently driving past that command. */
-                if(decoded!='C')line_trial.adaptive.route_blocked=true;
+                 * trial: stop rather than silently driving past that command.
+                 */
+                if (decoded != 'C')
+                {
+                    line_trial.adaptive.route_blocked = true;
+                }
             }
             else
 #endif
-            if (owner_flags.active_valid && active.command!=MOTION_LINE_TRACE &&
-                (state.state == MOTION_TRACING) && fresh_capture &&
-                decoded && have_line && (line_epoch == state.epoch) &&
-                fresh(now, line_ms, MOTION_INPUT_MAX_AGE_MS) && !line.fault &&
-                (line.state != LINE_FAULT) && (line.state != LINE_LOST) &&
-                (line.state != LINE_CALIBRATING))
+                if (owner_flags.active_valid &&
+                    active.command != MOTION_LINE_TRACE &&
+                    (state.state == MOTION_TRACING) && fresh_capture &&
+                    decoded && have_line && (line_epoch == state.epoch) &&
+                    fresh(now, line_ms, MOTION_INPUT_MAX_AGE_MS) &&
+                    !line.fault && (line.state != LINE_FAULT) &&
+                    (line.state != LINE_LOST) &&
+                    (line.state != LINE_CALIBRATING))
             {
                 last_barcode_ms = barcode_ms;
                 state.barcode = (unsigned)(decoded - 'A' + 1);
                 if (decoded != 'C')
                 {
                     owner_flags.turning_from_line = true;
-                    begin_turn((decoded == 'A') ? 90 : (decoded == 'B') ? -90 : 180, now);
+                    begin_turn((decoded == 'A')   ? 90
+                               : (decoded == 'B') ? -90
+                                                  : 180,
+                               now);
                 }
             }
             else
@@ -2007,14 +2528,16 @@ void motion_task(INT stacd, void *exinf)
         }
         if ((dt >= MOTION_PERIOD_MS) && (dt <= 100u) && (state.faults == 0u))
         {
-            control_step(now, (uint16_t)dt, &line, line_ms, line_epoch, have_line,levels);
+            control_step(now, (uint16_t)dt, &line, line_ms, line_epoch,
+                         have_line, levels);
         }
         state.updated_ms = motion_now_ms();
         ++state.sequence;
         if (lock_mailbox() == E_OK)
         {
             /* Preserve rejections that raced with this owner iteration. */
-            state.rejected_requests = shared.rejected_requests + owner_rejections;
+            state.rejected_requests =
+                shared.rejected_requests + owner_rejections;
             shared.status = state;
             publish_observer_status();
             shared.processing = false;
@@ -2051,9 +2574,11 @@ ER motion_debug_line(line_msg_t *line, uint32_t *sampled_ms)
     return have ? E_OK : E_NOEXS;
 }
 
-ER motion_debug_barcode(bc_msg_t *barcode, uint32_t *sampled_ms, uint32_t *count)
+ER motion_debug_barcode(bc_msg_t *barcode, uint32_t *sampled_ms,
+                        uint32_t *count)
 {
-    if ((barcode == NULL) || (sampled_ms == NULL) || (count == NULL) || (mailbox_mutex <= 0))
+    if ((barcode == NULL) || (sampled_ms == NULL) || (count == NULL) ||
+        (mailbox_mutex <= 0))
     {
         return E_PAR;
     }

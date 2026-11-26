@@ -52,7 +52,8 @@
 #if MOTION_LINE_ROUTE && !MOTION_LINE_ADAPTIVE
 #error "Barcode routing requires MOTION_LINE_ADAPTIVE=1"
 #endif
-#if MOTION_LINE_ADAPTIVE && (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART || MOTION_LINE_SEARCH)
+#if MOTION_LINE_ADAPTIVE &&                                                    \
+    (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART || MOTION_LINE_SEARCH)
 #error "Adaptive control requires GP20 circuit mode with legacy search disabled"
 #endif
 #if MOTION_LINE_SEARCH && (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART)
@@ -70,16 +71,24 @@
 #if MOTION_LINE_REMOTE && (!MOTION_LINE_CIRCUIT || MOTION_LINE_AUTOSTART)
 #error "Remote control requires GP20 circuit mode, without autostart"
 #endif
-#define MOTION_LINE_BUTTON_PIN 20u /* Robo Pico active-low programmable button */
+/* Robo Pico active-low programmable button */
+#define MOTION_LINE_BUTTON_PIN 20u
 #define MOTION_CALIBRATED 0
-#define MOTION_ENCODERS_VERIFIED 1 /* verified 2026-10-31: both wheels count both ways, 0 invalid edges */
-#define MOTION_LEFT_MOTOR_SIGN -1   /* measured 2026-10-31: +duty spins left wheel backward */
-#define MOTION_RIGHT_MOTOR_SIGN 1   /* measured 2026-10-31: +duty spins right wheel forward */
-#define MOTION_LEFT_ENCODER_SIGN -1 /* measured: left count goes DOWN when driving forward */
-#define MOTION_RIGHT_ENCODER_SIGN 1 /* measured: right count goes UP when driving forward */
-#define MOTION_LEFT_COUNTS_REV 2774u  /* ROUGH: one hand turn gave 2679 L / 2869 R; refine with a 1 m push */
+/* verified 2026-10-31: both wheels count both ways, 0 invalid edges */
+#define MOTION_ENCODERS_VERIFIED 1
+/* measured 2026-10-31: +duty spins left wheel backward */
+#define MOTION_LEFT_MOTOR_SIGN -1
+/* measured 2026-10-31: +duty spins right wheel forward */
+#define MOTION_RIGHT_MOTOR_SIGN 1
+/* measured: left count goes DOWN when driving forward */
+#define MOTION_LEFT_ENCODER_SIGN -1
+/* measured: right count goes UP when driving forward */
+#define MOTION_RIGHT_ENCODER_SIGN 1
+/* ROUGH: one hand turn gave 2679 L / 2869 R; refine with a 1 m push */
+#define MOTION_LEFT_COUNTS_REV 2774u
 #define MOTION_RIGHT_COUNTS_REV 2774u
-#define MOTION_LEFT_CIRCUMFERENCE_UM 204200u /* 65 mm wheel (measured 64-66 mm) */
+/* 65 mm wheel (measured 64-66 mm) */
+#define MOTION_LEFT_CIRCUMFERENCE_UM 204200u
 #define MOTION_RIGHT_CIRCUMFERENCE_UM 204200u
 #define MOTION_TRACK_WIDTH_MM 125u /* measured, wheel centre to centre */
 #define MOTION_MAX_SPEED_MM_S 0u

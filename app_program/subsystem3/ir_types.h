@@ -1,23 +1,25 @@
 /*
- *	ir_types.h
- *	Subsystem 3 -- IR line tracing and barcode sensing (Buddy 3, 2500445).
+ *  ir_types.h
+ *  Subsystem 3 -- IR line tracing and barcode sensing (Buddy 3, 2500445).
  *
- *	Constants and minimum-bit message formats for the IR subsystem.
- *	No kernel or hardware includes, so the same file is used by the
- *	micro T-Kernel build and by the Pico SDK bench test
- *	(testing/subsystem3/ir_line_bench).
+ *  Constants and minimum-bit message formats for the IR subsystem.
+ *  No kernel or hardware includes, so the same file is used by the
+ *  micro T-Kernel build and by the Pico SDK bench test
+ *  (testing/subsystem3/ir_line_bench).
  *
- *	Tribunal 1 (Imm) decisions applied here:
- *	  - Double-line proportional tracing (Live Decision Change Log, "No change").
- *	  - Buddy 3 only sends what the IR sensors detect; Buddy 2 decodes the
- *	    barcode and maps it to an instruction ("Reassigned").
- *	  - Minimum-bit representation: each field uses the fewest bits that
- *	    cover its valid range (Constraint Injection, Buddy 3 row).
+ *  Tribunal 1 (Imm) decisions applied here:
+ *    - Double-line proportional tracing (Live Decision Change Log, "No
+ * change").
+ *    - Buddy 3 only sends what the IR sensors detect; Buddy 2 decodes the
+ *      barcode and maps it to an instruction ("Reassigned").
+ *    - Minimum-bit representation: each field uses the fewest bits that
+ *      cover its valid range (Constraint Injection, Buddy 3 row).
  */
 
 #ifndef IR_TYPES_H
 #define IR_TYPES_H
 
+#include "../app_assert.h"
 #include <stdint.h>
 
 /* ---------------------------------------------------------------------
@@ -33,20 +35,22 @@
 #ifndef IR_BARCODE_BLACK_LEVEL
 #define IR_BARCODE_BLACK_LEVEL 1
 #endif
-#if (IR_BARCODE_DIGITAL != 0 && IR_BARCODE_DIGITAL != 1) || (IR_BARCODE_BLACK_LEVEL != 0 && IR_BARCODE_BLACK_LEVEL != 1)
+#if (IR_BARCODE_DIGITAL != 0 && IR_BARCODE_DIGITAL != 1) ||                    \
+    (IR_BARCODE_BLACK_LEVEL != 0 && IR_BARCODE_BLACK_LEVEL != 1)
 #error "Barcode digital mode and black level must be 0 or 1"
 #endif
-#define IR_NUM_CH		3u
-#define IR_CH_BARCODE		0u	/* IR Left   - GP26 / ADC0 */
-#define IR_CH_LINE_A		1u	/* IR Centre - GP27 / ADC1 (left-hand)  */
-#define IR_CH_LINE_B		2u	/* IR Right  - GP28 / ADC2 (right-hand); VBAT jumper OPEN */
+#define IR_NUM_CH 3u
+#define IR_CH_BARCODE 0u /* IR Left   - GP26 / ADC0 */
+#define IR_CH_LINE_A 1u  /* IR Centre - GP27 / ADC1 (left-hand)  */
+#define IR_CH_LINE_B                                                           \
+    2u /* IR Right  - GP28 / ADC2 (right-hand); VBAT jumper OPEN */
 
 /* Measured in S3-U02/S3-U03 (2026-10-27): the A0 output is HIGHER on black. */
-#define IR_BLACK_IS_HIGH	1
+#define IR_BLACK_IS_HIGH 1
 
 /* Calibration: minimum black-white difference in raw 12-bit counts (TBC).
    Measured contrast was about 3200 counts on GP26/GP27. */
-#define IR_CAL_MIN_CONTRAST	600u
+#define IR_CAL_MIN_CONTRAST 600u
 
 /* ---------------------------------------------------------------------
  *  Line sensor placement (Buddy 3 doc section 4.1):
@@ -59,34 +63,38 @@
  *  brought closer than the line width (sliding test showed a gap where
  *  both read white), so EDGE gave almost only +/-100.
  * --------------------------------------------------------------------- */
-#define LINE_MODE_EDGE		0
-#define LINE_MODE_OUTSIDE	1
-#ifndef LINE_MODE			/* can be overridden with -DLINE_MODE=0 for testing */
-#define LINE_MODE		LINE_MODE_OUTSIDE
+#define LINE_MODE_EDGE 0
+#define LINE_MODE_OUTSIDE 1
+#ifndef LINE_MODE /* can be overridden with -DLINE_MODE=0 for testing */
+#define LINE_MODE LINE_MODE_OUTSIDE
 #endif
 
 /* ---------------------------------------------------------------------
  *  Line tracing thresholds on the normalised 0 (white) .. 100 (black)
  *  scale.  All TBC on the real track.
  * --------------------------------------------------------------------- */
-#define LINE_ON_BLACK		75u	/* sensor counts as "on black" at or above   */
-#define LINE_OFF_WHITE		15u	/* sensor counts as "on white" at or below   */
-#define LINE_LOST_TIMEOUT_MS	200u	/* EDGE: both white this long -> LINE_LOST   */
-#define LINE_UNSEEN_MS		2000u	/* OUTSIDE: neither sensor saw the line this long -> LINE_LOST */
+#define LINE_ON_BLACK 75u  /* sensor counts as "on black" at or above   */
+#define LINE_OFF_WHITE 15u /* sensor counts as "on white" at or below   */
+#define LINE_LOST_TIMEOUT_MS                                                   \
+    200u /* EDGE: both white this long -> LINE_LOST   */
+#define LINE_UNSEEN_MS                                                         \
+    2000u /* OUTSIDE: neither sensor saw the line this long -> LINE_LOST */
 
 /* ---------------------------------------------------------------------
  *  Barcode capture (barcode sensor only).  Widths are counted in samples;
  *  at the 1 kHz sample rate one sample = 1 ms.  All TBC.
  * --------------------------------------------------------------------- */
-#define BC_MAX_ELEMS		63u	/* fits the 6-bit count                       */
-#define BC_EXPECTED_ELEMS	29u	/* Code 39 "*X*": 3 x 9 elements + 2 gaps (assumed); 0 = disable early finish */
-#define BC_MIN_ELEMS		5u	/* shorter captures are treated as noise      */
+#define BC_MAX_ELEMS 63u /* fits the 6-bit count                       */
+#define BC_EXPECTED_ELEMS                                                      \
+    29u /* Code 39 "*X*": 3 x 9 elements + 2 gaps (assumed); 0 = disable early \
+           finish */
+#define BC_MIN_ELEMS 5u /* shorter captures are treated as noise      */
 /* Standalone experiments may override these; production defaults stay 60/35. */
 #ifndef BC_BAR_ON
-#define BC_BAR_ON          60u
+#define BC_BAR_ON 60u
 #endif
 #ifndef BC_BAR_OFF
-#define BC_BAR_OFF         35u
+#define BC_BAR_OFF 35u
 #endif
 /* Wider durations: the standalone slow-scan experiment (BARCODE_TERMINAL)
  * and the kernel LINE_ROUTE profile (BARCODE_WIDE, set by the makefile).
@@ -94,40 +102,44 @@
  * read at line-following speed; 8-bit widths saturate at 255 ms. */
 #ifdef BARCODE_SLOW_SCAN
 #if !defined(BARCODE_TERMINAL) && !defined(BARCODE_WIDE)
-#error "BARCODE_SLOW_SCAN needs BARCODE_TERMINAL (bench) or BARCODE_WIDE (kernel route profile)"
+#error "BARCODE_SLOW_SCAN requires BARCODE_TERMINAL or BARCODE_WIDE"
 #endif
 typedef uint16_t bc_width_t;
-#define BC_QUIET_MS         1500u
-#define BC_WIDTH_SAT        65535u
+#define BC_QUIET_MS 1500u
+#define BC_WIDTH_SAT 65535u
 #else
 typedef uint8_t bc_width_t;
-#define BC_QUIET_MS         150u
-#define BC_WIDTH_SAT        255u
+#define BC_QUIET_MS 150u
+#define BC_WIDTH_SAT 255u
 #endif
 
 #ifndef BC_SAMPLE_PERIOD_US
 #define BC_SAMPLE_PERIOD_US 1000u
 #endif
-#define BC_QUIET_SAMPLES ((BC_QUIET_MS * 1000u + BC_SAMPLE_PERIOD_US - 1u) / BC_SAMPLE_PERIOD_US)
+#define BC_QUIET_SAMPLES                                                       \
+    ((BC_QUIET_MS * 1000u + BC_SAMPLE_PERIOD_US - 1u) / BC_SAMPLE_PERIOD_US)
 #ifdef BARCODE_WIDE
 /* Route profile: the quiet time also scales with the barcode's own widest
  * element (barcode_sense.c bc_quiet_samples), up to BC_QUIET_MAX_MS. */
-#define BC_QUIET_WIDEST     4u
-#define BC_QUIET_MAX_MS     5000u
-#define BC_QUIET_MAX_SAMPLES ((BC_QUIET_MAX_MS * 1000u + BC_SAMPLE_PERIOD_US - 1u) / BC_SAMPLE_PERIOD_US)
+#define BC_QUIET_WIDEST 4u
+#define BC_QUIET_MAX_MS 5000u
+#define BC_QUIET_MAX_SAMPLES                                                   \
+    ((BC_QUIET_MAX_MS * 1000u + BC_SAMPLE_PERIOD_US - 1u) / BC_SAMPLE_PERIOD_US)
 #endif
 
 /* ---------------------------------------------------------------------
  *  Line state: 7 states -> 3 bits.
  * --------------------------------------------------------------------- */
-typedef enum {
-	LINE_CALIBRATING = 0,	/* not calibrated yet                          */
-	LINE_ON,		/* following the line                          */
-	LINE_EDGE_ONLY,		/* a sensor is fully on black: sharp correction */
-	LINE_LOST_HOLD,		/* EDGE only: both white, shorter than LINE_LOST_TIMEOUT_MS */
-	LINE_LOST,		/* line not seen for the timeout               */
-	LINE_BOTH_BLACK,	/* both black: junction candidate              */
-	LINE_FAULT		/* IR fault (calibration failed, stale samples) */
+typedef enum
+{
+    LINE_CALIBRATING = 0, /* not calibrated yet                          */
+    LINE_ON,              /* following the line                          */
+    LINE_EDGE_ONLY,       /* a sensor is fully on black: sharp correction */
+    LINE_LOST_HOLD,  /* EDGE only: both white, shorter than LINE_LOST_TIMEOUT_MS
+                      */
+    LINE_LOST,       /* line not seen for the timeout               */
+    LINE_BOTH_BLACK, /* both black: junction candidate              */
+    LINE_FAULT       /* IR fault (calibration failed, stale samples) */
 } line_state_t;
 
 /* ---------------------------------------------------------------------
@@ -140,14 +152,16 @@ typedef enum {
  *  side by side measure a lateral offset, not an angle, so 8 bits is the
  *  minimum for this algorithm.
  * --------------------------------------------------------------------- */
-typedef struct {
+typedef struct
+{
     /* Keep the original four-byte alignment and RP2040 message layout. */
-    _Alignas(uint32_t) int8_t err;  /* Positive values steer left. */
-    uint8_t  state     : 3;
-    uint8_t  seq       : 4;
-    uint8_t  fault     : 1;
-    uint16_t bc_active : 1;         /* Hold speed during barcode capture. */
-    uint16_t t_ms      : 15;        /* Wraps every 32.768 seconds. */
+    int8_t err __attribute__((
+        aligned(sizeof(uint32_t)))); /* Positive values steer left. */
+    uint8_t state : 3;
+    uint8_t seq : 4;
+    uint8_t fault : 1;
+    uint16_t bc_active : 1; /* Hold speed during barcode capture. */
+    uint16_t t_ms : 15;     /* Wraps every 32.768 seconds. */
 } line_msg_t;
 
 /* ---------------------------------------------------------------------
@@ -158,33 +172,43 @@ typedef struct {
  *
  *  Header 16 bits + count bytes of widths.
  * --------------------------------------------------------------------- */
-typedef struct {
-	uint16_t	count		: 6;	/* elements stored (bar first)               */
-	uint16_t	overflow	: 1;	/* more than BC_MAX_ELEMS seen: do not decode */
-	uint16_t	seq		: 4;	/* wraps                                     */
-	uint16_t	reserved	: 5;
+typedef struct
+{
+    uint16_t count : 6;    /* elements stored (bar first)               */
+    uint16_t overflow : 1; /* more than BC_MAX_ELEMS seen: do not decode */
+    uint16_t seq : 4;      /* wraps                                     */
+    uint16_t reserved : 5;
 } bc_hdr_t;
 
-typedef struct {
-	bc_hdr_t	hdr;
-	bc_width_t	widths[BC_MAX_ELEMS];	/* samples per element; BC_WIDTH_SAT = saturated */
+typedef struct
+{
+    bc_hdr_t hdr;
+    bc_width_t widths[BC_MAX_ELEMS]; /* samples per element; BC_WIDTH_SAT =
+                                        saturated */
 } bc_msg_t;
 
 /* Calibration for one channel: two 12-bit ADC values packed in 24 bits. */
-typedef struct {
-	uint32_t	white	: 12;
-	uint32_t	black	: 12;
+typedef struct
+{
+    uint32_t white : 12;
+    uint32_t black : 12;
 } ir_cal_t;
 
-_Static_assert(IR_CH_LINE_A != IR_CH_LINE_B && IR_CH_LINE_A != IR_CH_BARCODE &&
-	       IR_CH_LINE_B != IR_CH_BARCODE, "IR sensor roles must be distinct");
-_Static_assert(sizeof(line_msg_t) == 4, "line_msg_t must be 32 bits");
-_Static_assert(sizeof(bc_hdr_t) == 2, "bc_hdr_t must be 16 bits");
-_Static_assert(BC_QUIET_SAMPLES < BC_WIDTH_SAT, "quiet timeout must fit the duration counter");
+APP_STATIC_ASSERT(ir_types_ir_sensor_roles_must_be_distinct,
+                  IR_CH_LINE_A != IR_CH_LINE_B &&
+                      IR_CH_LINE_A != IR_CH_BARCODE &&
+                      IR_CH_LINE_B != IR_CH_BARCODE);
+APP_STATIC_ASSERT(ir_types_line_msg_t_must_be_32_bits, sizeof(line_msg_t) == 4);
+APP_STATIC_ASSERT(ir_types_bc_hdr_t_must_be_16_bits, sizeof(bc_hdr_t) == 2);
+APP_STATIC_ASSERT(ir_types_quiet_timeout_must_fit_the_duration_counter,
+                  BC_QUIET_SAMPLES < BC_WIDTH_SAT);
 #ifdef BARCODE_WIDE
-_Static_assert(BC_QUIET_MAX_SAMPLES < BC_WIDTH_SAT, "longest quiet timeout must fit the duration counter");
+APP_STATIC_ASSERT(ir_types_longest_quiet_timeout_must_fit_the_duration_counter,
+                  BC_QUIET_MAX_SAMPLES < BC_WIDTH_SAT);
 #endif
-_Static_assert(LINE_OFF_WHITE < LINE_ON_BLACK, "white threshold must be below black");
-_Static_assert(BC_BAR_OFF < BC_BAR_ON, "barcode hysteresis thresholds reversed");
+APP_STATIC_ASSERT(ir_types_white_threshold_must_be_below_black,
+                  LINE_OFF_WHITE < LINE_ON_BLACK);
+APP_STATIC_ASSERT(ir_types_barcode_hysteresis_thresholds_reversed,
+                  BC_BAR_OFF < BC_BAR_ON);
 
 #endif /* IR_TYPES_H */

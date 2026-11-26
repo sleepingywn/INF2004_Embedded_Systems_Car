@@ -257,6 +257,8 @@ $(E2U): ../tools/elf2uf2/main.cpp
 
 $(EXE_FILE).elf: | $(E2U)
 
+APP_C_DIALECT := -std=c99
+
 CFLAGS := -mcpu=cortex-m0plus -mthumb -ffreestanding\
     -std=gnu11 \
     -O2 -g3 \

@@ -12,10 +12,10 @@ with tempfile.TemporaryDirectory(prefix='robocar-remote-') as folder:
   exe=str(Path(folder)/(name+'.exe'))
   sources=['testing/subsystem2/'+('route_settings' if name=='settings' else 'remote_'+name)+'_test.c']
   if name!='wire':sources+=['app_program/subsystem2/motion_logic.c']
-  subprocess.run(['gcc',*FLAGS,*sources,'-o',exe],cwd=ROOT,check=True)
+  subprocess.run(['gcc',*FLAGS,'app_program/subsystem2/motion_route_decode.c',*sources,'-o',exe],cwd=ROOT,check=True)
   subprocess.run([exe],check=True)
  with_sources=['testing/subsystem2/unlimited_run_test.c','app_program/subsystem2/motion_logic.c']
  exe=str(Path(folder)/'unlimited.exe')
- subprocess.run(['gcc',*FLAGS,'-DMOTION_LINE_UNLIMITED=1',*with_sources,'-o',exe],cwd=ROOT,check=True)
+ subprocess.run(['gcc',*FLAGS,'-DMOTION_LINE_UNLIMITED=1',*with_sources,'app_program/subsystem2/motion_route_decode.c','-o',exe],cwd=ROOT,check=True)
  subprocess.run([exe],check=True)
 print('PASS remote command transport, actual GP20 console arbiter and actual motor watchdog')

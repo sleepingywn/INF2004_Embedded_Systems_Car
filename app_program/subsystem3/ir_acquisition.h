@@ -7,12 +7,15 @@
 
 /* Private to the S3 task on core 0 and its two same-priority ISRs. */
 #define IR_ACQ_EVENT 1u
-#define IR_ACQ_RING_SIZE 64u /* 63 usable slots (63 ms); overflow stops acquisition.
-                              * Was 16: on the car the IR task was occasionally held
-                              * up > 15 ms (boot, and once after ~5 min), flt 8. */
+#define IR_ACQ_RING_SIZE                                                       \
+    64u /* 63 usable slots (63 ms); overflow stops acquisition.                \
+         * Was 16: on the car the IR task was occasionally held                \
+         * up > 15 ms (boot, and once after ~5 min), flt 8. */
 #define IR_ACQ_PERIOD_US 1000u
 /* Provisional acceptance bound, not a measured timing achievement. */
-#define IR_ACQ_MAX_JITTER_US 800u /* TEST BUILD: 100 tripped on the car; 500 nearly did (scan 490 us seen) */
+#define IR_ACQ_MAX_JITTER_US                                                   \
+    800u /* TEST BUILD: 100 tripped on the car; 500 nearly did (scan 490 us    \
+            seen) */
 
 typedef enum
 {
@@ -24,17 +27,25 @@ typedef enum
 
 typedef struct
 {
-    uint32_t sampled_ms; /* scheduled acquisition time, motion_now_ms timebase */
+    uint32_t
+        sampled_ms; /* scheduled acquisition time, motion_now_ms timebase */
     uint32_t barcode : 12;
     uint32_t line_a : 12;
     uint32_t line_b : 12;
 } ir_raw_frame_t;
 
 /* First failure is retained until an explicit acquisition restart. */
-typedef enum {
-    IR_REASON_NONE, IR_REASON_LAUNCH_LATE, IR_REASON_SCAN_OVERLAP,
-    IR_REASON_SCAN_TIMEOUT, IR_REASON_ADC, IR_REASON_OVERFLOW,
-    IR_REASON_QUEUE_AGE, IR_REASON_WATCHDOG, IR_REASON_STARTUP,
+typedef enum
+{
+    IR_REASON_NONE,
+    IR_REASON_LAUNCH_LATE,
+    IR_REASON_SCAN_OVERLAP,
+    IR_REASON_SCAN_TIMEOUT,
+    IR_REASON_ADC,
+    IR_REASON_OVERFLOW,
+    IR_REASON_QUEUE_AGE,
+    IR_REASON_WATCHDOG,
+    IR_REASON_STARTUP,
     IR_REASON_HARDWARE
 } ir_fault_reason_t;
 

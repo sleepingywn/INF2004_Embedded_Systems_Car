@@ -14,6 +14,8 @@ static inline int64_t motion_bits_decode(uint64_t value, unsigned width)
 {
     uint64_t modulus = UINT64_C(1) << width;
     value &= modulus - UINT64_C(1);
-    return (value < (modulus / UINT64_C(2))) ? (int64_t)value : (int64_t)value - (int64_t)modulus;
+    return (value < (modulus / UINT64_C(2)))
+               ? (int64_t)value
+               : (int64_t)value - (int64_t)modulus;
 }
 #endif

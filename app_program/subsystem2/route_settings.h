@@ -12,9 +12,13 @@ extern bool route_mapping_persisted;
 void route_settings_boot(void);
 void route_settings_reboot(const uint8_t map[ROUTE_MAP_COUNT]);
 bool route_settings_valid(const uint8_t *map);
-static inline char route_mapping_code(char scanned) {
-    if(scanned<'A' || scanned>'Z')return 0;
-    unsigned action=route_mapping_get((unsigned)(scanned-'A'));
-    return action && action<=4 ? (char)('A'+action-1) : 0;
+static inline char route_mapping_code(char scanned)
+{
+    if (scanned < 'A' || scanned > 'Z')
+    {
+        return 0;
+    }
+    unsigned action = route_mapping_get((unsigned)(scanned - 'A'));
+    return action && action <= 4 ? (char)('A' + action - 1) : 0;
 }
 #endif

@@ -1,18 +1,24 @@
+#include "../app_assert.h"
 #include "ir_runtime.h"
 #include "../subsystem2/motion_ir_bridge.h"
 #if MOTION_LINE_CIRCUIT
 #include "../../config/line_boot_calibration.h"
 #endif
-#define memset __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
+#define memset                                                                 \
+    __builtin_memset /* not <string.h>: its size_t clashes with tk/syslib.h */
 #define memcpy __builtin_memcpy
 
 #define IR_COMMAND_EVENT 2u
 #define IR_TASK_PRIORITY 16
-#define IR_WATCHDOG_MS 20u /* liveness watchdog; not the 1 kHz pacing source */
+#define IR_WATCHDOG_MS                                                         \
+    20u /* liveness watchdog; not the 1 kHz pacing source                      \
+         */
 #define IR_MAX_QUEUE_AGE_MS (IR_ACQ_RING_SIZE - 1u)
 #if MOTION_LINE_ROUTE && !IR_BARCODE_DIGITAL
-#include "barcode_level.h"   /* fixed cutoffs 200/240 + relative bar end (18 Nov 2026) */
-_Static_assert(BC_LVL_WHITE_MAX < BC_LVL_BLACK_MIN, "raw barcode hysteresis reversed");
+/* Fixed cutoffs and relative bar end (18 Nov 2026). */
+#include "barcode_level.h"
+APP_STATIC_ASSERT(ir_runtime_raw_barcode_hysteresis_reversed,
+                  BC_LVL_WHITE_MAX < BC_LVL_BLACK_MIN);
 static bc_level_t bc_level = {BC_LVL_WHITE_MAX, 0u, BC_LVL_WHITE_MAX, 0u};
 #endif
 
@@ -61,14 +67,28 @@ static volatile uint8_t bc_ext_last_n;
 static volatile uint32_t bc_ext_last_seq;
 static void bc_ext_sample(uint16_t raw)
 {
-    if (bridge.capture.active) {
+    if (bridge.capture.active)
+    {
         unsigned i = bridge.capture.count;
-        if (i < BC_MAX_ELEMS) {
-            if (i >= bc_ext_n) { bc_ext_cur[i] = raw; bc_ext_n = (uint8_t)(i + 1u); }
-            else if ((i & 1u) == 0u ? raw > bc_ext_cur[i] : raw < bc_ext_cur[i]) bc_ext_cur[i] = raw;
+        if (i < BC_MAX_ELEMS)
+        {
+            if (i >= bc_ext_n)
+            {
+                bc_ext_cur[i] = raw;
+                bc_ext_n = (uint8_t)(i + 1u);
+            }
+            else if ((i & 1u) == 0u ? raw > bc_ext_cur[i] : raw < bc_ext_cur[i])
+            {
+                bc_ext_cur[i] = raw;
+            }
         }
-    } else if (bc_ext_was_active) {
-        for (unsigned i = 0; i < bc_ext_n; ++i) bc_ext_last[i] = bc_ext_cur[i];
+    }
+    else if (bc_ext_was_active)
+    {
+        for (unsigned i = 0; i < bc_ext_n; ++i)
+        {
+            bc_ext_last[i] = bc_ext_cur[i];
+        }
         bc_ext_last_n = bc_ext_n;
         ++bc_ext_last_seq;
         bc_ext_n = 0u;
@@ -78,15 +98,25 @@ static void bc_ext_sample(uint16_t raw)
 unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq)
 {
     unsigned n = bc_ext_last_n < max ? bc_ext_last_n : max;
-    for (unsigned i = 0; i < n; ++i) out[i] = bc_ext_last[i];
-    if (seq) *seq = bc_ext_last_seq;
+    for (unsigned i = 0; i < n; ++i)
+    {
+        out[i] = bc_ext_last[i];
+    }
+    if (seq)
+    {
+        *seq = bc_ext_last_seq;
+    }
     return n;
 }
 #else
 unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq)
 {
-    (void)out; (void)max;
-    if (seq) *seq = 0u;
+    (void)out;
+    (void)max;
+    if (seq)
+    {
+        *seq = 0u;
+    }
     return 0u;
 }
 #endif
@@ -138,11 +168,13 @@ static void timing_fault(ir_fault_reason_t reason, uint32_t detail_us)
     ir_raw_frame_t unused;
     ir_acq_status_t live;
     (void)ir_acquisition_pop(&unused, &live);
-    if (owner.acquisition.first_fault_reason == IR_REASON_NONE) {
+    if (owner.acquisition.first_fault_reason == IR_REASON_NONE)
+    {
         live.faults |= owner.acquisition.faults;
         owner.acquisition = live;
     }
-    if (owner.acquisition.first_fault_reason == IR_REASON_NONE) {
+    if (owner.acquisition.first_fault_reason == IR_REASON_NONE)
+    {
         owner.acquisition.first_fault_us = in_w(TIMER_TIMERAWL);
         owner.acquisition.first_fault_reason = reason;
         owner.acquisition.first_fault_detail = detail_us;
@@ -173,14 +205,17 @@ static void apply_command(unsigned command)
             runtime_fault();
         }
     }
-    else if ((command == IR_RUNTIME_FINISH) && (owner.state == IR_RUNTIME_CALIBRATING))
+    else if ((command == IR_RUNTIME_FINISH) &&
+             (owner.state == IR_RUNTIME_CALIBRATING))
     {
         /* Only samples already processed by this task belong to calibration.
-         * Discard queued frames so a pre-FINISH barcode can never be replayed. */
+         * Discard queued frames so a pre-FINISH barcode can never be replayed.
+         */
         ir_acquisition_discard();
         owner.failed_channels = ir_cal_finish(&accumulator, owner.calibration);
 #if IR_BARCODE_DIGITAL
-        /* D0 has a hardware threshold; only the analogue line pair calibrates. */
+        /* D0 has a hardware threshold; only the analogue line pair calibrates.
+         */
         owner.failed_channels &= ~(1u << IR_CH_BARCODE);
 #endif
         if (owner.failed_channels != 0u)
@@ -193,7 +228,8 @@ static void apply_command(unsigned command)
             owner.state = IR_RUNTIME_READY;
             motion_ir_bridge_init(&bridge);
             runtime_flags.epoch_known = false;
-            /* Clear the live source fault only after a fresh successful handoff. */
+            /* Clear the live source fault only after a fresh successful
+             * handoff. */
         }
     }
 }
@@ -203,7 +239,8 @@ static void process_frame(const ir_raw_frame_t *frame)
     uint32_t now = motion_now_ms();
     if ((uint32_t)(now - frame->sampled_ms) > IR_MAX_QUEUE_AGE_MS)
     {
-        timing_fault(IR_REASON_QUEUE_AGE, (uint32_t)(now - frame->sampled_ms) * 1000u);
+        timing_fault(IR_REASON_QUEUE_AGE,
+                     (uint32_t)(now - frame->sampled_ms) * 1000u);
         return;
     }
     owner.sample_valid = false;
@@ -250,8 +287,11 @@ static void process_frame(const ir_raw_frame_t *frame)
     for (unsigned ch = 0; ch < IR_NUM_CH; ++ch)
     {
         normalized[ch] = ir_normalise(&owner.calibration[ch], raw[ch]);
-        #if IR_BARCODE_DIGITAL
-        if(ch == IR_CH_BARCODE)normalized[ch] = raw[ch] ? 100u : 0u;
+#if IR_BARCODE_DIGITAL
+        if (ch == IR_CH_BARCODE)
+        {
+            normalized[ch] = raw[ch] ? 100u : 0u;
+        }
 #endif
         owner.normalized[ch].value = normalized[ch];
     }
@@ -261,11 +301,13 @@ static void process_frame(const ir_raw_frame_t *frame)
      * 60/35 scale missed blurred narrow bars. Display values stay calibrated;
      * only the barcode capture input changes. Line sensors are unchanged. */
     {
-        const bool black = bc_level_black(&bc_level, bridge.capture.is_bar, raw[IR_CH_BARCODE]);
+        const bool black = bc_level_black(&bc_level, bridge.capture.is_bar,
+                                          raw[IR_CH_BARCODE]);
         normalized[IR_CH_BARCODE] = black ? 100u : 0u;
     }
 #endif
-    ER error = motion_ir_bridge_sample(&bridge, normalized, true, frame->sampled_ms, owner.epoch);
+    ER error = motion_ir_bridge_sample(&bridge, normalized, true,
+                                       frame->sampled_ms, owner.epoch);
     /* Each ADC frame reaches the bridge at acquisition rate. Sending only
      * the latest raw triple to the slower motor loop could skip narrow bars;
      * the bridge retains widths while B2 decides which letter and manoeuvre. */
@@ -289,7 +331,8 @@ static void process_frame(const ir_raw_frame_t *frame)
         owner.last_handoff_error = error;
         owner.last_handoff_ms = frame->sampled_ms;
         owner.last_handoff_stage = 2u;
-        /* The bridge can assert the source itself; keep our mirror consistent. */
+        /* The bridge can assert the source itself; keep our mirror consistent.
+         */
         runtime_flags.health_asserted = false;
         runtime_fault();
     }
@@ -321,15 +364,19 @@ static void ir_task(INT stacd, void *exinf)
      * Motion's bounded startup gate releases independently of AP connection. */
     uint32_t startup_ms = motion_now_ms();
     motion_status_t startup_motion;
-    while (motion_get_status(&startup_motion) != E_OK || !startup_motion.ready) {
-        if ((uint32_t)(motion_now_ms() - startup_ms) > 6000u) {
-            timing_fault(IR_REASON_STARTUP, (uint32_t)(motion_now_ms() - startup_ms) * 1000u);
+    while (motion_get_status(&startup_motion) != E_OK || !startup_motion.ready)
+    {
+        if ((uint32_t)(motion_now_ms() - startup_ms) > 6000u)
+        {
+            timing_fault(IR_REASON_STARTUP,
+                         (uint32_t)(motion_now_ms() - startup_ms) * 1000u);
             publish_status();
             break;
         }
         tk_dly_tsk(20);
     }
-    if (owner.state != IR_RUNTIME_FAULT && ir_acquisition_start(runtime_event) < E_OK)
+    if (owner.state != IR_RUNTIME_FAULT &&
+        ir_acquisition_start(runtime_event) < E_OK)
     {
         owner.acquisition.faults = IR_ACQ_HARDWARE;
         runtime_fault();
@@ -352,12 +399,17 @@ static void ir_task(INT stacd, void *exinf)
         {
             bool available = ir_acquisition_pop(&frame, &status);
             status.faults |= owner.acquisition.faults;
-            /* Task-level failures must survive subsequent acquisition snapshots. */
-            if (owner.acquisition.first_fault_reason != IR_REASON_NONE) {
-                status.first_fault_reason = owner.acquisition.first_fault_reason;
+            /* Task-level failures must survive subsequent acquisition
+             * snapshots. */
+            if (owner.acquisition.first_fault_reason != IR_REASON_NONE)
+            {
+                status.first_fault_reason =
+                    owner.acquisition.first_fault_reason;
                 status.first_fault_us = owner.acquisition.first_fault_us;
-                status.first_fault_detail = owner.acquisition.first_fault_detail;
-                status.first_fault_samples = owner.acquisition.first_fault_samples;
+                status.first_fault_detail =
+                    owner.acquisition.first_fault_detail;
+                status.first_fault_samples =
+                    owner.acquisition.first_fault_samples;
             }
             owner.acquisition = status;
             if (status.faults != 0u)
@@ -378,11 +430,12 @@ static void ir_task(INT stacd, void *exinf)
         publish_status();
         UINT flags;
         uint32_t wait_started_ms = motion_now_ms();
-        ER error = tk_wai_flg(runtime_event, IR_ACQ_EVENT | IR_COMMAND_EVENT, TWF_ORW | TWF_BITCLR,
-                              &flags, IR_WATCHDOG_MS);
+        ER error = tk_wai_flg(runtime_event, IR_ACQ_EVENT | IR_COMMAND_EVENT,
+                              TWF_ORW | TWF_BITCLR, &flags, IR_WATCHDOG_MS);
         if ((error < E_OK) && (owner.state != IR_RUNTIME_FAULT))
         {
-            timing_fault(IR_REASON_WATCHDOG, (uint32_t)(motion_now_ms() - wait_started_ms) * 1000u);
+            timing_fault(IR_REASON_WATCHDOG,
+                         (uint32_t)(motion_now_ms() - wait_started_ms) * 1000u);
             publish_status();
         }
     }
@@ -410,11 +463,13 @@ ER ir_runtime_init(void)
 #if IR_BARCODE_DIGITAL
     owner.failed_channels &= ~(1u << IR_CH_BARCODE);
 #endif
-    if (owner.failed_channels == 0u) {
+    if (owner.failed_channels == 0u)
+    {
         owner.calibration_revision = 1u;
         owner.state = IR_RUNTIME_READY;
     }
-    /* healthy stays false until acquisition and fresh bridge publication pass. */
+    /* healthy stays false until acquisition and fresh bridge publication pass.
+     */
 #endif
     published = owner;
     motion_ir_bridge_init(&bridge);
@@ -445,7 +500,8 @@ ER ir_runtime_calibration(ir_runtime_command_t command)
         return error;
     }
     if ((pending.command != 0u) || pending.processing ||
-        ((command == IR_RUNTIME_FINISH) && (published.state != IR_RUNTIME_CALIBRATING)))
+        ((command == IR_RUNTIME_FINISH) &&
+         (published.state != IR_RUNTIME_CALIBRATING)))
     {
         tk_unl_mtx(runtime_mutex);
         return E_OBJ;

@@ -23,7 +23,9 @@ void motion_ir_bridge_init(motion_ir_bridge_t *bridge);
  * calibration validity. epoch is copied from a coherent motion status record.
  * On ANY gap reset partial barcode; caller must handle a negative return.
  * MOTION_IR_SUPERSEDED discards bridge state without asserting a source fault;
- * caller must discard queued old-epoch frames and wait for fresh new-epoch data. */
-ER motion_ir_bridge_sample(motion_ir_bridge_t *bridge, const uint8_t normalized[3], bool valid,
+ * caller must discard queued old-epoch frames and wait for fresh new-epoch
+ * data. */
+ER motion_ir_bridge_sample(motion_ir_bridge_t *bridge,
+                           const uint8_t normalized[3], bool valid,
                            uint32_t sample_ms, uint32_t epoch);
 #endif

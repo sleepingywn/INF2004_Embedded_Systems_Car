@@ -1,15 +1,17 @@
 #ifndef TELEMETRY_WIRE_H
 #define TELEMETRY_WIRE_H
 #include <stdint.h>
-/* Version 2 (96 bytes; v1 prefix/offsets preserved): explicit little-endian fields; never transmit C struct layout.
- * Validity bits: 0 motion snapshot, 1 physical calibration, 2 IR, 3 terrain.
- * Bits 4/5: fresh motion status / application ready.
- * Event types: 0 snapshot, 1 motor transition, 16..20 S4 event indices.
- * A cleared bit means unavailable, even when the associated bytes are zero.
+/* Version 2 (96 bytes; v1 prefix/offsets preserved): explicit little-endian
+ * fields; never transmit C struct layout. Validity bits: 0 motion snapshot, 1
+ * physical calibration, 2 IR, 3 terrain. Bits 4/5: fresh motion status /
+ * application ready. Event types: 0 snapshot, 1 motor transition, 16..20 S4
+ * event indices. A cleared bit means unavailable, even when the associated
+ * bytes are zero.
  */
 #define S1_FRAME_SIZE 96u
 #define S1_WIRE_VERSION 2u
-typedef struct {
+typedef struct
+{
     uint32_t boot_id, sequence, published_ms;
     uint32_t motion_ms, motion_epoch, motion_sequence;
     uint32_t left_count, right_count;

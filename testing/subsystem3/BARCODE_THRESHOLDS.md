@@ -128,9 +128,9 @@ CLOSE-TO-FINISH-2, but the code was (`barcode_level.h` is identical).
 ```sh
 cd testing/subsystem3
 gcc -O2 -Wall -DBARCODE_SLOW_SCAN -DBARCODE_WIDE -I../../app_program/subsystem3 \
-    -o barcode_level_test barcode_level_test.c -lm && ./barcode_level_test
+    -o barcode_level_test barcode_level_test.c ../../app_program/subsystem2/motion_route_decode.c -lm && ./barcode_level_test
 gcc -O2 -Wall -DBARCODE_SLOW_SCAN -DBARCODE_WIDE -I../../app_program/subsystem3 \
-    -o barcode_replay_test barcode_replay_test.c && ./barcode_replay_test
+    -o barcode_replay_test barcode_replay_test.c ../../app_program/subsystem2/motion_route_decode.c && ./barcode_replay_test
 ```
 
 (Both are also run by `python testing/subsystem2/run_route_tests.py`.)

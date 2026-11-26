@@ -1,6 +1,6 @@
 /* barcode_level_test.c - laptop check of the LINE_ROUTE barcode level rule.
  *   gcc -O2 -Wall -DBARCODE_SLOW_SCAN -DBARCODE_WIDE -I../../app_program/subsystem3 \
- *       -o barcode_level_test barcode_level_test.c -lm && ./barcode_level_test
+ *       -o barcode_level_test barcode_level_test.c ../../app_program/subsystem2/motion_route_decode.c -lm && ./barcode_level_test
  *
  * Sensor model fitted to the car (18 Nov 2026, raw ADC): white 177, wide bar
  * 1309, narrow bar 307, thin gap 177.  The spot is wider than a narrow element,

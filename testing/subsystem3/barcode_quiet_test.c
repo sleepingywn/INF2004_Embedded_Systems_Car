@@ -1,7 +1,7 @@
 /* barcode_quiet_test.c - laptop check of the end-of-capture (quiet) time in
  * the route profile.
  *   gcc -std=c11 -Wall -Wextra -DBARCODE_SLOW_SCAN -DBARCODE_WIDE \
- *       -I../../app_program/subsystem3 barcode_quiet_test.c \
+ *       -I../../app_program/subsystem3 barcode_quiet_test.c ../../app_program/subsystem2/motion_route_decode.c \
  *       ../../app_program/subsystem3/barcode_sense.c -o barcode_quiet_test
  *
  * Car 25 Nov 2026: a bigger printed barcode driven at V5 speed had wide white

@@ -3,7 +3,7 @@
  * with route_choose(), then the one-marker decode only if time and distance
  * agree.  Must never give a wrong letter.  All scans are Z barcodes except
  * those logged as A and the '?' scan of the A run (2a3deb85, first '?').
- *   gcc -DBARCODE_SLOW_SCAN -DBARCODE_WIDE -I../.. barcode_replay_test.c
+ *   gcc -DBARCODE_SLOW_SCAN -DBARCODE_WIDE -I../.. barcode_replay_test.c ../../app_program/subsystem2/motion_route_decode.c
  */
 #include <assert.h>
 #include <stdio.h>

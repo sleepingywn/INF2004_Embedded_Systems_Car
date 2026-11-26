@@ -1,276 +1,97 @@
-# micro T-Kernel 3.0 project for Raspberry Pi Pico W
+# SE08 autonomous robocar · final A0 firmware
 
-A starting point for your project: micro T-Kernel 3.0 running on **both cores**
-of the Pico W's RP2040, with a USB serial console and the WiFi driver built in.
+Submission branch `feature/barr-c-standard` targets the Robo Pico with a
+Raspberry Pi Pico W running dual-core micro T-Kernel. The barcode sensor uses
+analogue A0 on GP26. The left and right line sensors use GP27 and GP28.
+The IMU uses GP16 (SDA) and GP17 (SCL).
 
-This integration branch combines Buddy 2's motion code, Buddy 3's IR logic and
-runtime, and Buddy 4's IMU / terrain subsystem. See
-[the motion integration notes](app_program/subsystem2/README_MOTION.md) and the
-[S3 runtime notes](app_program/subsystem3/README_RUNTIME.md) for their APIs.
-It builds and has run on the car (31 Oct 2026): the combined TEST build passes
-22/22, and the motors, encoders, IR calibration and hump detection were tested
-with the integration console (`app_program/int_console/`, press `h`). Results are
-in `testing/integration/TEST_LOG.md`. Startup does not request movement; Buddy 2's
-speed controller is not tuned yet (`MOTION_CALIBRATED 0`).
+GP20 starts an autonomous run. Dashboard Start selects a five-second heartbeat
+lease. Neither start mode has a fixed run duration. A decoded letter arms the
+action for the approaching junction. Mapping edits apply to later eligible
+scans. The highest completed hump resets at the start of each run.
 
-You need a **Raspberry Pi Pico W**, a USB cable, and a computer running
-macOS, Linux, or Windows with **WSL (Ubuntu)**. On Windows, run every
-command below inside the WSL Ubuntu terminal.
+## Build the submission image
 
-## Current GP20 line-following trial (V5)
+Start at the root of this checkout. Use a shell with GNU Make, Git, a host C++
+compiler and the Arm bare-metal toolchain on PATH. The verified compiler is
+Arm GNU 14.2.Rel1. On Windows the build also works in MSYS2 with its GNU Make.
+On Linux or WSL the commands below assume Bash.
 
-The opt-in V5 image starts with GP20 and runs for at most 30 seconds. See the
-[V5 release guide](testing/integration/ADAPTIVE_V5_RELEASE.md) for current behavior,
-wiring, build/test commands, operator feedback and remaining limitations. Earlier
-trial records describe historical versions. This profile does not enable metric
-odometry or claim arbitrary-course completion.
+1. Point `PICO_SDK_PATH` at a Pico C SDK checkout. The verified SDK is 2.3.0. Initialise its USB, radio and lwIP submodules.
 
----
+   ```sh
+   export PICO_SDK_PATH="$HOME/pico/pico-sdk"
+   git -C "$PICO_SDK_PATH" submodule update --init lib/tinyusb lib/cyw43-driver lib/lwip
+   arm-none-eabi-gcc --version
+   ```
 
-## 1. Set up the Pico C SDK and the compiler
+2. For a fresh checkout, copy `config/wifi_secrets.example.h` to
+   `config/wifi_secrets.h`. Enter the team's hotspot SSID, Wi-Fi credentials,
+   laptop broker address and matching MQTT credentials. The dashboard uses
+   the private broker on port 1884. Keep the local file out of Git.
+   [Dashboard and broker setup](tools/dashboard/README.md)
 
-You need two separate things:
+3. Force a complete build with the final profile.
 
-| What | Why | Where it comes from |
-|---|---|---|
-| **Pico C SDK** | USB and WiFi driver source code | `git clone` (step 1.2) |
-| **Arm GNU Toolchain** (`arm-none-eabi-gcc`) | the compiler | a separate download (step 1.3) |
+   ```sh
+   make -C build_make -B -j8 SMP=1 CONSOLE=usb_cdc WIFI=cyw43 NET=lwip MQTT=1 \
+     LINE_DEMO=1 LINE_CIRCUIT=1 LINE_AUTOSTART=0 LINE_SEARCH=0 LINE_ADAPTIVE=1 \
+     LINE_ROUTE=1 LINE_REMOTE=1 BARCODE_DIGITAL=0 LINE_UNLIMITED=1 TEST=0
+   ```
 
-> ⚠️ **The SDK does NOT include the compiler.** You must install the compiler
-> on its own and put its `bin` folder on your `PATH` (step 1.4).
+   The output is
+   `build_make/mtk3pico_smp1_usb_cdc_wifi_lwip_mqtt_line30_button_adaptive_route_remote_no_time_limit.uf2`.
+   The inherited `line30` filename component identifies the circuit profile.
+   `no_time_limit` identifies the final run policy. Adaptive steering owns line
+   recovery in this configuration. A bare `make` selects a different image.
 
-**1.1 Install the basic tools: git, make and a host C++ compiler**
+4. To install on a robot, hold BOOTSEL while connecting USB, release it and
+   copy the named UF2 to RPI-RP2. The board reboots after copying. Leave GP20
+   released until ready to start. The final build and simulations run without
+   flashing or connecting a robot.
 
-```sh
-# macOS
-xcode-select --install
+## Reproduce the software checks
 
-# Linux / WSL (Ubuntu)
-sudo apt update && sudo apt install -y git make g++
-```
-
-**1.2 Download the Pico C SDK** (any folder works; this guide uses `~/pico`)
-
-```sh
-mkdir -p ~/pico && cd ~/pico
-git clone --branch 2.2.0 https://github.com/raspberrypi/pico-sdk.git
-cd pico-sdk
-git submodule update --init lib/tinyusb lib/cyw43-driver
-```
-
-The `submodule` line is required: it downloads the USB and WiFi drivers.
-(SDK 2.3.0 has also been tested and works.)
-
-**1.3 Install the Arm GNU Toolchain (the compiler)**
-
-- **macOS / Windows (WSL) / Linux:** download from
-  <https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads>.
-  Pick the **AArch32 bare-metal target (arm-none-eabi)** package for your
-  computer. For WSL, choose the **Linux x86_64** `.tar.xz`.
-  Extract it, e.g. to `~/tools/arm-gnu-toolchain-<version>/`.
-- **Linux / WSL shortcut:** `sudo apt install -y gcc-arm-none-eabi`
-  installs it straight onto your PATH. If you use this, skip the PATH line in 1.4.
-
-Find the folder that contains `arm-none-eabi-gcc`. It is the toolchain's
-**`bin`** folder, e.g. `~/tools/arm-gnu-toolchain-15.3.rel1/bin`.
-
-**1.4 Tell your shell where the compiler and SDK are**
-
-Add these two lines to the end of `~/.zshrc` (macOS) or `~/.bashrc` (Linux/WSL),
-**changing both paths to match your computer**:
+Use Python 3, host GCC and Node.js with npm. Run these from the repository
+root. On Windows PowerShell, use `python` and `npm.cmd` as appropriate.
 
 ```sh
-export PATH="$HOME/tools/arm-gnu-toolchain-15.3.rel1/bin:$PATH"   # folder that contains arm-none-eabi-gcc
-export PICO_SDK_PATH="$HOME/pico/pico-sdk"                         # the SDK from step 1.2
+python3 testing/subsystem2/run_route_tests.py
+python3 testing/subsystem2/run_remote_tests.py
+python3 testing/subsystem1/run_barcode_telemetry_tests.py
+python3 testing/subsystem4/run_terrain_tests.py
+npm --prefix tools/dashboard test
 ```
 
-Open a **new** terminal, then check both:
+The route runner also runs the adaptive and legacy regression suites. The
+terrain runner builds fresh binaries in a temporary directory and includes the
+recorded A8 replay. Run it with native Windows GCC and Ubuntu GCC to exercise
+both simulated noise sequences. The dashboard suite contains 33 tests.
 
-```sh
-arm-none-eabi-gcc --version     # must print a version, not "command not found"
-ls $PICO_SDK_PATH               # must list the SDK files
-```
+## What still needs the robot
 
-If `arm-none-eabi-gcc` is "not found", your `PATH` does not point to the
-toolchain's `bin` folder. Fix that before going further.
+| Requirement | Evidence to collect on the final image |
+|---|---|
+| Motor calibration and navigation accuracy | Measure each wheel under load against the ±10% speed target within 1 s. Record ten trials for the 1 m distance and lateral error targets (≤20 mm) and the 90°/180° turn target (≤5°). Geometry remains provisional with `MOTION_CALIBRATED=0`. |
+| Real-time control and stopping | Measure the 20 ms control period and ≤2 ms jitter under simultaneous sensing and Wi-Fi load. Time a valid STOP to safe motor outputs (≤20 ms). Measure wheel coast separately. Verify the 250 ms watchdog, reset and safe restart on the board. |
+| Encoder integrity | Inject or independently count 10,000 reference pulses per wheel up to the proposed 2 kHz rate and compare missed and extra counts. |
+| Track and barcode reliability | Record a complete course run, completion time, bends, crossings, recovery, and each mapped action. Count correct, missed and wrong decodes across lighting, approach angles and speeds. |
+| IMU and terrain | Compare per-run hump peaks with measured heights. Check stationary slow pickups, ordinary bumps, battery-only sampling, and recovery after a real I²C fault. Both software hosts missed the 4 mm one-sided synthetic hump. |
+| Wireless and resource limits | Verify battery-powered MQTT on the private hotspot, timestamp gaps and reconnects under motion, time STOP/lease loss at the wheels, and measure task stack headroom and queue pressure under concurrent load. |
 
----
+The assessment scope covers Buddies 1–4. Buddy 5 obstacle avoidance and IMU
+collision detection were removed from the team's scope. Previous robot footage
+documents the demonstrated revisions. The final submission profile has
+software and cross-build evidence.
+[Tribunal traceability and results](testing/integration/TRIBUNAL_ALIGNMENT.md)
 
-## 2. Clone this repo and build the `.uf2` file
+## Source and review guide
 
-**2.1 Clone your project**
-
-```sh
-cd ~/pico
-git clone <URL-of-this-repo> my-project
-cd my-project
-```
-
-**2.2 Build**
-
-```sh
-cd build_make
-make -j8
-```
-
-A successful build ends with a line like
-`tools/elf2uf2 mtk3pico_smp1_usb_cdc_wifi.elf mtk3pico_smp1_usb_cdc_wifi.uf2`.
-Your firmware is **`build_make/mtk3pico_smp1_usb_cdc_wifi.uf2`**.
-
-If `make` stops with an error, it tells you which one is wrong:
-`arm-none-eabi-gcc not found` means fix `PATH`, and
-`PICO_SDK_PATH is not set` means fix `PICO_SDK_PATH` (step 1.4).
-
-To build a single-core, UART-only or test version, see section 3.
-
-**2.3 Flash it onto the Pico W**
-
-1. Hold the **BOOTSEL** button and plug the Pico W into USB, then release.
-   A drive called **RPI-RP2** appears.
-2. Copy the `.uf2` file onto that drive. On WSL, run `explorer.exe .` in
-   `build_make` to open the folder in Windows. The Pico reboots by itself.
-
-**2.4 See the output**
-
-Open the Pico's USB serial port at 115200 baud:
-
-```sh
-screen /dev/tty.usbmodem* 115200      # macOS   (quit: Ctrl-A then K)
-screen /dev/ttyACM0 115200            # Linux
-```
-
-On Windows, use PuTTY or the VS Code *Serial Monitor* on the new COM port.
-You should see the task reports. Connect an LED with a 330 Ω resistor from
-**GP19** to GND to see subsystem 1's LED blink.
-
-**2.5 Write your own code**
-
-Your code lives in **`app_program/`**. Every `.c` file there, and in its
-subfolders, is compiled automatically.
-
-- **`app_main.c` → `usermain()` is where the program starts.** It first calls
-  every subsystem's `subsystemN_init()` (create kernel objects), then every
-  `subsystemN_start()` (start tasks). Read its comments first.
-- **One folder per student:** `app_program/subsystem1/` … `subsystem5/`.
-  Subsystems 1–4 hold a working example, one task each (LED, producer,
-  consumer, monitor). Together they use the main micro T-Kernel APIs and
-  pass data between subsystems. Subsystem 5 is an empty template.
-  Replace the examples with your own subsystems.
-- `subsystemN.h` is that subsystem's public interface: the object IDs and
-  data formats the other subsystems may use.
-- `app.h` holds the definitions shared by the whole team.
-- **Drivers go in your subsystem folder too**, as a `drv_<name>.c` /
-  `drv_<name>.h` pair, e.g. `subsystem2/drv_ultrasonic.c`. They are compiled
-  automatically. Do not add drivers under `device/`: that folder holds the
-  kernel's own serial, I2C and ADC drivers, and adding to it means editing
-  kernel and makefile files shared by the whole team.
-
-**Working as a team:** record owners, pins, priorities and the interfaces
-between subsystems in **`TEAM.md`**, and record every test in **`testing/`**
-(see `testing/README.md`). `make TEST=1` builds a test image that runs all
-the subsystem tests at power-up. Short videos of tests and demos are shared
-as unlisted YouTube links, listed in **`videos/`**.
-
-Pins: use **GP0–GP22 and GP26–GP28**. GP0/GP1 are free unless your team
-builds with `CRASH_REPORT=1` (section 3), which needs them. Never use
-GP23/GP24/GP25/GP29: they are wired to the Pico W radio. The Pico W's
-on-board LED is also on the radio, so use an external LED instead.
-
-After editing, run `make -j8` again in `build_make` and copy the new `.uf2`.
-
----
-
-## 3. Build options: `SMP`, `CONSOLE`, `WIFI`, `TEST`, `CRASH_REPORT`
-
-`make` on its own uses the defaults. To build differently, put options
-after `make`. They can be combined in any order:
-
-```sh
-make -j8                          # defaults: SMP=1 CONSOLE=usb_cdc WIFI=cyw43 TEST=0 CRASH_REPORT=0
-make SMP=0 -j8                    # single-core build
-make CONSOLE=uart WIFI=none -j8   # no USB console, radio off (no Pico SDK needed)
-make TEST=1 -j8                   # firmware with the subsystem self-tests
-make CRASH_REPORT=1 -j8           # also see crash reports, on GP0/GP1 (uses those pins)
-```
-
-To set several options at once, list them all, separated by spaces. For
-example, to track down a crash in the test build while running on one core only:
-
-```sh
-make SMP=0 TEST=1 CRASH_REPORT=1 -j8
-#  -> build_make/mtk3pico_smp0_usb_cdc_wifi_crash_test.uf2
-```
-
-Any option you leave out keeps its default (here `CONSOLE=usb_cdc` and
-`WIFI=cyw43`). Options are not remembered: give them on every `make`, as
-the next plain `make` goes back to the defaults.
-
-| Option | Values (**default**) | What it does | Image name | C macro your code can test |
-|---|---|---|---|---|
-| `SMP` | `0`, **`1`** | `1` runs the kernel on both RP2040 cores; `0` uses core 0 only | `smp1` / `smp0` | `TK_SUPPORT_SMP` (1 or 0) |
-| `CONSOLE` | **`usb_cdc`**, `uart` | where `tm_printf` output goes. `usb_cdc` = USB cable; `uart` = UART0 only (GP0 TX / GP1 RX, needs a USB-serial adapter) | `_usb_cdc` / `_uart` | `TM_CONSOLE_USB_CDC` |
-| `WIFI` | **`cyw43`**, `none` | `cyw43` powers up the Pico W radio and its driver task; `none` leaves the radio off | `_wifi` / *(nothing)* | `TM_WIFI_CYW43` |
-| `TEST` | **`0`**, `1` | `1` compiles every `subsystemN_test.c` and runs the tests at power-up | `_test` / *(nothing)* | `APP_TEST` (1 or 0) |
-| `CRASH_REPORT` | **`0`**, `1` | `1` also copies the console to UART0 on **GP0 (TX) / GP1 (RX)**, 115200 baud, so you can see the last messages and the kernel's crash report (see below). **Uses GP0/GP1.** `CONSOLE=uart` always does this. | `_crash` / *(nothing)* | `TM_CONSOLE_UART` (1 or 0) |
-
-**Why `CRASH_REPORT` exists.** USB output is not sent the moment you call
-`tm_printf`: it waits in a buffer until the kernel's USB task sends it. If the
-program crashes, no task runs again, so the last messages and the kernel's
-crash report never reach your USB terminal. The terminal just goes quiet.
-UART output *is* sent at once, even inside the crash handler. So when you
-need to know why the Pico crashed or froze, build with `CRASH_REPORT=1`,
-connect a USB-serial adapter (adapter RX → GP0, adapter GND → GND), and read
-it at 115200 baud. Normal `tm_printf` output on USB works the same with
-either setting. If a subsystem has claimed GP0/GP1 in `TEAM.md`, unplug that
-hardware before using `CRASH_REPORT=1`.
-
-The options are part of the image name, e.g.
-`mtk3pico_smp1_usb_cdc_wifi_test.uf2`, so you can always tell which build
-you are flashing. Switching options needs no `make clean`: the makefile
-notices and recompiles everything.
-
-Using an option in C code:
-
-```c
-#if TK_SUPPORT_SMP
-    ctsk.tskatr |= TA_ASSPRC;   /* core affinity only exists on the dual-core build */
-#endif
-
-#if APP_TEST
-    /* code that only exists in the test build */
-#endif
-```
-
-### Where the options live in the makefile
-
-All five are handled in **`build_make/pico_rp2040.mk`**. To find each piece, search the file for the
-names in the left column (e.g. `grep -n "TEST" build_make/pico_rp2040.mk`).
-Each option goes through the same steps:
-
-| Step | What to look for | Example for `TEST` |
-|---|---|---|
-| 1. Default value | `NAME ?= value` near the top of the file | `TEST ?= 0` |
-| 2. Allowed values | an `$(error Unknown ...)` check just below it | `$(error Unknown TEST '$(TEST)'; use 0 or 1)` |
-| 3. Image-name suffix | `NAME_SUFFIX :=` and the `EXE_FILE :=` line | `TEST_SUFFIX := _test` |
-| 4. C macro for the code | a `CFLAGS += -D...` line | `CFLAGS += -DAPP_TEST=$(TEST)` |
-| 5. Rebuild on change | the `PROFILE_ID :=` line | `...-test$(TEST)` |
-| 6. Extra source files (`CONSOLE`, `WIFI` only) | an `ifeq ($(CONSOLE),usb_cdc)` or `ifeq ($(WIFI),cyw43)` block that adds the USB/radio files and SDK include paths | — |
-
-- **Changing a default:** edit the `?=` line from step 1, e.g.
-  `CONSOLE ?= uart`. Every `make` without that option then uses the new value.
-- **Adding your own option** (say `DEBUG=1` to turn on extra prints): copy
-  how `TEST` is done. Add steps 1 to 5 next to the `TEST` lines, then
-  use `#if APP_DEBUG` in your code. **Step 5 matters:** without it, switching
-  the option can quietly link files that were compiled with the old setting.
-- **Kernel settings** such as the maximum number of tasks, semaphores or
-  mailboxes are not make options. They are in `config/config.h` (`CNF_MAX_...`).
-
-The makefile also has `NET=lwip` and `MQTT=1` (TCP/IP and MQTT over WiFi).
-They need the SDK's `lib/lwip` submodule and a `config/wifi_secrets.h`
-(copy `config/wifi_secrets.example.h`). This guide does not cover them.
-
----
-
-*micro T-Kernel 3.0 © Ken Sakamura / TRON Forum, distributed under the
-T-License 2.2. This dual-core RP2040 port is derived from the official
-μT-Kernel 3.0 BSP (`tron-forum/mtk3_bsp`, branch `pico_rp2040`).*
+| Area | Entry point |
+|---|---|
+| RTOS startup | [Application entry](app_program/app_main.c) |
+| MQTT transport, wire format and dashboard | [Dashboard takeover guide](tools/dashboard/TAKEOVER.md) |
+| Motor owner, encoders and route execution | [Motion subsystem](app_program/subsystem2/README_MOTION.md) |
+| IR acquisition and barcode capture | [IR runtime](app_program/subsystem3/README_RUNTIME.md) |
+| IMU, lift and terrain | [Terrain processing](app_program/subsystem4/imu_logic.c) |
+| Coding-standard scope and verification | [BARR-C review and simulation evidence](testing/integration/BARR_C_SIMULATION.md) |

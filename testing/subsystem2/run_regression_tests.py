@@ -56,7 +56,7 @@ def main():
         run('line-overlap',search_flags+['testing/subsystem2/line_overlap_test.c','app_program/subsystem2/motion_logic.c'])
         run('line-overlap-normal',['-DMOTION_LINE_DEMO=1','-DMOTION_LINE_CIRCUIT=1','testing/subsystem2/line_overlap_test.c','app_program/subsystem2/motion_logic.c'])
         run('overlap-owner',search_flags+['-Wno-type-limits','-Wno-sign-compare','-Iinclude','testing/subsystem2/line_overlap_owner_test.c','app_program/subsystem2/motion_logic.c'])
-        run('ir-acquisition',['-Itesting/console/mock','-Iinclude','-Iconfig','testing/console/ir_acquisition_test.c'])
+        run('ir-acquisition',['-Itesting/console/mock','-Iinclude','-Iconfig','testing/console/ir_acquisition_test.c','app_program/subsystem2/motion_route_decode.c'])
         print('Completed',len(checks),'test executables')
 
 

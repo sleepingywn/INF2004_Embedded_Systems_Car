@@ -1,8 +1,59 @@
-# BARR-C firmware branch simulation
+# BARR-C submission review
 
+## Final A0 candidate
+
+The application uses the C99 dialect on RP2040. The micro T-Kernel BSP, SDK
+and network libraries retain their integration build flags. The source checks
+cover `app_program` startup, console and Buddies 1–4. The excluded Buddy 5
+scaffold, third-party code and host simulators are outside this review.
+
+| BARR-C:2018 finding | Final disposition and check |
+|---|---|
+| 1.1, C dialect and target extensions | The application compile command selects `-std=c99`. Named C99 typedef assertions still fail the build on invalid sizes, pin maps or thresholds. Both message headers also pass Arm GCC with `-std=c99 -pedantic-errors`. Target-specific alignment, interrupt/flash barriers and the kernel ABI still depend on Arm GCC. |
+| 1.2, 1.3, 3.4 and 3.5, layout | All 95 in-scope C sources and headers passed an 80-column and zero-tab scan. The shared formatter uses four spaces, Allman braces and explicit control bodies. A C syntax-tree scan found compound bodies on the inspected if/for/while statements. |
+| 4.2, interfaces and storage | Every in-scope C source has a same-stem header, and all headers have matching inclusion guards. Adaptive tuning, crossing tuning and the Code 39 table have source-file definitions. Existing subsystem entry points remain available. |
+| 5.3 and 5.4, data representation | Compared two line records and two terrain records, plus alignment offsets, in Cortex-M0+ object data against c5388ca. The bytes matched. Terrain packing tests cover signed fields, saturation and invalid floating-point values. |
+| 6.2, function length | The former 318-line IMU update now calls separate rise, attitude, hump, lift and tilt routines. Its main entry and each extracted routine fit within 100 source lines. Across the application, 15 other functions exceed the 100-line guideline, including the motor owner and terrain task. This remains a manual review item for their control flow and timing. |
+| 8.3, switch defaults | The route phase dispatcher explicitly preserves the previous fallback for an unrecognised phase. The in-scope syntax-tree scan found a default in each switch. |
+
+The checks establish the listed rules for the stated scope. They do not
+certify every BARR-C rule. Legacy identifiers, multi-exit functions, compiler
+extensions and the distinction between task and interrupt ownership still
+need rule-by-rule review for an unqualified conformance claim.
+
+### Reproduced results
+
+- A forced A0 build with Arm GNU 14.2.Rel1 and Pico SDK 2.3.0 produced the
+  UF2. Linked size was 427,728 bytes of text, zero initialised data and
+  107,120 bytes of BSS. The inherited linker warning about an RWX LOAD
+  segment remains. The optional on-target self-test profile also cross-built.
+- The route, adaptive, regression, remote-control, telemetry and barcode suites
+  passed. The regression runner ran 38 executables. All 33 dashboard tests passed.
+- Native Windows and Ubuntu 24.04 GCC each passed all 19 lift cases plus
+  math and packing. Each replay processed 1,090 recorded A8 samples and found
+  one hump with no lift event. Both hosts detected the 5, 10 and 13 mm
+  synthetic one-sided humps and missed the 4 mm case. On each host, the
+  simulator output and per-sample CSV matched c5388ca in all six runs.
+  Ubuntu also passed terrain packing with undefined-behaviour and
+  float-to-integer conversion sanitizers enabled.
+- The [submission README](../../README.md) gives the exact build and host
+  commands, plus the requirements awaiting measurements on the robot.
+
+To repeat the application formatting and C99 message-header checks from the
+repository root in Bash, use clang-format 23.1.5 and the Arm compiler.
+
+~~~sh
+git ls-files -z -- 'app_program/*.c' 'app_program/*.h' ':!app_program/subsystem5/*' |
+  xargs -0 clang-format --dry-run --Werror --
+for header in app_program/subsystem3/ir_types.h app_program/subsystem4/terrain_pack.h; do
+  arm-none-eabi-gcc -mcpu=cortex-m0plus -mthumb -std=c99 -pedantic-errors -x c -fsyntax-only "$header" || exit 1
+done
+~~~
+
+## Earlier branch comparison
 Local branch `feature/barr-c-standard` is based on `feature/ctf2-andy` at
 `ee763d4`. Scope is the first set of findings from the 26 November 2026 audit.
-The Pico project still builds as GNU11. Whole-project BARR-C:2018 conformance
+At that revision the Pico project built as GNU11. Whole-project BARR-C:2018 conformance
 remains open.
 
 | Check | Observed result |

@@ -38,7 +38,8 @@ static void crossing(uint32_t start)
     s=(line_adaptive_t){0};
     o=line_adaptive_step(&s,line_levels_pack(90,90),start,20,0,0);
     o=line_adaptive_step(&s,line_levels_pack(3,3),start+100,20,50,50);
-    o=line_adaptive_step(&s,line_levels_pack(3,3),start+200,20,900,900);
+    o=line_adaptive_step(&s,line_levels_pack(3,3),start+200,20,170,170);
+    o=line_adaptive_step(&s,line_levels_pack(3,3),start+220,20,1170,1170);
     /* Either enclosing recovery bound can stop first; no unbounded crossing. */
     assert(!o.left && !o.right && s.stop_reason==LINE_STOP_RECOVERY_DISTANCE);
 
@@ -76,7 +77,8 @@ static void hump(uint32_t start)
     o=line_adaptive_step(&s,line_levels_pack(90,90),start,20,0,0);
     o=line_adaptive_step(&s,line_levels_pack(90,90),start+100,20,500,500);
     assert(o.mode==LINE_ADAPT_CROSSING);
-    o=line_adaptive_step(&s,line_levels_pack(90,90),start+200,20,900,900);
+    o=line_adaptive_step(&s,line_levels_pack(90,90),start+200,20,170,170);
+    o=line_adaptive_step(&s,line_levels_pack(3,3),start+220,20,1170,1170);
     assert(o.mode==LINE_ADAPT_CROSSING_FAILED && s.stop_reason==LINE_STOP_CROSSING_DISTANCE);
 
     s=(line_adaptive_t){0};                       /* same input without the hint: mark stop */

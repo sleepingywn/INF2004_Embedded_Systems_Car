@@ -18,6 +18,9 @@
 
 #define S4_HUMP_HINT_MS 100u
 
+bool s4_drive_ready(void);
+void s4_request_run_reset(void);
+
 extern volatile uint32_t s4_hump_seen_ms;   /* 0 = never */
 
 static inline bool s4_hump_recent(uint32_t now_ms)

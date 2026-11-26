@@ -22,7 +22,7 @@ static bool available,link=true,healthy=true;
 static uint32_t connection=1;
 static uint8_t latest_control[CONTROL_STATUS_SIZE];
 int s1_control_context(uint32_t *b,uint32_t *s,int *c){*b=123;*s=connection;*c=link;return 1;}
-int s1_control_take(control_command_t *c){if(!available)return 0;*c=queued;available=false;return 1;}
+int s1_control_take(control_command_t *c,uint32_t now,uint32_t last_id,uint32_t epoch,bool fresh){(void)now;(void)last_id;(void)epoch;(void)fresh;if(!available)return 0;*c=queued;available=false;return 1;}
 int s1_control_status_offer(const uint8_t *b){memcpy(latest_control,b,sizeof latest_control);return 1;}
 /* This control fixture does not generate barcode sensor samples. */
 unsigned ir_runtime_barcode_levels(uint16_t *out, unsigned max, uint32_t *seq)

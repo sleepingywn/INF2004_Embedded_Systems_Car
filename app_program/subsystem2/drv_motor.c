@@ -31,6 +31,29 @@ void barcode_buzzer_set(bool sounding)
 }
 #endif
 
+/* RP2040 WATCHDOG and PSM registers. Startup configured a 1 us tick.
+ * RP2040-E1 decrements LOAD twice per tick. Reset PWM and both processors. */
+#define MOTOR_WD_CTRL  0x40058000u
+#define MOTOR_WD_LOAD  0x40058004u
+#define MOTOR_WD_SCRATCH4 0x4005801cu
+#define MOTOR_WD_SELECT 0x40010008u
+#define MOTOR_WD_RESET_DOMAINS 0x1fffcu
+#define MOTOR_WD_ENABLE (1u << 30)
+#define MOTOR_WD_LOAD_250_MS 500000u
+
+void motor_watchdog_feed(void)
+{
+    out_w(MOTOR_WD_LOAD, MOTOR_WD_LOAD_250_MS);
+}
+
+void motor_watchdog_arm(void)
+{
+    out_w(MOTOR_WD_SCRATCH4, 0u); /* boot the normal drive-inhibited image */
+    out_w(MOTOR_WD_SELECT, MOTOR_WD_RESET_DOMAINS);
+    motor_watchdog_feed();
+    set_w(MOTOR_WD_CTRL, MOTOR_WD_ENABLE);
+}
+
 void motor_hw_stop(void)
 {
     /* Both A and B LOW = brake, Robo Pico datasheet Table 3.

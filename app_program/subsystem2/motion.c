@@ -782,7 +782,7 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags,
     if ((state.faults != 0u) || ((flags & (STOP_BIT | SOURCE_BITS)) != 0u) ||
         !owner_flags.motor_ready ||
         (request->command==MOTION_LINE_TRACE ?
-            (!owner_flags.encoder_ready || !state.raw_valid ||
+            (!s4_drive_ready() || !owner_flags.encoder_ready || !state.raw_valid ||
              !fresh(now,state.time_ms,LINE_FOLLOW_INPUT_AGE_MS) || !line_usb_connected() ||
              !line_follow_usable(line,now,line_ms,state.epoch,line_epoch,have_line)) :
             ((request->command != MOTION_BENCH) && !state.valid)) ||
@@ -817,6 +817,7 @@ static void admit(const motion_request_t *request, uint32_t now, UINT flags,
             begin_turn(motion_request_value(request), now);
             break;
         case MOTION_LINE_TRACE:
+            s4_request_run_reset();
             state.state=MOTION_TRACING;
 #if MOTION_LINE_ADAPTIVE
             last_barcode_ms=now; /* never replay a pre-start route capture */
@@ -987,7 +988,6 @@ static route_odometry_t route_odo;
 static struct {
     route_phase_t phase;
     char armed;            /* mapped action for the next junction, 0 = none */
-    char armed_letter;     /* decoded letter whose dashboard setting to follow */
     char doing;            /* letter of the running manoeuvre */
     bool junction_candidate, exit_candidate;
     uint32_t junction_since_ms, exit_since_ms, pivot_sweep_ms;
@@ -1098,7 +1098,7 @@ bool motion_pivot_sample(unsigned index, motion_pivot_sample_t *sample,
 static void route_reset(void)
 {
     route.phase = ROUTE_IDLE;
-    route.armed_letter = route.armed = route.doing = 0;
+    route.armed = route.doing = 0;
     route.junction_candidate = route.exit_candidate = false;
 }
 static void route_write(unsigned left_duty, unsigned right_duty, int right_direction)
@@ -1274,18 +1274,6 @@ static bool route_step(uint32_t now, const line_msg_t *line, uint32_t line_ms,
          (b >= ROUTE_EXIT_MIN_DARKNESS && (int)b - (int)a >= ROUTE_EXIT_MIN_CONTRAST));
     switch (route.phase) {
     case ROUTE_IDLE:
-        if (route.armed) {
-            char updated = route_mapping_code(route.armed_letter);
-            if (updated != route.armed) {
-                route.armed = updated;
-                state.barcode = updated ? (unsigned)(updated - 'A' + 1) : 0;
-                if (updated) route_event(ROUTE_EV_ARMED, updated, 0, 0, 0, 0);
-                else {
-                    route_event(ROUTE_EV_NOT_ARMED, route.armed_letter, 2, 0, 0, 0);
-                    route.armed_letter = 0;
-                }
-            }
-        }
         if (!route.armed || !line_ok || line->state != LINE_BOTH_BLACK) {
             route.junction_candidate = false;
             return false;
@@ -1298,7 +1286,7 @@ static bool route_step(uint32_t now, const line_msg_t *line, uint32_t line_ms,
         if ((uint32_t)(line_ms - route.junction_since_ms) < ROUTE_JUNCTION_CONFIRM_MS) return false;
         if (line_trial.adaptive.mode != LINE_ADAPT_CROSSING) return false;
         route.doing = route.armed;
-        route.armed_letter = route.armed = 0;
+        route.armed = 0;
         route.junction_candidate = false;
         route_event(ROUTE_EV_JUNCTION, route.doing, (int)a, (int)b, 0, 0);
         if (route_first_phase(route.doing) == ROUTE_SETTLE_BEFORE) {
@@ -1464,11 +1452,14 @@ static void route_on_barcode(const bc_msg_t *barcode, uint32_t barcode_ms, bool 
     if (!chosen) return;
     char scanned = chosen;
     chosen = route_mapping_code(scanned); /* retain original letter in barcode telemetry */
+    if (route.armed) {
+        route_event(ROUTE_EV_NOT_ARMED, scanned, 3, 0, 0, 0);
+        return;
+    }
     if (route.phase != ROUTE_IDLE || !route_letter_armable(chosen)) {
         route_event(ROUTE_EV_NOT_ARMED, chosen, route.phase != ROUTE_IDLE ? 1 : 2, 0, 0, 0);
         return;
     }
-    route.armed_letter = scanned;
     route.armed = chosen;
     route.junction_candidate = false;
     if (chosen >= 'A' && chosen <= 'D') state.barcode = (unsigned)(chosen - 'A' + 1);
@@ -1816,6 +1807,7 @@ void motion_task(INT stacd, void *exinf)
                 continue;
             }
             /* First control interval starts after application startup. */
+            motor_watchdog_arm();
             state.ready = 1;
             diagnostics.released_ms = now;
             /* Startup health transitions that have already cleared are not
@@ -1843,6 +1835,10 @@ void motion_task(INT stacd, void *exinf)
             {
                 state.state = MOTION_ERROR;
             }
+        }
+        if (owner_flags.active_valid && active.command == MOTION_LINE_TRACE && !s4_drive_ready())
+        {
+            fault_stop(MOTION_FAULT_EXTERNAL);
         }
         if (owner_flags.active_valid && !(MOTION_LINE_UNLIMITED && active.command==MOTION_LINE_TRACE) &&
             ((uint32_t)(now - active.issued_ms) >= active.ttl_ms))
@@ -2020,6 +2016,11 @@ void motion_task(INT stacd, void *exinf)
             publish_observer_status();
             shared.processing = false;
             tk_unl_mtx(mailbox_mutex);
+            if (dt >= MOTION_PERIOD_MS && dt <= 100u &&
+                (state.faults & MOTION_FAULT_HANDOFF) == 0u)
+            {
+                motor_watchdog_feed();
+            }
         }
         else
         {

@@ -20,6 +20,7 @@
 #include "lwip/timeouts.h"
 #include "wifi_secrets.h"
 #include "mqtt_utk.h"
+#include "../../../../app_program/subsystem2/motion_time.h"
 #include "../../../../app_program/subsystem1/telemetry_transport.h"
 #ifndef MQTT_TOPIC_BASE
 #define MQTT_TOPIC_BASE "inf2004/se08/car01/v1"
@@ -130,7 +131,7 @@ static void incoming_data_cb(void *arg, const u8_t *data, u16_t len, u8_t flags)
 	if((flags & MQTT_DATA_FLAG_LAST) != 0) {
         /* Binary commands are never interpreted as console text. */
         if(!rx_truncated && __builtin_strcmp(rx_topic,MQTT_TOPIC_BASE "/control/command")==0)
-            (void)s1_control_offer(rx_data,rx_len);
+            (void)s1_control_offer(rx_data,rx_len,motion_now_ms());
 	}
 }
 
@@ -154,16 +155,13 @@ static void publish_done_cb(void *arg, err_t result)
 
 static void heartbeat_timeout(void *arg)
 {
-	static unsigned int	count = 0;
-	UB			payload[48];
-	int			len;
+	static uint8_t sequence;
 
 	(void)arg;
 
 	if(mqtt_client_is_connected(client)) {
-		len = tm_sprintf(payload, (const UB*)"hb %u", count++);
-		tm_printf((UB*)"mqtt: TX [" MQTT_TOPIC "] \"%s\"\n", payload);
-		(void)mqtt_publish(client, MQTT_TOPIC, payload, (u16_t)len,
+		uint8_t payload = sequence++;
+		(void)mqtt_publish(client, MQTT_TOPIC, &payload, sizeof(payload),
 				   0 /* qos */, 0 /* retain */,
 				   publish_done_cb, NULL);
 	}
@@ -204,18 +202,9 @@ static void connection_cb(mqtt_client_t *c, void *arg, mqtt_connection_status_t 
 
 		tm_printf((UB*)"mqtt: connected to " MQTT_BROKER_IP "\n");
 
-		/* Subscribe to the same topic this client publishes to, so every
-		 * heartbeat comes back from the broker and is printed by
-		 * incoming_data_cb(). A matching RX for each TX is end-to-end
-		 * proof of the round trip without needing mosquitto_sub on the
-		 * broker host. Callbacks must be registered before subscribing,
-		 * or the first delivery has nowhere to go. */
-		mqtt_set_inpub_callback(client, incoming_publish_cb,
-					incoming_data_cb, NULL);
-
-        (void)mqtt_subscribe(client,MQTT_TOPIC_BASE "/control/command",1,subscribe_done_cb,NULL);
-		err = mqtt_subscribe(client, MQTT_TOPIC, 0 /* qos */,
-				     subscribe_done_cb, NULL);
+		/* Register callbacks before subscribing to dashboard commands. */
+		mqtt_set_inpub_callback(client, incoming_publish_cb, incoming_data_cb, NULL);
+		err = mqtt_subscribe(client, MQTT_TOPIC_BASE "/control/command", 1, subscribe_done_cb, NULL);
 		if(err != ERR_OK) {
 			tm_printf((UB*)"mqtt: mqtt_subscribe() failed, err=%d\n",
 				  (int)err);

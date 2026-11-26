@@ -38,8 +38,13 @@
 #define LINE_TARGET_SLEW_CPS_PER_SECOND (LINE_FEEDBACK_PROFILE ? 2000u:4000u)
 #define LINE_TARGET_DECEL_CPS_PER_SECOND 4000u
 #define LINE_DECEL_PER_SECOND (LINE_FEEDBACK_PROFILE ? 1000u:500u)
-/* Legacy line profiles allow one settling count. Zero denotes no count budget in V5. */
-#define LINE_PAUSE_REVERSE_BUDGET (MOTION_LINE_ADAPTIVE ? 0u:1u)
+/* V5 adaptive trial: gross backward counts, only during initial settling.
+ * Provisional count/time bounds, not a diagnosis of mechanical vs electrical
+ * movement. Legacy profiles retain their previous one-count policy. */
+#define LINE_PAUSE_REVERSE_BUDGET (MOTION_LINE_ADAPTIVE ? 2u:1u)
+#define LINE_PAUSE_SETTLE_MS 140u
+#define LINE_PAUSE_REARM_MS 60u
+#define LINE_PAUSE_REARM_COUNTS 3u
 _Static_assert(LINE_FOLLOW_MAX_MS <= 30000u, "Fits motion request TTL");
 typedef enum {
     LINE_STEP_WAIT, LINE_STEP_OK, LINE_STEP_DONE, LINE_STEP_IR,
@@ -73,6 +78,9 @@ typedef struct {
     uint8_t pause_reverse_used[2];
     uint32_t output_pause_ms[2],last_settle_ms[2]; /* diagnostic only */
     int32_t progress_peak[2];
+    uint32_t pause_window_ms[2];
+    bool pause_window_active[2];
+    uint32_t pause_forward_ms[2],pause_forward_counts[2];
     unsigned pre_pause_duty[2];
     int32_t rejected_target_left,rejected_target_right;
 } line_follow_t;
@@ -253,22 +261,25 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
     int64_t l=-(int64_t)motion_count_delta(raw_left,f->origin_left);
     int64_t r=motion_count_delta(raw_right,f->origin_right);
     int64_t backwards[2]={f->previous_total[0]-l,f->previous_total[1]-r};
-    /* Describe the previous output interval for rollback diagnostics and the
-     * one-count exception in legacy profiles. */
+    /* Only the interval already commanded stopped can settle backward. Do
+     * not grant tolerance on entry to a pause, to the powered outer wheel,
+     * or renew it after forward motion/bounce within the same pause. */
     unsigned pause_mask=line_pause_eligible(f);
     bool paused[2]={(pause_mask&1u)!=0,(pause_mask&2u)!=0};
     bool previously_stopped[2]={!f->speed.left.target_cps && !f->speed.left.duty,
                                !f->speed.right.target_cps && !f->speed.right.duty};
-    bool settled[2];
+    bool previously_rolling[2]={f->speed.left.target_cps>=LINE_INNER_MIN_CPS && f->speed.left.duty>0,
+                               f->speed.right.target_cps>=LINE_INNER_MIN_CPS && f->speed.right.duty>0};
+    bool settled[2]={false,false};
     for(unsigned i=0;i<2;++i)
         settled[i]=paused[i] && backwards[i]>0 &&
-            (MOTION_LINE_ADAPTIVE || backwards[i]+f->pause_reverse_used[i]<=LINE_PAUSE_REVERSE_BUDGET);
-    if(!MOTION_LINE_ADAPTIVE) {
-        if(l<0)f->encoder_reject|=LINE_ENCODER_LEFT_NEGATIVE;
-        if(r<0)f->encoder_reject|=LINE_ENCODER_RIGHT_NEGATIVE;
-        if(backwards[0]>0 && !settled[0])f->encoder_reject|=LINE_ENCODER_LEFT_RECEDING;
-        if(backwards[1]>0 && !settled[1])f->encoder_reject|=LINE_ENCODER_RIGHT_RECEDING;
-    }
+            (!MOTION_LINE_ADAPTIVE || (f->pause_window_active[i] &&
+                (uint32_t)(now-f->pause_window_ms[i])<LINE_PAUSE_SETTLE_MS)) &&
+            backwards[i]+f->pause_reverse_used[i]<=LINE_PAUSE_REVERSE_BUDGET;
+    if(l<0)f->encoder_reject|=LINE_ENCODER_LEFT_NEGATIVE;
+    if(r<0)f->encoder_reject|=LINE_ENCODER_RIGHT_NEGATIVE;
+    if(backwards[0]>0 && !settled[0])f->encoder_reject|=LINE_ENCODER_LEFT_RECEDING;
+    if(backwards[1]>0 && !settled[1])f->encoder_reject|=LINE_ENCODER_RIGHT_RECEDING;
     if(f->encoder_reject)return LINE_STEP_ENCODER;
     if(l>=LINE_FOLLOW_COUNT_LIMIT || r>=LINE_FOLLOW_COUNT_LIMIT ||
        l<=-(int64_t)LINE_FOLLOW_COUNT_LIMIT || r<=-(int64_t)LINE_FOLLOW_COUNT_LIMIT)return LINE_STEP_LIMIT;
@@ -364,7 +375,6 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
      * Encoder settling is guarded separately; fault/STOP remains immediate. */
     if(lt)lt=line_target_ramp(f->speed.left.target_cps,lt,dt);
     if(rt)rt=line_target_ramp(f->speed.right.target_cps,rt,dt);
-#if !MOTION_LINE_ADAPTIVE
     /* During a powered interval only new forward ground resets the stall timer.
      * Repeated bounce over the same counts does not constitute progress. */
     if(!lt || !f->speed.left.target_cps || l>f->progress_peak[0]) {
@@ -375,7 +385,6 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
     }
     if((lt && (uint32_t)(now-f->last_progress_ms[0])>=LINE_FOLLOW_STALL_MS) ||
        (rt && (uint32_t)(now-f->last_progress_ms[1])>=LINE_FOLLOW_STALL_MS))return LINE_STEP_STALL;
-#endif
     unsigned rejected;
     /* Validate both wheels before committing feedback. Legacy paused-wheel
      * settling is rebased here; V5 passes signed travel to the rate check. */
@@ -386,9 +395,9 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
     line_soft_restart(&next_speed.right,rt,f->pre_pause_duty[1]);
     line_startup_retarget(&next_speed.left,(int32_t)l,lt);
     line_startup_retarget(&next_speed.right,(int32_t)r,rt);
-    if(!MOTION_LINE_ADAPTIVE && settled[0])next_speed.previous_left=(int32_t)l;
-    if(!MOTION_LINE_ADAPTIVE && settled[1])next_speed.previous_right=(int32_t)r;
-    if(!speed_control_targets_step_policy(&next_speed,(int32_t)l,(int32_t)r,dt*1000u,lt,rt,MOTION_LINE_ADAPTIVE,&rejected)) {
+    if(settled[0])next_speed.previous_left=(int32_t)l;
+    if(settled[1])next_speed.previous_right=(int32_t)r;
+    if(!speed_control_targets_step_report(&next_speed,(int32_t)l,(int32_t)r,dt*1000u,lt,rt,&rejected)) {
         f->encoder_reject=LINE_ENCODER_SPEED;f->speed_reject=(uint8_t)rejected;
         f->rejected_target_left=lt;f->rejected_target_right=rt;
         return LINE_STEP_ENCODER;
@@ -396,13 +405,30 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
     f->speed=next_speed;
     for(unsigned i=0;i<2;++i) {
         if(settled[i]) {
-            int64_t used=f->pause_reverse_used[i]+backwards[i];
-            f->pause_reverse_used[i]=(uint8_t)(used>255 ? 255:used);
+            f->pause_reverse_used[i]+=(uint8_t)backwards[i];
             f->last_settle_ms[i]=now;
         }
         bool output_paused=i==0 ? lt==0 && !f->speed.left.duty:rt==0 && !f->speed.right.duty;
         if(output_paused && !previously_stopped[i])f->output_pause_ms[i]=now;
-        if(!output_paused && (!MOTION_LINE_ADAPTIVE || !settled[i]))f->pause_reverse_used[i]=0;
+        if(MOTION_LINE_ADAPTIVE) {
+            /* A short command pulse or encoder bounce must not renew either
+             * the time window or gross reverse allowance. Require observed
+             * forward rolling in prior AND next powered intervals. */
+            bool rolling=i==0 ? lt>=LINE_INNER_MIN_CPS && f->speed.left.duty>0:
+                                rt>=LINE_INNER_MIN_CPS && f->speed.right.duty>0;
+            if(previously_rolling[i] && rolling && backwards[i]<0) {
+                f->pause_forward_ms[i]+=dt;
+                if(f->pause_forward_ms[i]>LINE_PAUSE_REARM_MS)f->pause_forward_ms[i]=LINE_PAUSE_REARM_MS;
+                f->pause_forward_counts[i]+=(uint32_t)(-backwards[i]);
+                if(f->pause_forward_counts[i]>LINE_PAUSE_REARM_COUNTS)f->pause_forward_counts[i]=LINE_PAUSE_REARM_COUNTS;
+                if(f->pause_forward_ms[i]>=LINE_PAUSE_REARM_MS && f->pause_forward_counts[i]>=LINE_PAUSE_REARM_COUNTS) {
+                    f->pause_reverse_used[i]=0;f->pause_window_active[i]=false;
+                }
+            } else f->pause_forward_ms[i]=f->pause_forward_counts[i]=0;
+            if(output_paused && !f->pause_window_active[i]) {
+                f->pause_window_active[i]=true;f->pause_window_ms[i]=now;
+            }
+        } else if(i==0 ? lt!=0 : rt!=0)f->pause_reverse_used[i]=0;
     }
     f->previous_total[0]=(int32_t)l;f->previous_total[1]=(int32_t)r;
     f->previous_ms=sampled_ms;

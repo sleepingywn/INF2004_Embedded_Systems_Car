@@ -45,7 +45,7 @@ The WiFi task only stages commands and publishes status. The diagnostic/GP20 own
 ## Source map
 
 - `app_program/subsystem1/control_wire.h`: binary contract and time checks.
-- `telemetry_transport.c`: bounded command/status slots under the existing mutex.
+- `telemetry_transport.c`: four ordinary command slots, a separate STOP latch and a status slot.
 - `subsystem2/line_console.c`: shared GP20 permission, command acknowledgement and lease renewal.
 - `subsystem2/motion.c`: guarded network admission and motor-owner lease enforcement.
 - `lib/liblwip/sysdepend/pico_rp2040/mqtt_utk.c`: fragmented receive handling, command subscription and periodic status.
@@ -73,9 +73,7 @@ Exact length, action range, boot/session, epoch, freshness and newer command ID
 are validated. Expected revision prevents overwriting changes from another view.
 STOP retains mailbox priority. Status flag 32 advertises live mapping edits.
 During line tracing and reacquisition the console publishes the new RAM revision.
-The motion owner tracks the scanned letter and updates its pending action on each
-line-control step until junction confirmation. Ignore cancels a pending action.
-A maneuver already underway finishes with the action selected at confirmation. Further edits replace the pending table. At the first idle or fault stop,
+The motion owner latches the action at decode. An edit applies from the next scan. Further edits replace the pending table. At the first idle or fault stop,
 the console confirms a STOP epoch with zero duty before rebooting to save. Keep
 power on until persisted readback. The save reboot clears RAM run history.
 

@@ -63,7 +63,7 @@ void imu_logic_init(imu_logic_t *s, const imu_config_t *cfg)
  * is unchanged, so the boot calibration still holds.  Recalibrating here
  * would happen while the car may be driving or on the hump and would bake
  * that tilt into the reference.  Keep the calibration and this run's hump
- * results (FR5: highest hump since boot); drop everything built on the bad
+ * results (FR5: highest completed hump in the current run); drop everything built on the bad
  * data: the filter, a hump in progress, the lift detector and the LIFTED
  * latch.  The filter restarts level; a new hump must start from flat. */
 void imu_logic_sensor_restart(imu_logic_t *s)
@@ -91,6 +91,10 @@ void imu_logic_sensor_restart(imu_logic_t *s)
 
 void imu_logic_reset_run(imu_logic_t *s)
 {
+    s->rearm_needed = s->rearm_needed || s->hump_state != HUMP_FLAT;
+    s->hump_state = HUMP_FLAT;
+    s->enter_timer = s->desc_timer = s->exit_timer = s->state_timer = 0.0f;
+    s->pre_h_mm = s->hump_h_mm = s->pitch_peak_mm = s->hump_peak_angle = 0.0f;
     s->highest_hump_peak_mm = 0.0f;
     s->current_hump_peak_mm = 0.0f;
     s->current_hump_peak_pitch_deg = 0.0f;

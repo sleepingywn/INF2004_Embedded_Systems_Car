@@ -94,10 +94,9 @@ static void owner_wrapper(void)
     }
     line_follow_t before=f;
     assert(f.adaptive.paused[0] && !f.speed.left.duty && !f.speed.left.target_cps);
-    /* A late rollback on the paused wheel is still valid odometry. */
+    /* The settled wheel is outside its 140 ms allowance. */
     assert(line_follow_step_observed(&f,0u-(l-1),r+12,0,2500,2500,&line,2500,1,1,true,true,
-        line_levels_pack(95,5))==LINE_STEP_OK);
-    assert(!f.encoder_reject && f.pause_reverse_used[0]==1);
+        line_levels_pack(95,5))==LINE_STEP_ENCODER);
     f=before;
     assert(line_follow_step_observed(&f,0u-l,r,0,2500,2500,&line,2300,1,1,true,true,
         line_levels_pack(95,5))==LINE_STEP_IR);
@@ -113,9 +112,10 @@ static void owner_wrapper(void)
     f=before;
     assert(line_follow_step_observed(&f,0u-l,r,0,2500,2500,&line,2500,1,1,true,true,0)==LINE_STEP_IR);
     line_follow_begin(&f,0,0,0,0,0);
-    for(unsigned t=20;t<=800;t+=20)
-        assert(line_follow_step_observed(&f,0,0,0,t,t,&line,t,1,1,true,true,
-            line_levels_pack(95,5))==LINE_STEP_OK);
+    line_step_t result=LINE_STEP_OK;
+    for(unsigned t=20;t<=800 && result==LINE_STEP_OK;t+=20)
+        result=line_follow_step_observed(&f,0,0,0,t,t,&line,t,1,1,true,true,line_levels_pack(95,5));
+    assert(result==LINE_STEP_STALL);
 }
 static void sweep_boundaries(bool last_left)
 {
@@ -147,6 +147,21 @@ static void sweep_boundaries(bool last_left)
 }
 int main(void)
 {
+    /* Only active search consumes FR2's budget. Equal wheel movement keeps
+     * differential sweep guards independent of this boundary check. */
+    uint16_t white = line_levels_pack(0,0);
+    uint32_t begin = UINT32_MAX - 500u;
+    line_adaptive_t search = {0};
+    line_adaptive_step(&search,white,begin-3000u,20,400,400);
+    line_adaptive_step(&search,white,begin,20,600,600);
+    assert(search.phase == 1u && search.origin[0] == 600);
+    line_adaptive_t distance = search;
+    assert(line_adaptive_step(&search,white,begin+1499u,20,600,600).mode==LINE_ADAPT_SEARCH);
+    line_adaptive_step(&search,white,begin+1500u,20,600,600);
+    assert(search.stop_reason==LINE_STOP_RECOVERY_TIME);
+    assert(line_adaptive_step(&distance,white,begin+20u,20,1599,1599).mode==LINE_ADAPT_SEARCH);
+    line_adaptive_step(&distance,white,begin+40u,20,1600,1599);
+    assert(distance.stop_reason==LINE_STOP_RECOVERY_DISTANCE);
     sweep_boundaries(true);
     sweep_boundaries(false);
     for(unsigned l=0;l<=100;++l)for(unsigned r=0;r<=100;++r) {

@@ -14,6 +14,12 @@ static unsigned settings_reboots;
 void route_settings_reboot(const uint8_t map[26]) { (void)map; ++settings_reboots; }
 void route_settings_boot(void) {}
 #include "../../app_program/subsystem2/motion.c"
+static bool terrain_available = true;
+static unsigned terrain_resets, watchdog_feeds;
+bool s4_drive_ready(void) { return terrain_available; }
+void s4_request_run_reset(void) { ++terrain_resets; }
+void motor_watchdog_arm(void) { watchdog_feeds = 0; }
+void motor_watchdog_feed(void) { ++watchdog_feeds; }
 volatile uint32_t s4_hump_seen_ms;   /* S4 hump hint (s4_hump_hint.h): never set in these tests */
 #undef memset
 #undef memcpy
@@ -117,7 +123,8 @@ ER tk_loc_mtx(ID a, int b) { (void)a; (void)b; return E_OK; }
 ER tk_unl_mtx(ID a) { (void)a; return E_OK; }
 ER tk_set_flg(ID a, UINT b) { (void)a; flag_bits |= b; return E_OK; }
 ER tk_clr_flg(ID a, UINT b) { (void)a; flag_bits &= b; return E_OK; }
-ER tk_ref_flg(ID a, T_RFLG *b) { (void)a; b->flgptn = flag_bits; return E_OK; }
+static bool safety_flag_failed;
+ER tk_ref_flg(ID a, T_RFLG *b) { (void)a; b->flgptn = flag_bits; return safety_flag_failed ? E_IO : E_OK; }
 ID tk_cre_mtx(const T_CMTX *a) { (void)a; return 1; }
 ID tk_cre_flg(const T_CFLG *a) { (void)a; return 1; }
 ID tk_cre_cyc(const T_CCYC *a) { (void)a; return 1; }
@@ -255,7 +262,11 @@ ER tk_wai_flg(ID a, UINT b, UINT c, UINT *d, int e)
     if (clock_ms==540) {
         assert(route.phase==ROUTE_IDLE && line_trial.adaptive.mode==LINE_ADAPT_JUNCTION);
         assert(line_trial.adaptive.last_right_target>line_trial.adaptive.last_left_target);
-        if (scenario==3) assert(route.armed=='D');
+        if (scenario==3) {
+            assert(route.armed=='D');
+            route_mapping['D'-'A']=2;
+            assert(route_mapping_code('D')=='B');
+        }
         if (scenario==5) assert(!route.armed);
     }
     if(owner_hook)owner_hook();
@@ -264,6 +275,7 @@ ER tk_wai_flg(ID a, UINT b, UINT c, UINT *d, int e)
 }
 static void reset_owner(int which, uint32_t until)
 {
+    route_mapping['D'-'A']=4;
     c_steered=c_searched=false;
     scenario = which; stop_at_ms = until;
     clock_ms = flag_bits = 0; out_left = out_right = 0; fake_raw = (encoder_raw_t){0};
@@ -368,8 +380,41 @@ static void owner_tests(void)
     assert(has(ROUTE_EV_FAILED) && state.faults == MOTION_FAULT_TIMEOUT && !out_left && !out_right);
     puts("PASS route owner 6: branch never found -> timeout stop, motors off");
 }
+static unsigned feeds_before_failure;
+static void fail_safety_flags(void)
+{
+    if (clock_ms == 200u) {
+        feeds_before_failure = watchdog_feeds;
+        safety_flag_failed = true;
+    }
+}
+
+static void fail_terrain(void)
+{
+    if (clock_ms == 200u) terrain_available = false;
+}
+
 int main(void)
 {
+    reset_owner(1, 300);
+    terrain_available = false;
+    unsigned initial_resets = terrain_resets;
+    run();
+    assert(!owner_flags.active_valid && !out_left && !out_right && terrain_resets == initial_resets);
+    terrain_available = true;
+    reset_owner(1, 300);
+    owner_hook = fail_terrain;
+    run();
+    assert(state.faults == MOTION_FAULT_EXTERNAL && !out_left && !out_right);
+    assert(terrain_resets == initial_resets + 1u && watchdog_feeds > 0u);
+    terrain_available = true;
+    reset_owner(1, 300);
+    owner_hook = fail_safety_flags;
+    run();
+    assert(feeds_before_failure && watchdog_feeds == feeds_before_failure);
+    assert(state.faults == MOTION_FAULT_HANDOFF && !out_left && !out_right);
+    safety_flag_failed = false;
+    owner_hook = NULL;
     logic_tests();
     owner_tests();
     return 0;

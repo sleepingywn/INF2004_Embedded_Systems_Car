@@ -154,6 +154,25 @@ static void publication_results(void)
 }
 int main(void)
 {
+    fixture();
+    owner.calibration_revision = 7u;
+    apply_command(IR_RUNTIME_BEGIN);
+    assert(!owner.sample_valid && owner.state == IR_RUNTIME_CALIBRATING);
+    uint16_t dark[IR_NUM_CH] = {3000,3000,3000};
+    uint16_t light[IR_NUM_CH] = {200,200,200};
+    ir_cal_add(&accumulator, light);
+    ir_cal_add(&accumulator, dark);
+    apply_command(IR_RUNTIME_FINISH);
+    assert(owner.calibration_revision == 8u && !owner.sample_valid);
+    frame(110); /* fence old frames after the calibration change */
+    assert(!owner.sample_valid);
+    frame(111);
+    publish_status();
+    assert(published.sample_valid && published.raw.sampled_ms == 111u);
+    assert(published.calibration_revision == 8u && published.normalized[IR_CH_LINE_A].value == 100u);
+    apply_command(IR_RUNTIME_BEGIN);
+    apply_command(IR_RUNTIME_FINISH);
+    assert(owner.state == IR_RUNTIME_FAULT && !owner.sample_valid && owner.calibration_revision == 8u);
     publication_results();
     for(unsigned i=0;i<16;++i) {
         race_reset=(i&1u)!=0;

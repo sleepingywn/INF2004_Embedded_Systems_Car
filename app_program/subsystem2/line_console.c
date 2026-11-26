@@ -6,6 +6,7 @@
 #include "line_autostart.h"
 #if MOTION_LINE_REMOTE
 #include "../subsystem1/telemetry_transport.h"
+#include "../subsystem4/s4_hump_hint.h"
 #endif
 #include "../subsystem3/ir_runtime.h"
 #if MOTION_LINE_CIRCUIT && !MOTION_LINE_AUTOSTART
@@ -93,7 +94,8 @@ static void route_console_drain(void)
             break;
         case ROUTE_EV_NOT_ARMED:
             tm_printf((UB*)"[route] ROUTE: %c not armed (%s)\n", (INT)e.code,
-                      (UB*)(e.v[0] == 1 ? "a turn is in progress" : "letter has no manoeuvre"));
+                      (UB*)(e.v[0] == 1 ? "a turn is in progress" :
+                            e.v[0] == 3 ? "junction already armed" : "letter has no manoeuvre"));
             break;
         case ROUTE_EV_JUNCTION:
             tm_printf((UB*)"[route] JUNCTION: %c -> %s (A=%d B=%d)\n", (INT)e.code,
@@ -539,12 +541,12 @@ static void remote_poll(void)
        (m.state==MOTION_IDLE || m.state==MOTION_ERROR) &&
        !motion_left_duty(&m) && !motion_right_duty(&m))
         remote_stop(CONTROL_STOPPED,now,m.epoch);
-    bool can_start=!mapping_pending && !button_retry_gesture && !button_restart_pending && connected && boot && fresh && m.ready && m.raw_valid && !m.faults &&
+    bool can_start=s4_drive_ready() && !mapping_pending && !button_retry_gesture && !button_restart_pending && connected && boot && fresh && m.ready && m.raw_valid && !m.faults &&
         m.state==MOTION_IDLE && button.armed && button.ready && !button.pressed_once &&
         !button_pressed() && !button_boot_pending && !button_reset_pending && !boot_pending && remote.stage==0;
     control_command_t c;
-    if(s1_control_take(&c) && connected &&
-       control_fresh(&c,boot,session,c.op==CONTROL_STOP ? c.epoch : m.epoch,now) &&
+    if(s1_control_take(&c,now,remote.last_id,m.epoch,fresh) && connected &&
+       control_fresh(&c,boot,session,c.op==CONTROL_STOP && !fresh ? c.epoch : m.epoch,now) &&
        (c.op==CONTROL_STOP || fresh)) {
         if(c.op==CONTROL_KEEP) {
             if((remote.stage==1 || remote.stage==2) && c.id==remote.owner &&

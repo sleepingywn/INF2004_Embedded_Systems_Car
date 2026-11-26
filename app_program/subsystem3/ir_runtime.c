@@ -121,6 +121,7 @@ static void set_health(bool healthy)
 
 static void runtime_fault(void)
 {
+    owner.sample_valid = false;
     ir_acquisition_stop();
     owner.acquisition.running = false;
     owner.state = IR_RUNTIME_FAULT;
@@ -160,6 +161,7 @@ static void apply_command(unsigned command)
         ir_cal_begin(&accumulator);
         memset(owner.calibration, 0, sizeof(owner.calibration));
         memset(owner.normalized, 0, sizeof(owner.normalized));
+        owner.sample_valid = false;
         owner.calibration_samples = 0;
         owner.failed_channels = 7u;
         owner.acquisition = (ir_acq_status_t){0};
@@ -187,6 +189,7 @@ static void apply_command(unsigned command)
         }
         else
         {
+            ++owner.calibration_revision;
             owner.state = IR_RUNTIME_READY;
             motion_ir_bridge_init(&bridge);
             runtime_flags.epoch_known = false;
@@ -203,6 +206,7 @@ static void process_frame(const ir_raw_frame_t *frame)
         timing_fault(IR_REASON_QUEUE_AGE, (uint32_t)(now - frame->sampled_ms) * 1000u);
         return;
     }
+    owner.sample_valid = false;
     owner.raw = *frame;
     uint16_t raw[IR_NUM_CH] = {frame->barcode, frame->line_a, frame->line_b};
     if (owner.state == IR_RUNTIME_CALIBRATING)
@@ -288,6 +292,7 @@ static void process_frame(const ir_raw_frame_t *frame)
     }
     else
     {
+        owner.sample_valid = true;
         set_health(true);
     }
 }
@@ -402,7 +407,10 @@ ER ir_runtime_init(void)
 #if IR_BARCODE_DIGITAL
     owner.failed_channels &= ~(1u << IR_CH_BARCODE);
 #endif
-    if(owner.failed_channels==0u)owner.state=IR_RUNTIME_READY;
+    if (owner.failed_channels == 0u) {
+        owner.calibration_revision = 1u;
+        owner.state = IR_RUNTIME_READY;
+    }
     /* healthy stays false until acquisition and fresh bridge publication pass. */
 #endif
     published = owner;

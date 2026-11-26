@@ -33,8 +33,7 @@ and S4 statistics continue to work independently of the sensor data path.
 | GP8/9, GP10/11 | B2 left/right motors, unchanged |
 
 The BSP now explicitly configures the RP2040 watchdog **tick generator** at
-12 CLK_REF cycles per microsecond and releases TIMER reset at startup. This
-does not enable the watchdog reset function. Previously no such initialization
+12 CLK_REF cycles per microsecond and releases TIMER reset at startup. The motion owner separately arms the hardware reset watchdog after startup. Previously no such initialization
 was present in the repository, although B2 and the WiFi compatibility layer
 read the raw timer. It must be verified in both SMP and single-core builds.
 

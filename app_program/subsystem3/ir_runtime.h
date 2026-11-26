@@ -21,6 +21,7 @@ typedef struct
 {
     uint32_t updated_ms;
     uint32_t epoch;
+    uint32_t calibration_revision; /* per boot, increments on successful calibration */
     uint32_t calibration_samples;
     uint32_t handoff_errors;
     uint32_t epoch_resyncs; /* rejected old-session data; acquisition kept running */
@@ -38,6 +39,7 @@ typedef struct
     uint8_t failed_channels : 3; /* bit 0 GP26, bit 1 GP27, bit 2 GP28 */
     bool healthy : 1;
     bool command_pending : 1;
+    bool sample_valid : 1; /* all three normalized values belong to raw.sampled_ms and this revision */
 } ir_runtime_status_t;
 
 ER ir_runtime_init(void);

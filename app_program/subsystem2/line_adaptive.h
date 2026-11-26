@@ -22,7 +22,7 @@ static const line_adaptive_config_t line_adaptive_config={
     .filter_ms=40,.derivative_ms=80,
     .seen_enter=20,.seen_leave=10,.black=75,
     .confirm_ms=60,.pause_confirm_ms=60,.uncertainty_counts=120,.bend_hold_counts=40,
-    .first_sweep_counts=240,.opposite_sweep_counts=320,.recovery_counts=800,.recovery_ms=3000
+    .first_sweep_counts=240,.opposite_sweep_counts=320,.recovery_counts=1000,.recovery_ms=1500
 };
 typedef enum {
     LINE_ADAPT_TRACK, LINE_ADAPT_UNCERTAIN, LINE_ADAPT_SEARCH,
@@ -94,9 +94,9 @@ static inline line_adaptive_output_t line_adaptive_step(line_adaptive_t *s,
     bool was_visible=s->visible;
     int32_t crossing_left=0,crossing_right=0;
     /* An unresolved line-loss budget cannot be escaped by entering a mark. */
-    if(s->uncertain && now-s->uncertain_ms>=c->recovery_ms)
+    if(s->uncertain && s->phase && now-s->uncertain_ms>=c->recovery_ms)
         return la_stop(s,LINE_ADAPT_LOST,LINE_STOP_RECOVERY_TIME);
-    if(s->uncertain && la_travel(l,r,s->origin)>=(int32_t)c->recovery_counts)
+    if(s->uncertain && s->phase && la_travel(l,r,s->origin)>=(int32_t)c->recovery_counts)
         return la_stop(s,LINE_ADAPT_LOST,LINE_STOP_RECOVERY_DISTANCE);
     /* Partial darkness on both eyes can still be the edge of a wide mark.
      * Replenish the encounter budget only after one eye is clearly white. */
@@ -174,7 +174,12 @@ static inline line_adaptive_output_t line_adaptive_step(line_adaptive_t *s,
             s->paused[0]=s->paused[1]=false;
             return la_output(s,LINE_ADAPT_UNCERTAIN,c->search_speed-steer,c->search_speed+steer);
         }
-        if(!s->phase){s->phase=1;s->sweep_origin[0]=l;s->sweep_origin[1]=r;}
+        if (!s->phase) {
+            s->phase = 1;
+            s->uncertain_ms = now;
+            s->origin[0] = s->sweep_origin[0] = l;
+            s->origin[1] = s->sweep_origin[1] = r;
+        }
         /* Differential wheel travel bounds a pivot without guessing degrees.
          * One sweep toward last evidence, then one wider opposite sweep. */
         int32_t differential=la_abs((l-s->sweep_origin[0])-(r-s->sweep_origin[1]));

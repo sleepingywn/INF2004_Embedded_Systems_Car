@@ -212,5 +212,15 @@ int main(void)
         assert(!s.calibrated && s.cal_n == 0);
     }
     puts("PASS 15: IMU restart keeps calibration and highest hump, drops the LIFTED latch");
+    s.calibrated = true;
+    s.lifted = true;
+    s.highest_hump_peak_mm = 12.0f;
+    s.hump_count = 2;
+    s.hump_state = HUMP_CLIMBING;
+    s.pre_h_mm = 5.0f;
+    imu_logic_reset_run(&s);
+    assert(s.hump_count == 0 && s.highest_hump_peak_mm == 0 && s.pre_h_mm == 0);
+    assert(s.hump_state == HUMP_FLAT && s.rearm_needed && s.calibrated && s.lifted);
+    puts("PASS 16: run reset clears previous hump and preserves lift protection");
     return 0;
 }

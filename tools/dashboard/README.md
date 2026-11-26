@@ -40,7 +40,7 @@ Fill ignored `config/wifi_secrets.h` with the Wi-Fi credentials, laptop private 
 
 ## Data and limitations
 
-Topics use `inf2004/se08/car01/v1`: `telemetry` and `events` carry explicitly little-endian binary frames: version 1 is 80 bytes, version 2 is 96 bytes with barcode history. `status` retains the existing text heartbeat. See telemetry_wire.c and decode.js for offsets. C bitfield layouts are never sent over the wire.
+Topics use `inf2004/se08/car01/v1`: `telemetry` and `events` carry explicitly little-endian binary frames: version 1 is 80 bytes, version 2 is 96 bytes with barcode history. `status` carries a one-byte heartbeat sequence that wraps after 255. See telemetry_wire.c and decode.js for offsets. C bitfield layouts are never sent over the wire.
 
 S1 samples every 250 ms into one replaceable telemetry slot and an eight-event FIFO. Only the Wi-Fi task calls MQTT; QoS 1 acknowledgement removes queued records. Duplicate delivery is possible. Boot tags are probabilistic 32-bit ROSC-derived identifiers, not authentication. Snapshot components have independent acquisition times and validity bits.
 
@@ -93,14 +93,12 @@ route manoeuvres, performed at the next junction; this does not add adjustable
 angles, distances or speeds. The displayed Last barcode remains the scanned letter.
 Default instructions are A=right, B/Z=left, C=straight, D=U-turn, others=ignore.
 
-Edits are drafts until **Save on robot**. Saving requires a connected, stopped car;
-the firmware disarms it, waits for the motor owner's confirmed zero-output STOP,
-then restarts it to commit the settings. The page confirms success only after
-reading the matching stored map back from the robot. Save never starts a run.
-After reconnecting, instructions are loaded from the robot, not browser storage.
-Use **Discard edits** to reload settings changed by another dashboard. Default
-instructions are also a draft until saved. Old firmware keeps Start/Stop support
-but the new settings controls remain unavailable until firmware is installed.
+Apply instructions updates the robot's RAM table while it is tracing or idle.
+A decode latches one action for the upcoming junction. Later edits take effect
+on a subsequent scan when the route can accept an instruction. At the next
+stop, the firmware waits for the motor owner's zero-output acknowledgement,
+then reboots to save the table. Keep power on until the dashboard confirms the
+stored values. Discard edits reloads the robot's current table.
 
 The last 8 KB of the Pico W's 2 MB flash is reserved as two independent 4 KB
 sectors. Versioned records contain a revision, all 26 actions and CRC32. Updates

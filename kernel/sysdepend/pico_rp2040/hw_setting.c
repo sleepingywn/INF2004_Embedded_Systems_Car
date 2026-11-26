@@ -191,7 +191,7 @@ EXPORT void knl_startup_hw(void)
 	/* RP2040 TIMER uses the watchdog tick generator. CLK_REF is the 12 MHz
 	   XOSC above: 12 cycles per tick gives 1 us. Establish this once at boot,
 	   before the SMP port, B2 deadlines or S3 alarm 3 can read the timer.
-	   This enables tick generation only, NOT the watchdog reset function.
+	   Motion arms the watchdog reset after startup, before admitting commands.
 	   WATCHDOG_TICK = 0x4005802c; ENABLE bit 9, CYCLES bits 8:0. */
 	out_w(0x4005802cu, (1u << 9) | XOSC_MHz);
 

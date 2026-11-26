@@ -76,37 +76,104 @@ uint32_t s1_transport_dropped(void)
 }
 
 static uint32_t control_boot,control_session;
-static int control_connected,control_pending,control_have_status;
-static control_command_t control_slot;
+#define CONTROL_QUEUE_DEPTH 4u
+static int control_connected, control_have_status;
+static unsigned control_head, control_count;
+static control_command_t control_fifo[CONTROL_QUEUE_DEPTH];
+/* The single Wi-Fi producer can post STOP while the transport mutex is busy.
+ * Sequentially consistent 32-bit accesses let the consumer detect a torn copy
+ * and retry next poll. The acknowledged version advances only after delivery. */
+static uint32_t stop_version, stop_taken, stop_id, stop_issued, stop_epoch;
+#define STOP_LOAD(word) __atomic_load_n(&(word), __ATOMIC_SEQ_CST)
+#define STOP_STORE(word, value) __atomic_store_n(&(word), (value), __ATOMIC_SEQ_CST)
 static uint8_t control_status[CONTROL_STATUS_SIZE];
-void s1_control_boot(uint32_t boot) {
- if(!lock())return;
- control_boot=boot;tk_unl_mtx(transport_mutex);
+
+void s1_control_boot(uint32_t boot)
+{
+    if (!lock()) return;
+    __atomic_store_n(&control_boot, boot, __ATOMIC_RELEASE);
+    tk_unl_mtx(transport_mutex);
 }
-int s1_control_link(uint32_t session,int connected) {
- if(!lock())return 0;
- if(control_session!=session || !connected)control_pending=0;
- control_session=session;control_connected=connected;
- tk_unl_mtx(transport_mutex);return 1;
+
+int s1_control_link(uint32_t session, int connected)
+{
+    if (!lock()) return 0;
+    if (control_session != session || !connected) {
+        control_count = 0;
+        STOP_STORE(stop_taken, STOP_LOAD(stop_version));
+    }
+    control_session = session;
+    control_connected = connected;
+    tk_unl_mtx(transport_mutex);
+    return 1;
 }
-int s1_control_context(uint32_t *boot,uint32_t *session,int *connected) {
- if(!lock())return 0;
- *boot=control_boot;*session=control_session;*connected=control_connected;
- tk_unl_mtx(transport_mutex);return 1;
+
+int s1_control_context(uint32_t *boot, uint32_t *session, int *connected)
+{
+    if (!lock()) return 0;
+    *boot = __atomic_load_n(&control_boot, __ATOMIC_ACQUIRE);
+    *session = control_session;
+    *connected = control_connected;
+    tk_unl_mtx(transport_mutex);
+    return 1;
 }
-int s1_control_offer(const uint8_t *frame,unsigned length) {
- control_command_t c;
- if(!control_decode(frame,length,&c) || !lock())return 0;
- int accepted=control_connected && c.boot==control_boot && c.session==control_session &&
-              (!control_pending || c.op==CONTROL_STOP);
- if(accepted){control_slot=c;control_pending=1;}
- tk_unl_mtx(transport_mutex);return accepted;
+
+int s1_control_offer(const uint8_t *frame, unsigned length, uint32_t now_ms)
+{
+    control_command_t cmd;
+    if (!control_decode(frame, length, &cmd) ||
+        now_ms - cmd.issued > CONTROL_MAX_AGE_MS || !cmd.boot || !cmd.session)
+        return 0;
+    /* Link state and session changes run on this same Wi-Fi producer. */
+    if (!control_connected || cmd.session != control_session ||
+        cmd.boot != __atomic_load_n(&control_boot, __ATOMIC_ACQUIRE)) return 0;
+    uint32_t version = STOP_LOAD(stop_version);
+    if (cmd.op == CONTROL_STOP) {
+        if (version != STOP_LOAD(stop_taken) && !control_newer(cmd.id, STOP_LOAD(stop_id)))
+            return 1;
+        STOP_STORE(stop_version, version + 1u);
+        STOP_STORE(stop_id, cmd.id);
+        STOP_STORE(stop_issued, cmd.issued);
+        STOP_STORE(stop_epoch, cmd.epoch);
+        STOP_STORE(stop_version, version + 2u);
+        return 1;
+    }
+    if (!lock()) return 0;
+    bool accepted = version == STOP_LOAD(stop_taken) && control_count < CONTROL_QUEUE_DEPTH;
+    if (accepted) {
+        control_fifo[(control_head + control_count) % CONTROL_QUEUE_DEPTH] = cmd;
+        ++control_count;
+    }
+    tk_unl_mtx(transport_mutex);
+    return accepted;
 }
-int s1_control_take(control_command_t *command) {
- if(!lock())return 0;
- int found=control_pending;
- if(found){*command=control_slot;control_pending=0;}
- tk_unl_mtx(transport_mutex);return found;
+
+int s1_control_take(control_command_t *command, uint32_t now, uint32_t last_id,
+                    uint32_t epoch, bool motion_fresh)
+{
+    if (!lock()) return 0;
+    uint32_t version = STOP_LOAD(stop_version);
+    bool found = version != STOP_LOAD(stop_taken) || control_count != 0u;
+    if (version != STOP_LOAD(stop_taken)) {
+        *command = (control_command_t){.op=CONTROL_STOP, .session=control_session,
+            .boot=__atomic_load_n(&control_boot, __ATOMIC_ACQUIRE), .id=STOP_LOAD(stop_id),
+            .issued=STOP_LOAD(stop_issued), .epoch=STOP_LOAD(stop_epoch)};
+        if ((version & 1u) || version != STOP_LOAD(stop_version)) {
+            found = false;
+        } else {
+            STOP_STORE(stop_taken, version);
+            found = control_newer(command->id, last_id) &&
+                now - command->issued <= CONTROL_MAX_AGE_MS &&
+                (!motion_fresh || command->epoch == epoch);
+            if (found) control_count = 0;
+        }
+    } else if (control_count != 0u) {
+        *command = control_fifo[control_head];
+        control_head = (control_head + 1u) % CONTROL_QUEUE_DEPTH;
+        --control_count;
+    }
+    tk_unl_mtx(transport_mutex);
+    return found;
 }
 int s1_control_status_offer(const uint8_t *frame) {
  if(!lock())return 0;

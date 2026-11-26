@@ -24,8 +24,10 @@ int main(void)
             diagnostics.line_step==LINE_STEP_ROUTE_REQUIRED && diagnostics.line_stop_reason==LINE_STOP_ROUTE_COMMAND && stopped_at==300);
         if(scenario==65 || scenario==70)assert(state.barcode==3);
         if(scenario==66 || scenario==67 || scenario==70 || scenario==71)assert(state.rejected_barcodes);
-        if((scenario>=72 && scenario<=84) || scenario==86 || scenario==87)
+        if(scenario==77 || scenario==78 || scenario==87)
             assert(stop_injected && !state.faults && state.result==MOTION_CANCELLED);
+        if ((scenario>=72 && scenario<=76) || (scenario>=79 && scenario<=84) || scenario==86)
+            assert(state.faults==MOTION_FAULT_ENCODER && diagnostics.line_step==LINE_STEP_ENCODER);
         if(scenario==56 || scenario==63 || scenario==85) {
             assert(state.invalid_edges>0 && !state.faults);
             assert(stop_injected && state.result==MOTION_CANCELLED);

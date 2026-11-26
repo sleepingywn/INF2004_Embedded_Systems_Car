@@ -106,6 +106,22 @@ LOCAL void record_event(INT idx, W value)
 /* ---- B4-FR10: START / RESET of a run */
 LOCAL volatile UB	reset_req;	/* set by s4_reset_run, cleared by the task */
 
+/* Independent single-writer generations prevent a motor start racing a manual reset. */
+static uint32_t run_generation;
+static uint32_t safe_sample_ms;
+
+void s4_request_run_reset(void)
+{
+    uint32_t generation = __atomic_load_n(&run_generation, __ATOMIC_RELAXED);
+    __atomic_store_n(&run_generation, generation + 1u, __ATOMIC_RELEASE);
+}
+
+bool s4_drive_ready(void)
+{
+    uint32_t sample = __atomic_load_n(&safe_sample_ms, __ATOMIC_ACQUIRE);
+    return sample != 0u && motion_now_ms() - sample <= S4_HUMP_HINT_MS;
+}
+
 EXPORT ER s4_reset_run(void)
 {
 	INT i;
@@ -382,13 +398,11 @@ LOCAL void print_status(void)
    then copy it in with one assignment under the mutex (no field-by-field
    read-modify-write on shared data).  If the lock is busy for 2 ms, skip
    this update (the next one is only 20 ms away) rather than block. */
-LOCAL void publish(BOOL fault)
+LOCAL void publish(BOOL fault, UW acquired_ms)
 {
-	SYSTIM			now;
 	terrain_values_t	v;
 	S4_TERRAIN		packed;
 
-	tk_get_tim(&now);
 	v.pitch_deg    = logic.pitch_deg;
 	v.roll_deg     = logic.roll_deg;
 	v.turn_dps     = wheel_turn_dps;	/* from subsystem 2's wheel counts */
@@ -396,11 +410,11 @@ LOCAL void publish(BOOL fault)
 	v.cur_peak_mm  = logic.current_hump_peak_mm;
 	v.high_peak_mm = logic.highest_hump_peak_mm;
 	v.hump_state   = (uint8_t)logic.hump_state;
-	v.motion_class = (uint8_t)motion_now;	/* B4-FR11 */
+	v.motion_class = fault ? S4_MOTION_UNKNOWN : (uint8_t)motion_now;
 	v.hump_count   = logic.hump_count;
 	v.calibrated   = logic.calibrated;
 	v.imu_fault    = fault ? true : false;
-	v.time_ms      = now.lo;
+	v.time_ms      = acquired_ms;
 	packed = terrain_pack(&v);
 
 	if (tk_loc_mtx(mtx_terrain, MTX_WAIT_MS) < E_OK) {
@@ -430,7 +444,9 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 	UW		start_us, prev_us, fail_run = 0;
 	BOOL		fault = FALSE, announced_cal = FALSE, got;
 	gy511_accel_t	last_raw = {0.0f, 0.0f, 0.0f};
-	UW		same_run = 0;
+	uint32_t handled_run = 0u, sample_motion_ms = 0u;
+	UW		same_run = 0, fresh_samples = 0, acquired_ms = 0;
+	BOOL		checking_samples = FALSE;
 
 	(void)stacd; (void)exinf;
 
@@ -465,22 +481,48 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			s4_diag.jitter_max_us = start_us - release_us;
 		}
 
-		if (reset_req) {			/* B4-FR10: new run */
+		uint32_t requested_run = __atomic_load_n(&run_generation, __ATOMIC_ACQUIRE);
+		if (reset_req || requested_run != handled_run) {
+			handled_run = requested_run;			/* B4-FR10: new run */
 			imu_logic_reset_run(&logic);
 			reset_req = 0;
 			tm_printf((UB*)"terrain: new run -- highest hump and count cleared\n");
 		}
 
 		/* ---- read + process (this is what "exec" measures) ---- */
-		got = (!fault && gy511_read(&raw)) ? TRUE : FALSE;
+		BOOL verification_tick = checking_samples;
+		got = ((!fault || checking_samples) && gy511_read(&raw)) ? TRUE : FALSE;
+		if (checking_samples) {
+			/* A baseline and two changes on separate ticks rule out a
+			   constant output vector, including a new post-reboot constant. */
+			if (!got) {
+				fresh_samples = 0;
+			} else {
+				if (!fresh_samples) fresh_samples = 1;
+				else if (raw.x != last_raw.x || raw.y != last_raw.y || raw.z != last_raw.z)
+					fresh_samples++;
+				last_raw = raw;
+			}
+			if (fresh_samples >= 3) {
+				checking_samples = FALSE;
+				fault = FALSE;
+				fail_run = same_run = 0;
+				prev_us = start_us;
+				record_event(S4_EV_IMU_FAULT, 0);
+				tk_clr_flg(flg_terrain, ~(UINT)S4_EVT_IMU_FAULT);
+				tm_printf((UB*)"terrain: IMU fault cleared, fresh XYZ confirmed (%s at 0x%02x)\n",
+					  gy511_chip_name(), gy511_address());
+			}
+			/* Resume processing on the next tick with a normal dt. */
+			got = FALSE;
+		}
 
 		/* Frozen data (seen 18 Nov 2026 on the car: |a| stuck at
 		   2592 mg, i2c err 0) is a sensor fault, not a lift.  Drop the
 		   LIFTED latch and the filter (both built on bad data) and
-		   re-initialise the chip.  A stuck sensor cannot keep the motors
-		   off.  The mounting calibration and the run's highest hump are
+		   re-initialise the chip. Drive stays inhibited until fresh data.  The mounting calibration and the run's highest hump are
 		   kept: recalibrating while driving would give a wrong level
-		   reference, and FR5 reports the highest hump since boot. */
+		   reference, and FR5 reports the highest hump in this run. */
 		if (got) {
 			if (raw.x == last_raw.x && raw.y == last_raw.y && raw.z == last_raw.z) {
 				same_run++;
@@ -502,6 +544,10 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		}
 
 		if (got) {
+			SYSTIM sample;
+			tk_get_tim(&sample);
+			acquired_ms = sample.lo;
+			sample_motion_ms = motion_now_ms();
 			UINT  ev;
 			UW    read_us = now_us() - start_us, logic_start;
 			float dt = (float)(start_us - prev_us) * 1e-6f;
@@ -629,32 +675,27 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 				tm_printf((UB*)"\n");
 				announced_cal = TRUE;
 			}
-		} else if (!fault && ++fail_run >= FAULT_AFTER) {
+		} else if (!fault && !verification_tick && ++fail_run >= FAULT_AFTER) {
 			fault = TRUE;
 			record_event(S4_EV_IMU_FAULT, 1);
 			tk_set_flg(flg_terrain, S4_EVT_IMU_FAULT);
 			tm_printf((UB*)"terrain: IMU FAULT (%u failed reads in a row)\n", fail_run);
 		} else if (fault && s4_diag.cycles % REINIT_EVERY == 0) {
-			BOOL ok;
-			counting = 0;	/* init takes > 20 ms: not an overrun */
-			ok = gy511_init();
+			if (checking_samples)
+				tm_printf((UB*)"terrain: IMU still faulted, fresh XYZ unconfirmed before retry\n");
+			counting = 0;
+			checking_samples = gy511_init();
 			counting = 1;
-			if (ok) {
-				fault = FALSE;
-				fail_run = 0;
-				s4_diag.sensor_found = TRUE;
-				prev_us = now_us();
-				record_event(S4_EV_IMU_FAULT, 0);
-				tk_clr_flg(flg_terrain, ~(UINT)S4_EVT_IMU_FAULT);
-				tm_printf((UB*)"terrain: IMU fault cleared (%s at 0x%02x)\n",
-					  gy511_chip_name(), gy511_address());
-				if (!logic.calibrated) {
-					tm_printf((UB*)"terrain: calibrating -- keep the car STILL and LEVEL for 2 s\n");
-				}
-			}
+			fresh_samples = 0;
+			s4_diag.sensor_found = checking_samples;
+			if (checking_samples)
+				tm_printf((UB*)"terrain: IMU configured, checking for fresh XYZ\n");
 		}
 
-		publish(fault);
+		__atomic_store_n(&safe_sample_ms,
+		    got && !fault && logic.calibrated && !logic.lifted ? sample_motion_ms : 0u,
+		    __ATOMIC_RELEASE);
+		publish(fault || !got, acquired_ms);
 		drain_legacy_if03();
 
 		if (s4_status_print && s4_diag.cycles % PRINT_EVERY == 0 && logic.calibrated) {

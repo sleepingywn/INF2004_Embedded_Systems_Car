@@ -1,5 +1,6 @@
 #ifndef MOTION_H
 #define MOTION_H
+#include "motion_time.h"
 #include "../app.h"
 #include "motion_config.h"
 #include "motion_bits.h"
@@ -159,7 +160,6 @@ static inline int32_t motion_right_duty(const motion_status_t *status)
     return (int32_t)motion_bits_decode(status->right_duty_bits, 11u);
 }
 
-uint32_t motion_now_ms(void);
 /* Use this constructor to range-check wide caller values BEFORE bit-field
  * narrowing. Direct assignment of an out-of-range bit-field loses information. */
 ER motion_request_init(motion_request_t *request, motion_command_t command, motion_source_t source,

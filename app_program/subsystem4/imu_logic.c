@@ -224,8 +224,6 @@ void imu_logic_wheel_gap(imu_logic_t *s)
         abort_hump(s);
         s->pre_h_mm = 0.0f;
     }
-    /* An unmeasured interval can hide the crest. Require a flat observation
-     * before counting a new hump. Completed peaks and the lift latch survive. */
 }
 
 uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,

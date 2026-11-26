@@ -27,8 +27,6 @@ static inline uint8_t route_action_at(const route_actions_t *actions, unsigned i
     return (uint8_t)((word >> route_action_shift(index)) & 7u);
 }
 
-/* Only for private, unpublished maps. Inputs are checked before packing so an
- * invalid action cannot silently wrap to a valid command. */
 static inline bool route_action_set(route_actions_t *actions, unsigned index, unsigned value)
 {
     if (index >= ROUTE_MAP_COUNT || value > ROUTE_ACTION_MAX) return false;

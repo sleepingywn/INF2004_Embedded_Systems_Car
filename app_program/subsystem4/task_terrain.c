@@ -273,7 +273,7 @@ LOCAL float wheel_travel_mm(float dt)
 					/ (float)MOTION_RIGHT_COUNTS_REV;
 
 	if (!wheel_have || m.epoch != wheel_prev_epoch ||
-        (UW)(m.time_ms - wheel_prev_ms) > 100u) {			/* establish a new baseline */
+        (UW)(m.time_ms - wheel_prev_ms) > 100u) {
         if (S4_PRETEND_SPEED_MM_S == 0) imu_logic_wheel_gap(&logic);
 		wheel_prev_l = m.left_count;
 		wheel_prev_r = m.right_count;

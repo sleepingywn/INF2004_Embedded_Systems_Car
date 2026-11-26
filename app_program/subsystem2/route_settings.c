@@ -5,7 +5,6 @@
 #define SLOT0 0x1fe000u
 #define SLOT1 0x1ff000u
 #define PAGE 256u
-/* A=right, B=left, C=straight, D=U-turn; Z (word 2, slot 5)=left. */
 static route_actions_t active_actions = {{1u | (2u<<3) | (3u<<6) | (4u<<9), 0u, 2u<<15}};
 
 void route_mapping_apply(const route_actions_t *actions)
@@ -26,8 +25,6 @@ void route_mapping_export(uint8_t map[ROUTE_MAP_COUNT])
 {
     for (unsigned i = 0; i < ROUTE_MAP_COUNT; ++i) map[i] = route_mapping_get(i);
 }
-/* The console is the sole runtime writer and exports the table itself.
- * A concurrent motor decode reads exactly one letter and latches its action. */
 uint32_t route_mapping_revision;
 bool route_mapping_persisted;
 bool route_settings_valid(const uint8_t *m) {

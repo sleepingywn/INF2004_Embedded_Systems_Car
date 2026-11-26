@@ -27,9 +27,9 @@
 #define ROUTE_EXIT_CONFIRM_MS 10u    /* bench: 10 ms; kernel sees a new line sample every 20 ms loop */
 #define ROUTE_TURN_TIMEOUT_MS 6000u
 #define ROUTE_SETTLE_MS 300u
-#define ROUTE_STALL_MS 400u
 #define ROUTE_LINE_FRESH_MS 100u
 #define ROUTE_STRAIGHT_COUNTS 1358u  /* 100 mm: 100000 um * 2774 / 204200 */
+#define ROUTE_STRAIGHT_CLEAR_COUNTS (ROUTE_STRAIGHT_COUNTS / 5u) /* about 20 mm */
 #define ROUTE_U_TURN_COUNTS 2667u    /* 180 deg pivot on 125 mm track */
 
 /* Nominal angles use the existing wheel calibration. Sweep forward only. */
@@ -49,7 +49,8 @@ typedef enum {
     ROUTE_SETTLE_BEFORE,  /* stopped, before C/D leg */
     ROUTE_STRAIGHT,
     ROUTE_PIVOT,
-    ROUTE_SETTLE_AFTER    /* stopped, before V5 restarts */
+    ROUTE_SETTLE_AFTER,   /* stopped, before V5 restarts */
+    ROUTE_STRAIGHT_GUIDED /* adaptive controller owns the remainder of C */
 } route_phase_t;
 
 static inline bool route_letter_armable(char c)

@@ -31,3 +31,18 @@ test('last scan shows captured count against 29, including incomplete and overle
  }
  assert.match(barcodeReading({...decode(frame(0,3)),receivedAt:1000},1100).detail,/0 \/ 29/);
 });
+
+test('last decoded letter follows the confirmed instruction for this boot',()=>{
+ const {barcodeInstruction}=require('./barcode');
+ const packet=decode(frame(68));
+ const status={bootId:packet.bootId,receivedAt:1000,flags:17,mappings:Array(26).fill(0)};
+ status.mappings[3]=4;
+ assert.equal(barcodeInstruction(packet,status,1000),'U-turn');
+ status.mappings[3]=2;
+ assert.equal(barcodeInstruction(packet,status,1100),'Turn left');
+ status.mappings[3]=0;
+ assert.equal(barcodeInstruction(packet,status,1100),'Ignore');
+ assert.equal(barcodeInstruction(packet,status,3000),'Mapping unavailable');
+ assert.equal(barcodeInstruction(packet,{...status,bootId:42},1100),'Mapping unavailable');
+ assert.equal(barcodeInstruction(decode(frame(0)),status,1100),'—');
+});

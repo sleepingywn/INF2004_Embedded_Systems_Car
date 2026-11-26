@@ -14,7 +14,7 @@ typedef struct {
     uint32_t filter_ms, derivative_ms;
     unsigned seen_enter, seen_leave, black;
     uint32_t confirm_ms, pause_confirm_ms, uncertainty_counts, bend_hold_counts;
-    uint32_t sweep_counts, recovery_counts, recovery_ms;
+    uint32_t first_sweep_counts, opposite_sweep_counts, recovery_counts, recovery_ms;
 } line_adaptive_config_t;
 static const line_adaptive_config_t line_adaptive_config={
     .cruise=450,.minimum_rolling=250,.maximum=600,.search_speed=350,
@@ -22,7 +22,7 @@ static const line_adaptive_config_t line_adaptive_config={
     .filter_ms=40,.derivative_ms=80,
     .seen_enter=20,.seen_leave=10,.black=75,
     .confirm_ms=60,.pause_confirm_ms=60,.uncertainty_counts=120,.bend_hold_counts=40,
-    .sweep_counts=160,.recovery_counts=800,.recovery_ms=3000
+    .first_sweep_counts=240,.opposite_sweep_counts=320,.recovery_counts=800,.recovery_ms=3000
 };
 typedef enum {
     LINE_ADAPT_TRACK, LINE_ADAPT_UNCERTAIN, LINE_ADAPT_SEARCH,
@@ -33,6 +33,10 @@ typedef struct {
     bool initialized, visible, uncertain, confirming, route_blocked;
     bool on_hump;          /* set by motion.c from S4 each cycle (s4_hump_hint.h) */
     line_crossing_t crossing;
+    bool checking_bend;
+    bool seeking_exit; /* C recovery: wait for a confirmed outgoing edge */
+    uint32_t bend_black_ms, sample_age_ms;
+    int32_t bend_origin[2], last_left_target, last_right_target;
     line_stop_reason_t stop_reason;
     bool paused[2];
     bool pause_pending[2];
@@ -57,7 +61,12 @@ static inline int32_t la_travel(int32_t l,int32_t r,const int32_t origin[2])
 {int32_t a=la_abs(l-origin[0]),b=la_abs(r-origin[1]);return a>b ? a:b;}
 static inline line_adaptive_output_t la_output(line_adaptive_t *s,
         line_adaptive_mode_t mode,int32_t l,int32_t r)
-{s->mode=mode;return (line_adaptive_output_t){l,r,mode};}
+{
+    s->mode=mode;
+    s->last_left_target=l;
+    s->last_right_target=r;
+    return (line_adaptive_output_t){l,r,mode};
+}
 
 /* No motor writes or clock reads: deterministic observation -> wheel targets.
  * The owner retains STOP, encoder, sample-age, epoch, stall and duration guards.
@@ -77,9 +86,9 @@ static inline line_adaptive_output_t line_adaptive_step(line_adaptive_t *s,
     if(s->route_blocked)return la_stop(s,LINE_ADAPT_ROUTE_REQUIRED,LINE_STOP_ROUTE_COMMAND);
     unsigned left=line_level_left(levels),right=line_level_right(levels);
     int32_t error=(int32_t)left-(int32_t)right;
-    bool black=left>=c->black && right>=c->black;
+    bool black=!s->seeking_exit && left>=c->black && right>=c->black;
     unsigned maximum=left>right ? left:right;
-    bool visible=!black && maximum>=(s->visible ? c->seen_leave:c->seen_enter);
+    bool visible=!s->seeking_exit && !black && maximum>=(s->visible ? c->seen_leave:c->seen_enter);
     bool entering=!s->initialized;
     s->initialized=true;
     bool was_visible=s->visible;
@@ -93,6 +102,30 @@ static inline line_adaptive_output_t line_adaptive_step(line_adaptive_t *s,
      * Replenish the encounter budget only after one eye is clearly white. */
     unsigned minimum=left<right ? left:right;
     bool clear_line=visible && maximum>=c->seen_enter && minimum<=c->seen_leave;
+    /* A curve can put both eyes onto the tape. Keep the entry wheel targets
+     * until continuous black spans both a time interval and forward motion.
+     * Use the outer wheel because the inner wheel may be intentionally paused. */
+    if (!black) s->checking_bend=false;
+    if (black && !s->on_hump && !s->crossing.active && !s->checking_bend &&
+        (s->mode==LINE_ADAPT_TRACK || s->mode==LINE_ADAPT_UNCERTAIN) &&
+        la_abs(s->last_left_target-s->last_right_target)>=120) {
+        s->checking_bend=true;
+        s->bend_black_ms=now;
+        s->bend_origin[0]=l;
+        s->bend_origin[1]=r;
+    }
+    if (s->checking_bend) {
+        uint32_t elapsed=now-s->bend_black_ms;
+        if (elapsed>=line_crossing_config.mark_ms)
+            return la_stop(s,LINE_ADAPT_CROSSING_FAILED,LINE_STOP_MARK_TIME);
+        /* Reusing a recent IR message cannot confirm continuous black. */
+        if (elapsed<c->confirm_ms+s->sample_age_ms ||
+            (l-s->bend_origin[0]<24 && r-s->bend_origin[1]<24))
+            return la_output(s,LINE_ADAPT_JUNCTION,s->last_left_target,s->last_right_target);
+        s->crossing=(line_crossing_t){.active=true,.started_ms=s->bend_black_ms,
+            .origin={s->bend_origin[0],s->bend_origin[1]}};
+        s->checking_bend=false;
+    }
     line_crossing_result_t crossing=line_crossing_step(&s->crossing,black,clear_line,s->on_hump,now,l,r,
         &crossing_left,&crossing_right);
     if(crossing==CROSS_FAILED)
@@ -145,7 +178,7 @@ static inline line_adaptive_output_t line_adaptive_step(line_adaptive_t *s,
         /* Differential wheel travel bounds a pivot without guessing degrees.
          * One sweep toward last evidence, then one wider opposite sweep. */
         int32_t differential=la_abs((l-s->sweep_origin[0])-(r-s->sweep_origin[1]));
-        uint32_t span=c->sweep_counts*(s->phase==1 ? 1u:2u);
+        uint32_t span=s->phase==1 ? c->first_sweep_counts : c->opposite_sweep_counts;
         if(differential>=(int32_t)span) {
             if(s->phase==2)return la_stop(s,LINE_ADAPT_LOST,LINE_STOP_SWEEP_COMPLETE);
             s->phase=2;s->search_direction=-s->search_direction;

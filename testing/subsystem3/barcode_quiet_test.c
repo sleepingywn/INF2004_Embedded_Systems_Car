@@ -40,8 +40,34 @@ static char run(unsigned scale, unsigned *count)
     return route_code39_decode(&m);
 }
 
+static void circle_exit_before_d(void)
+{
+    /* Observed false prefix, followed by the complete clean D widths from
+       the same run (the failed trace ended two elements early). */
+    const unsigned d[29] = {140,593,115,220,392,217,432,190,93,195,
+                            132,270,93,190,426,521,103,199,407,193,
+                            93,590,93,309,358,245,393,196,108};
+    bc_capture_t c;
+    bc_msg_t m = {0};
+    bc_init(&c);
+    assert(!feed(&c, true, 18375, &m));
+    assert(!feed(&c, false, 3921, &m));
+    assert(!bc_active(&c));
+    for (unsigned i = 0; i < 29; i++)
+        assert(!feed(&c, i % 2 == 0, d[i], &m));
+    assert(feed(&c, false, 1, &m));
+    assert(m.hdr.seq == 0 && m.hdr.count == 29 && route_code39_decode(&m) == 'D');
+
+    /* A plausible first bar on a large label still extends its first gap. */
+    bc_init(&c);
+    assert(!feed(&c, true, 900, &m));
+    assert(!feed(&c, false, 1800, &m));
+    assert(bc_active(&c));
+}
+
 int main(void)
 {
+    circle_exit_before_d();
     unsigned n;
     /* Normal size: unchanged, Z decodes. */
     assert(run(1, &n) == 'Z' && n == 29);

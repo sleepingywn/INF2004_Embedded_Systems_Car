@@ -106,21 +106,49 @@ static void owner_wrapper(void)
         line_levels_pack(95,5))==LINE_STEP_IR);
     f=before;
     assert(line_follow_step_observed(&f,0u-l,r,1,2500,2500,&line,2500,1,1,true,true,
-        line_levels_pack(95,5))==LINE_STEP_ENCODER);
+        line_levels_pack(95,5))==LINE_STEP_OK);
     f=before;
     assert(line_follow_step_observed(&f,0u-l,r,0,2500,2500,&line,2500,1,1,true,false,
         line_levels_pack(95,5))==LINE_STEP_DISCONNECTED);
     f=before;
     assert(line_follow_step_observed(&f,0u-l,r,0,2500,2500,&line,2500,1,1,true,true,0)==LINE_STEP_IR);
     line_follow_begin(&f,0,0,0,0,0);
-    for(unsigned t=20;t<200;t+=20)
+    for(unsigned t=20;t<=800;t+=20)
         assert(line_follow_step_observed(&f,0,0,0,t,t,&line,t,1,1,true,true,
             line_levels_pack(95,5))==LINE_STEP_OK);
-    assert(line_follow_step_observed(&f,0,0,0,200,200,&line,200,1,1,true,true,
-        line_levels_pack(95,5))==LINE_STEP_STALL);
+}
+static void sweep_boundaries(bool last_left)
+{
+    line_adaptive_t s={0};
+    uint16_t white=line_levels_pack(2,2);
+    uint16_t edge=last_left ? line_levels_pack(90,2) : line_levels_pack(2,90);
+    line_adaptive_step(&s,edge,0,20,0,0);
+    line_adaptive_step(&s,white,20,20,0,0);
+    line_adaptive_step(&s,white,40,20,120,120);
+    const int first[]={160,239,240};
+    for(unsigned i=0;i<3;++i) {
+        int counts=first[i];
+        int l=120+(last_left ? 0 : counts), r=120+(last_left ? counts : 0);
+        line_adaptive_output_t out=line_adaptive_step(&s,white,60+20*i,20,l,r);
+        assert(out.mode==LINE_ADAPT_SEARCH);
+        assert((out.left==0)==(counts<240 ? last_left : !last_left));
+    }
+    const int opposite[]={240,319,320};
+    for(unsigned i=0;i<3;++i) {
+        int counts=opposite[i];
+        int l=120+(last_left ? counts : 240), r=120+(last_left ? 240 : counts);
+        line_adaptive_output_t out=line_adaptive_step(&s,white,120+20*i,20,l,r);
+        if(counts<320) {
+            assert(out.mode==LINE_ADAPT_SEARCH && (out.right==0)==last_left);
+        } else {
+            assert(out.mode==LINE_ADAPT_LOST && s.stop_reason==LINE_STOP_SWEEP_COMPLETE);
+        }
+    }
 }
 int main(void)
 {
+    sweep_boundaries(true);
+    sweep_boundaries(false);
     for(unsigned l=0;l<=100;++l)for(unsigned r=0;r<=100;++r) {
         uint16_t levels=line_levels_pack(l,r);
         assert(line_levels_valid(levels) && line_level_left(levels)==l && line_level_right(levels)==r);

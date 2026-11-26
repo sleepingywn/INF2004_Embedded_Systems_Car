@@ -11,4 +11,13 @@ function barcodeReading(packet,now=Date.now()) {
  return {value:b.code===' ' ? '(space)' : b.code || 'Not decoded',detail:
    (b.code?'Read ':'Scan did not decode ')+ago+' ago'+(stale?' · telemetry stale':'')+' · '+b.elements+' / 29 elements (last capture)'};
 }
-module.exports={barcodeReading};
+const actionLabels=['Ignore','Turn right','Turn left','Straight · 100 mm','U-turn'];
+function barcodeInstruction(packet,status,now=Date.now()){
+ const barcode=packet?.barcode;
+ if(!barcode?.supported || !barcode.available || !barcode.seen || !barcode.code)return '—';
+ if(!/^[A-Z]$/.test(barcode.code))return 'No instruction';
+ if(!status || status.bootId!==packet.bootId || !(status.flags&16) ||
+    !Number.isFinite(status.receivedAt) || now-status.receivedAt>1500)return 'Mapping unavailable';
+ return actionLabels[status.mappings?.[barcode.code.charCodeAt(0)-65]] ?? 'Mapping unavailable';
+}
+module.exports={barcodeReading,barcodeInstruction,actionLabels};

@@ -243,7 +243,9 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
     if(!both_black && !line_follow_usable(line,now,line_ms,epoch,line_epoch,have_line))return LINE_STEP_IR;
     if(!MOTION_LINE_UNLIMITED && (uint32_t)(now-f->started_ms)>=LINE_FOLLOW_MAX_MS)return LINE_STEP_DONE;
     if((uint32_t)(now-sampled_ms)>LINE_FOLLOW_INPUT_AGE_MS)return LINE_STEP_TIME;
-    if(invalid!=f->invalid){f->encoder_reject=LINE_ENCODER_INVALID_EDGES;return LINE_STEP_ENCODER;}
+    /* The ISR already discards ambiguous edges. Adaptive tracking uses the
+     * accepted counts; the cumulative invalid counter remains diagnostic. */
+    if(!MOTION_LINE_ADAPTIVE && invalid!=f->invalid){f->encoder_reject=LINE_ENCODER_INVALID_EDGES;return LINE_STEP_ENCODER;}
     uint32_t dt=sampled_ms-f->previous_ms;
     if(dt>CONTROL_MAX_US/1000u)return LINE_STEP_TIME;
     if(dt<CONTROL_MIN_US/1000u)return LINE_STEP_WAIT;
@@ -272,6 +274,7 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
        l<=-(int64_t)LINE_FOLLOW_COUNT_LIMIT || r<=-(int64_t)LINE_FOLLOW_COUNT_LIMIT)return LINE_STEP_LIMIT;
     int32_t lt,rt;
 #if MOTION_LINE_ADAPTIVE
+    f->adaptive.sample_age_ms=now-line_ms;
     line_adaptive_output_t output=line_adaptive_step(&f->adaptive,levels,now,dt,(int32_t)l,(int32_t)r);
     if(output.mode==LINE_ADAPT_INVALID)return LINE_STEP_IR;
     if(output.mode==LINE_ADAPT_ROUTE_REQUIRED)return LINE_STEP_ROUTE_REQUIRED;
@@ -361,6 +364,7 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
      * Encoder settling is guarded separately; fault/STOP remains immediate. */
     if(lt)lt=line_target_ramp(f->speed.left.target_cps,lt,dt);
     if(rt)rt=line_target_ramp(f->speed.right.target_cps,rt,dt);
+#if !MOTION_LINE_ADAPTIVE
     /* During a powered interval only new forward ground resets the stall timer.
      * Repeated bounce over the same counts does not constitute progress. */
     if(!lt || !f->speed.left.target_cps || l>f->progress_peak[0]) {
@@ -371,6 +375,7 @@ static inline line_step_t line_follow_step_observed(line_follow_t *f,uint32_t ra
     }
     if((lt && (uint32_t)(now-f->last_progress_ms[0])>=LINE_FOLLOW_STALL_MS) ||
        (rt && (uint32_t)(now-f->last_progress_ms[1])>=LINE_FOLLOW_STALL_MS))return LINE_STEP_STALL;
+#endif
     unsigned rejected;
     /* Validate both wheels before committing feedback. Legacy paused-wheel
      * settling is rebased here; V5 passes signed travel to the rate check. */

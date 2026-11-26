@@ -25,9 +25,26 @@ int main(void) {
  reset_owner(1,2000);route_mapping[0]=4;
  bc_msg_t scan=make_code("WNNNNWNNW",false,100,300);
  route_on_barcode(&scan,400,true);assert(barcode_status.code=='A');assert(route.armed=='D');
- route_mapping[0]=2;assert(route.armed=='D'); /* earlier decision survives the edit */
- route_on_barcode(&scan,450,true);assert(route.armed=='B'); /* next A uses left */
- route.phase=ROUTE_IDLE;route.armed=0;route_mapping[0]=0;
+ line_msg_t line={.state=LINE_EDGE_ONLY};
+ uint16_t levels=line_levels_pack(90,5);
+ route_mapping[0]=2;
+ assert(!route_step(420,&line,420,state.epoch,true,levels));
+ assert(route.armed=='B' && barcode_status.code=='A');
+ route_mapping[0]=0;
+ assert(!route_step(440,&line,440,state.epoch,true,levels));
+ assert(!route.armed);
  route_on_barcode(&scan,500,true);assert(!route.armed&&barcode_status.code=='A');
+ route_mapping[0]=4;
+ route_on_barcode(&scan,520,true);
+ line.state=LINE_BOTH_BLACK;levels=line_levels_pack(90,90);
+ line_trial.adaptive.mode=LINE_ADAPT_CROSSING;
+ assert(!route_step(540,&line,540,state.epoch,true,levels));
+ route_mapping[0]=2;
+ assert(route_step(560,&line,560,state.epoch,true,levels));
+ assert(!route.armed && route.phase==ROUTE_ARC_LEFT && route.doing=='B');
+ route_mapping[0]=4;
+ state.raw_valid=1; /* encoder snapshot for the running arc */
+ route_step(580,&line,580,state.epoch,true,levels);
+ assert(route.doing=='B' && route.phase==ROUTE_ARC_LEFT);
  puts("PASS mapping journal: blank/corrupt flash, every interrupted program prefix, CRC bit flips, revision wrap, pending CRC, remapped/ignored actual barcode");
 }

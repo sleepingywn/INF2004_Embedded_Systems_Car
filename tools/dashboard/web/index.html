@@ -18,12 +18,20 @@
   </section>
   <div class="stack">
    <section class="card line-card"><h2>Line tracking <small>IR</small></h2><span class="metric-label">Position error</span><strong class="big-number" id="line-error">—</strong><div class="error-scale"><span id="error-marker"></span></div><div class="scale-labels"><span>Right</span><span>Centered</span><span>Left</span></div><p class="hint">Individual sensor darkness is not transmitted.</p></section>
-   <section class="card"><h2>Terrain <small>IMU</small></h2><div class="terrain-metrics"><div><span>Humps crossed</span><strong id="hump-count">—</strong></div><div><span>Highest hump</span><strong id="hump-height">—</strong></div></div><div class="route-note"><span>Last barcode</span><strong id="barcode-value">Unavailable</strong><p id="barcode-detail" class="hint">Waiting for barcode telemetry.</p></div></section>
+   <section class="card"><h2>Terrain <small>IMU</small></h2><div class="terrain-metrics"><div><span>Humps crossed</span><strong id="hump-count">—</strong></div><div><span>Highest hump</span><strong id="hump-height">—</strong><span class="latest-hump-label">Latest hump</span><strong id="latest-hump">—</strong></div></div></section>
+   <section class="card barcode-card" aria-labelledby="barcode-heading">
+    <h2 id="barcode-heading">Last barcode</h2>
+    <div class="barcode-ticket">
+     <strong id="barcode-value">Unavailable</strong>
+     <div class="barcode-command"><span>Current instruction</span><strong id="barcode-action">—</strong></div>
+    </div>
+    <p id="barcode-detail" class="hint">Waiting for barcode telemetry.</p>
+   </section>
   </div>
  </div>
  <section class="control-bar" aria-label="Vehicle controls"><div><div class="buttons"><button id="remote-start" class="start" disabled>▶ Start</button><button id="remote-stop" class="stop" disabled>■ Stop</button></div><p id="control-status" role="status" aria-live="polite">Remote control unavailable - use GP20.</p></div><div class="health"><span>Faults <strong id="faults">—</strong></span><span>Ready <strong id="ready">—</strong></span></div></section>
  <details class="card mapping-settings" id="mapping-settings"><summary>Barcode instructions <span>A–Z settings</span></summary>
-  <p>Edits apply from the next barcode scan. After stopping, the robot restarts to save them. Keep power on until the settings show as stored.</p>
+  <p>On firmware with live queued directions, editing an armed letter changes its pending action until the junction is confirmed. Ignore cancels it. After stopping, the robot restarts to save them. Keep power on until the settings show as stored.</p>
   <div class="mapping-grid" id="mapping-grid"></div>
   <div class="mapping-actions"><button id="mapping-defaults" disabled>Use default instructions</button><button id="mapping-reload" disabled>Discard edits</button><button id="mapping-save" disabled>Apply instructions</button></div>
   <p id="mapping-status" role="status" aria-live="polite">Waiting for mapping-capable firmware.</p>

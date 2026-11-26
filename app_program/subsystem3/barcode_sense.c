@@ -72,6 +72,11 @@ bool bc_active(const bc_capture_t *c)
 static uint32_t bc_quiet_samples(const bc_capture_t *c)
 {
 #ifdef BARCODE_WIDE
+	/* A lone stripe longer than the maximum quiet window can be track
+	   tape at a circle exit. Let a normal white margin discard it before
+	   it becomes a false prefix on the next label. */
+	if (c->count == 1u && c->widest >= BC_QUIET_MAX_SAMPLES)
+		return BC_QUIET_SAMPLES;
 	uint32_t q = (uint32_t)c->widest * BC_QUIET_WIDEST;
 	if (q < BC_QUIET_SAMPLES) q = BC_QUIET_SAMPLES;
 	if (q > BC_QUIET_MAX_SAMPLES) q = BC_QUIET_MAX_SAMPLES;

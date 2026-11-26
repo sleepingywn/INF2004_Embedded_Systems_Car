@@ -41,18 +41,18 @@ static void bounds(int sign,unsigned dt,uint32_t start)
     line_step_t result=LINE_STEP_OK;
     for(unsigned n=0;n<15 && result==LINE_STEP_OK;++n)
         result=step(&f,20,sign,n%2 ? 1:-1,0,0);
-    assert(result==LINE_STEP_STALL);
+    assert(result==LINE_STEP_OK);
     f=initial;
     assert(step(&f,20,sign,-300,0,sign*90)==LINE_STEP_ENCODER);
     assert(f.encoder_reject==LINE_ENCODER_SPEED);
     f=initial;
-    assert(step(&f,20,sign,-3,1,sign*90)==LINE_STEP_ENCODER);
-    assert(f.encoder_reject==LINE_ENCODER_INVALID_EDGES);
+    assert(step(&f,20,sign,-3,1,sign*90)==LINE_STEP_OK);
+    assert(!f.encoder_reject);
 }
 int main(void)
 {
     for(int sign=-1;sign<=1;sign+=2)for(unsigned dt=20;dt<=60;dt+=20) {
         bounds(sign,dt,0);bounds(sign,dt,UINT32_MAX-300u);
     }
-    puts("PASS V5 pause settling: rollback across sweep changes, powered bounce stall, rate and invalid-edge guards, wrap");
+    puts("PASS V5 pause settling: rollback across sweep changes, powered bounce tolerance, rate guard and discarded-edge tolerance, wrap");
 }

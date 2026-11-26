@@ -4,13 +4,15 @@ import {GLTFLoader} from 'three/examples/jsm/loaders/GLTFLoader.js';
 import {OrbitControls} from 'three/examples/jsm/controls/OrbitControls.js';
 import {RoomEnvironment} from 'three/examples/jsm/environments/RoomEnvironment.js';
 import {PoseTracker} from '../pose.js';
-import {barcodeReading} from '../barcode.js';
+import {barcodeReading,barcodeInstruction} from '../barcode.js';
 import {installRemoteControl} from './remote-control.js';
 
 const root=document.getElementById('robo-overview'),host=document.getElementById('car-stage');
 const tracker=new PoseTracker(),radToDeg=180/Math.PI;
 const states=['Idle','Driving','Travelling','Turning','Following line','Reacquiring line','Fault','Bench pulse'];
 const faultNames=['Encoder','Stall','Timeout','IR','Handoff','Range','External','Hardware'];
+let mappingStatus=null;
+let lastTerrain=null, latestHump=null;
 let renderer,camera,controls,scene,pose,wheelL,wheelR,headingArrow,segment=0;
 let from={...tracker.pose},target={...tracker.pose},shown={...tracker.pose},transitionAt=0;
 const reducedMotion=window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -29,6 +31,8 @@ function renderReadings(){
  const s=tracker.snapshot(),d=s.packet||{};
  const valid=bit=>s.fresh&&!!(d.valid&bit);
  const bc=barcodeReading(s.packet);text('barcode-value',bc.value);text('barcode-detail',bc.detail);
+ el('barcode-value').classList.toggle('decoded',!!d.barcode?.seen && !!d.barcode.code);
+ text('barcode-action',barcodeInstruction(s.packet,mappingStatus));
  const l=s.speed.left,r=s.speed.right,mean=l==null||r==null?null:(Math.abs(l)+Math.abs(r))/2;
  root.classList.toggle('stale',!s.fresh);root.classList.toggle('fault',valid(16)&&!!d.faults);
  text('connection',!s.packet?'Waiting for telemetry':s.fresh?'Receiving telemetry':'Telemetry stale');
@@ -55,6 +59,7 @@ function renderReadings(){
  text('motion-status',!s.motionValid?'Encoder data unavailable':l==null?'Collecting count baseline':'Measured wheel feedback');
  text('line-error',valid(4)?number(d.lineError):'—');el('error-marker').style.left='calc('+Math.max(0,Math.min(100,50+(d.lineError||0)/2))+'% - 4px)';el('error-marker').style.opacity=valid(4)?1:0;
  text('hump-count',valid(8)?number(d.humpCount):'—');text('hump-height',valid(8)?number(d.highestPeakMm)+' mm':'—');
+ text('latest-hump',valid(8)&&d.humpCount>0&&Number.isFinite(latestHump)?number(latestHump)+' mm':'—');
  text('faults',valid(16)?d.faults===0?'None':faultNames.filter((_,i)=>d.faults&(1<<i)).join(', '):'Unavailable');
  text('ready',valid(16)?d.ready?'Yes':'No':'Unavailable');
  text('metric-speeds','Calibrated speed: left '+(valid(3)&&d.leftSpeed!=null?d.leftSpeed+' mm/s':'unavailable')+' · right '+(valid(3)&&d.rightSpeed!=null?d.rightSpeed+' mm/s':'unavailable'));
@@ -62,14 +67,29 @@ function renderReadings(){
 }
 function accept(payload){
  if(!tracker.accept(payload))return;
+ if(payload.valid&8){
+  const sameBoot=lastTerrain?.bootId===payload.bootId;
+  if(!sameBoot || payload.humpCount===0 || payload.humpCount<lastTerrain.humpCount)latestHump=null;
+  if(payload.humpCount>0){
+   if(Number.isFinite(payload.latestHumpMm))latestHump=payload.latestHumpMm;
+   else if(payload.humpCount===1)latestHump=payload.highestPeakMm;
+   else if(sameBoot && payload.humpCount!==lastTerrain.humpCount){
+    latestHump=payload.motionClass===5 ? null : payload.currentPeakMm;
+   }
+  }
+  lastTerrain=payload;
+ }
  const s=tracker.snapshot();
  from={...shown};target={...s.pose};transitionAt=performance.now();
  if(s.segment!==segment){segment=s.segment;from={...target};shown={...target};}
  text('diagnostics',JSON.stringify(payload,null,2));renderReadings();
 }
 window.addEventListener('message',event=>{
- if(event.origin!==location.origin||event.source!==window.parent||event.data?.type!=='robocar-telemetry')return;
- accept(event.data.payload);
+ if(event.origin!==location.origin||event.source!==window.parent)return;
+ if(event.data?.type==='robocar-control' && event.data.payload?.kind==='controlStatus'){
+  mappingStatus=event.data.payload;
+  text('barcode-action',barcodeInstruction(tracker.packet,mappingStatus));
+ }else if(event.data?.type==='robocar-telemetry')accept(event.data.payload);
 });
 function reportSize(){if(window.parent!==window)window.parent.postMessage({type:'robocar-resize',height:Math.ceil(root.getBoundingClientRect().height)+4},location.origin);}
 new ResizeObserver(reportSize).observe(root);

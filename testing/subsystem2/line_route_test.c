@@ -139,10 +139,15 @@ void motor_hw_write(int16_t l, int16_t r)
     assert(l >= -200 && l <= 200 && r >= -200 && r <= 200);
     out_left = l; out_right = r;
 }
+static bool c_searched, c_steered;
 static void drain_events(void)
 {
     motion_route_event_t e;
     while (motion_route_next_event(&e)) {
+        if (e.kind==ROUTE_EV_LEG_DONE && e.code=='C') {
+            int average=(e.v[0]+e.v[1])/2;
+            assert(average>= (int)ROUTE_STRAIGHT_COUNTS && average<(int)ROUTE_STRAIGHT_COUNTS+25);
+        }
         if (event_count < sizeof route_seen - 1) route_seen[event_count++] = (char)('0' + e.kind);
         if (e.kind == ROUTE_EV_FAILED) printf("  route failed reason=%d phase=%d\n", e.v[0], e.v[1]);
     }
@@ -153,7 +158,23 @@ static void publish_line(void)
     line_msg_t line = {.state = LINE_EDGE_ONLY, .err = 90};
     uint16_t levels = line_levels_pack(95, 5);
     bool junction = clock_ms >= 600 && clock_ms < 700;
+    /* Brief bend overlap after arming, followed by the sustained crossing. */
+    if (clock_ms>=480 && clock_ms<540) junction=true;
     if (junction) { line = (line_msg_t){.state = LINE_BOTH_BLACK}; levels = line_levels_pack(90, 90); }
+    if (route.phase==ROUTE_STRAIGHT || route.phase==ROUTE_STRAIGHT_GUIDED) {
+        if (line_trial.adaptive.mode==LINE_ADAPT_SEARCH) c_searched=true;
+        if (route.phase==ROUTE_STRAIGHT_GUIDED && line_trial.adaptive.mode==LINE_ADAPT_TRACK &&
+            line_trial.speed.left.target_cps!=line_trial.speed.right.target_cps) c_steered=true;
+        if (scenario==13 || (scenario==12 && !c_searched)) {
+            line=(line_msg_t){.state=scenario==13 ? LINE_BOTH_BLACK : LINE_LOST};
+            levels=scenario==13 ? line_levels_pack(90,90) : line_levels_pack(3,3);
+        }
+        if (line_trial.adaptive.seeking_exit) {
+            int32_t travel=(motion_count_delta(route_fwd_left(),route.origin_left)+
+                            motion_count_delta(route_fwd_right(),route.origin_right))/2;
+            assert(travel >= (int)ROUTE_STRAIGHT_CLEAR_COUNTS);
+        }
+    }
     if (route.phase == ROUTE_ARC_RIGHT || route.phase == ROUTE_ARC_LEFT) {
         bool right = route.phase == ROUTE_ARC_RIGHT;
         int32_t lead = right ? motion_count_delta(route_fwd_left(), route.origin_left) -
@@ -202,6 +223,10 @@ ER tk_wai_flg(ID a, UINT b, UINT c, UINT *d, int e)
                (line_trial.speed.left.duty > 80u || line_trial.speed.right.duty > 80u));
         ++carried_handovers;
     }
+    /* One discarded transition on entry to each moving leg. */
+    if (previous_phase != route.phase && (route.phase==ROUTE_ARC_LEFT ||
+        route.phase==ROUTE_ARC_RIGHT || route.phase==ROUTE_STRAIGHT ||
+        route.phase==ROUTE_STRAIGHT_GUIDED || route.phase==ROUTE_PIVOT)) ++fake_raw.invalid;
     previous_phase = route.phase;
     if ((int)route.phase > max_phase_seen) max_phase_seen = (int)route.phase;
     if (clock_ms >= stop_at_ms) longjmp(done, 1);
@@ -222,10 +247,16 @@ ER tk_wai_flg(ID a, UINT b, UINT c, UINT *d, int e)
     if (clock_ms == 400 && scenario != 5) {
         const char *letter = scenario == 1 || scenario == 6 ? "WNNNNWNNW" : scenario == 2 ? "WNWNNWNNW" :
                              (scenario == 3 || scenario == 9 || scenario == 10 || scenario == 11) ? "NNNNWWNNW" : scenario == 4 ? "NWWNWNNNN" : "WNNNWWNNN";
-        if (scenario == 2) letter = "WNWNNWNNN"; /* C */
+        if (scenario == 2 || scenario == 12 || scenario == 13) letter = "WNWNNWNNN"; /* C */
         bc_msg_t bc = make_code(letter, false, 3, 9); /* short widths: fits the 400 ms history */
         shared.barcode = bc; shared.have_barcode = true;
         shared.barcode_ms = clock_ms; shared.barcode_epoch = state.epoch;
+    }
+    if (clock_ms==540) {
+        assert(route.phase==ROUTE_IDLE && line_trial.adaptive.mode==LINE_ADAPT_JUNCTION);
+        assert(line_trial.adaptive.last_right_target>line_trial.adaptive.last_left_target);
+        if (scenario==3) assert(route.armed=='D');
+        if (scenario==5) assert(!route.armed);
     }
     if(owner_hook)owner_hook();
     *d = flag_bits;
@@ -233,6 +264,7 @@ ER tk_wai_flg(ID a, UINT b, UINT c, UINT *d, int e)
 }
 static void reset_owner(int which, uint32_t until)
 {
+    c_steered=c_searched=false;
     scenario = which; stop_at_ms = until;
     clock_ms = flag_bits = 0; out_left = out_right = 0; fake_raw = (encoder_raw_t){0};
     sent = false; max_phase_seen = 0; carried_handovers = 0; event_count = 0; memset(route_seen, 0, sizeof route_seen);
@@ -267,7 +299,13 @@ static void owner_tests(void)
     reset_owner(2, 6000); run();
     assert(!state.faults && has(ROUTE_EV_LEG_DONE) && has(ROUTE_EV_RESUMED) && route.phase == ROUTE_IDLE);
     assert(max_phase_seen >= ROUTE_STRAIGHT && diagnostics.line_active);
-    puts("PASS route owner 2: barcode C drives straight 100 mm, then V5 resumes");
+    assert(c_steered && !c_searched);
+    puts("PASS C steers after clearing the junction and completes nominal 100 mm");
+    reset_owner(12, 8000); run();
+    assert(c_searched && c_steered && has(ROUTE_EV_LEG_DONE) && has(ROUTE_EV_RESUMED) && !state.faults);
+    reset_owner(13, 8000); run();
+    assert(c_searched && !has(ROUTE_EV_LEG_DONE) && state.faults==MOTION_FAULT_IR && !out_left && !out_right);
+    puts("PASS C searches after missing the exit; finds the edge or stops on a persistent mark");
 
     /* 3: D -> pivot (right wheel reverses) 2667 counts each, V5 restarts. */
     reset_owner(3, 13000); run();

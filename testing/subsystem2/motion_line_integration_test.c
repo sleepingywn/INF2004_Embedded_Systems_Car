@@ -149,8 +149,8 @@ ER tk_wai_flg(ID a,UINT b,UINT c,UINT*d,int e){
             if(scenario==62 && clock_ms>=320)flag_bits|=SOURCE_BIT(MOTION_HEALTH_IR);
             if(scenario==63 && clock_ms>=320)fake_raw.invalid=1;
         }
-        if((scenario==60 && clock_ms>=320) ||
-           ((scenario==59 || scenario==65 || scenario==66 || scenario==67 || scenario==70 || scenario==71) && clock_ms>=1000)) {
+        if((scenario==60 && clock_ms>=320) || (scenario==63 && clock_ms>=480) ||
+           ((scenario==56 || scenario==59 || scenario==65 || scenario==66 || scenario==67 || scenario==70 || scenario==71) && clock_ms>=1000)) {
             if(!stop_injected){assert(motion_stop()==E_OK);stop_injected=true;}
         }
         if((scenario>=64 && scenario<=70 && clock_ms==300) ||
@@ -169,7 +169,7 @@ ER tk_wai_flg(ID a,UINT b,UINT c,UINT*d,int e){
             if(scenario%2)--fake_raw.right;else ++fake_raw.left;
         }
         if(scenario==76 && clock_ms==500)fake_raw.right=state.right_count-1u;
-        if(((scenario>=72 && scenario<=76) || (scenario>=79 && scenario<=84) || scenario==86) &&
+        if(((scenario>=72 && scenario<=76) || (scenario>=79 && scenario<=86)) &&
            clock_ms>=1000 && !stop_injected) {
             assert(motion_stop()==E_OK);stop_injected=true;
         }

@@ -36,6 +36,14 @@ static void sustained(uint32_t start,unsigned dt,int sign)
     /* A raw direction reversal must not use the old pause candidate. */
     out=line_adaptive_step(&s,line_levels_pack(sign>0 ? 5:95,sign>0 ? 95:5),start+2020+dt,dt,510,510);
     assert(out.left && out.right);
+    /* First correction still points into the new turn. An isolated reversal
+     * should command less wheel-speed difference than a second matching tick. */
+    int first=la_abs(out.left-out.right);
+    assert(sign>0 ? out.left>out.right : out.right>out.left);
+    assert(la_abs(s.error_milli) == (int32_t)(90000u*dt/(40u+dt)));
+    out=line_adaptive_step(&s,line_levels_pack(sign>0 ? 5:95,sign>0 ? 95:5),
+                           start+2020+2*dt,dt,515,515);
+    assert(la_abs(out.left-out.right)>first);
 }
 int main(void)
 {

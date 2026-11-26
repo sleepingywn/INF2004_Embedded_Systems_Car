@@ -73,8 +73,9 @@ Exact length, action range, boot/session, epoch, freshness and newer command ID
 are validated. Expected revision prevents overwriting changes from another view.
 STOP retains mailbox priority. Status flag 32 advertises live mapping edits.
 During line tracing and reacquisition the console publishes the new RAM revision.
-A decoded letter selects its action once, so an already armed junction keeps its
-action. Further edits replace the pending table. At the first idle or fault stop,
+The motion owner tracks the scanned letter and updates its pending action on each
+line-control step until junction confirmation. Ignore cancels a pending action.
+A maneuver already underway finishes with the action selected at confirmation. Further edits replace the pending table. At the first idle or fault stop,
 the console confirms a STOP epoch with zero duty before rebooting to save. Keep
 power on until persisted readback. The save reboot clears RAM run history.
 

@@ -1,8 +1,9 @@
 // Drafts never change the car. Only Save sends a command; readback confirms it.
+import { actionLabels as actions } from "../barcode.js";
 export function installMappingSettings() {
  const el=id=>document.getElementById(id),viewer=crypto.randomUUID();
  const defaults=Array.from({length:26},(_,i)=>i<4?i+1:i===25?2:0);
- const actions=['Ignore','Turn right','Turn left','Straight · 100 mm','U-turn'];
+
  let status=null,draft=null,baseBoot=null,baseRevision=null,dirty=false,pending=null,notice='';
  const equal=(a,b)=>a?.length===26&&b?.length===26&&a.every((v,i)=>v===b[i]);
  const selects=defaults.map((_,i)=>{

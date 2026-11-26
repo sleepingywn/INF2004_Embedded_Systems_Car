@@ -17,7 +17,7 @@ static void crossing(uint32_t start)
     assert(o.mode==LINE_ADAPT_TRACK && !s.crossing.active && !s.uncertain);
     /* A distinct, confirmed later encounter receives a new finite budget. */
     o=line_adaptive_step(&s,line_levels_pack(90,90),start+400,20,100,100);
-    assert(s.crossing.started_ms==start+400);
+    assert(o.mode==LINE_ADAPT_JUNCTION && !s.crossing.active);
     o=line_adaptive_step(&s,line_levels_pack(90,90),start+500,20,500,500);
     assert(o.mode==LINE_ADAPT_CROSSING_FAILED && !o.left && !o.right &&
         s.stop_reason==LINE_STOP_MARK_DISTANCE);

@@ -1,8 +1,10 @@
 # Subsystem 1 — test log
 
-**Subsystem:** LED heartbeat (example)  ·  **Student ID:** <student ID>  ·  **Code:** `app_program/subsystem1/`
+**Subsystem:** MQTT telemetry and LED heartbeat  ·  **Code:** `app_program/subsystem1/`
 
 See `testing/README.md` for how to run tests and record results.
+
+[Final telemetry test procedures and pass criteria (B1-01, B1-10 and B1-07)](TELEMETRY_TEST_CASES.md)
 
 ## Test cases
 

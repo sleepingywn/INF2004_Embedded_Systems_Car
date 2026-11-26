@@ -106,8 +106,8 @@ const char *imu_hump_state_name(hump_state_t st)
     case HUMP_FLAT:       return "FLAT";
     case HUMP_CLIMBING:   return "CLIMBING";
     case HUMP_DESCENDING: return "DESCENDING";
+    default:              return "?";
     }
-    return "?";
 }
 
 imu_motion_t imu_classify_motion(const imu_logic_t *s, float speed_mm_s,
@@ -425,6 +425,10 @@ uint32_t imu_logic_update(imu_logic_t *s, imu_accel_t a, float dt_s,
         } else if (s->state_timer > c->hump_timeout_s) {
             abort_hump(s);
         }
+        break;
+    default:
+        /* Discard an invalid transition without counting a completed hump. */
+        abort_hump(s);
         break;
     }
 

@@ -68,7 +68,8 @@ void s1_collect(void)
          * apparently fresh again after a wrap while the producer is stalled. */
         if (S4_VALID(t) && s1_terrain_fresh(terrain_now.lo, t.time_ms,
             now, terrain_changed_ms, S4_STALE_MS)) v.valid |= 8u;
-        v.pitch_half_deg = t.pitch_hd; v.roll_half_deg = t.roll_hd;
+        v.pitch_half_deg = terrain_signed_byte(t.pitch_hd_bits);
+        v.roll_half_deg = terrain_signed_byte(t.roll_hd_bits);
         v.current_peak_mm = t.cur_peak_mm; v.highest_peak_mm = t.high_peak_mm;
         v.hump_count = t.hump_count; v.motion_class = t.motion_class;
     }

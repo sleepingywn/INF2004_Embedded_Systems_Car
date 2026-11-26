@@ -44,9 +44,9 @@
 #include <stdbool.h>
 
 typedef struct {
-	int64_t		pitch_hd	: 8;
-	int64_t		roll_hd		: 8;
-	int64_t		turn_2dps	: 8;
+    uint64_t pitch_hd_bits : 8;
+    uint64_t roll_hd_bits : 8;
+    uint64_t turn_2dps_bits : 8;
 	uint64_t	cur_peak_mm	: 7;
 	uint64_t	high_peak_mm	: 7;
 	uint64_t	hump_state	: 2;
@@ -78,11 +78,17 @@ typedef struct {
 /* Round and saturate every field into its bit width. */
 S4_TERRAIN	terrain_pack(const terrain_values_t *v);
 
+/* Decode an eight-bit two's-complement field without a signed bit-field. */
+static inline int terrain_signed_byte (uint8_t bits)
+{
+    return (bits < 128u) ? (int)bits : ((int)bits - 256);
+}
+
 /* ---- decoding, for consumers (integers: tm_printf has no %f) ---- */
-#define S4_PITCH_DDEG(t)	((int)(t).pitch_hd * 5)		/* 0.1 deg   */
-#define S4_ROLL_DDEG(t)		((int)(t).roll_hd * 5)		/* 0.1 deg   */
-#define S4_TURN_DPS(t)		((int)(t).turn_2dps * 2)	/* deg/s; check S4_TURN_OK */
-#define S4_TURN_OK(t)		((t).turn_2dps != S4_TURN_NA)
+#define S4_PITCH_DDEG(t) (terrain_signed_byte((t).pitch_hd_bits) * 5)
+#define S4_ROLL_DDEG(t)  (terrain_signed_byte((t).roll_hd_bits) * 5)
+#define S4_TURN_DPS(t)   (terrain_signed_byte((t).turn_2dps_bits) * 2)
+#define S4_TURN_OK(t)    (terrain_signed_byte((t).turn_2dps_bits) != S4_TURN_NA)
 #define S4_VALID(t)		((t).calibrated && !(t).imu_fault)
 /* Age of a snapshot in ms, correct across the 15-bit wrap */
 #define S4_AGE_MS(t, now_ms)	((unsigned)(((now_ms) - (t).time_ms) & S4_TIME_MASK))

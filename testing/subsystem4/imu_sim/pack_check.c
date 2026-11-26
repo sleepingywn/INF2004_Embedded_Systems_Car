@@ -9,6 +9,7 @@
 #include "terrain_pack.h"
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 
 static int fails;
 #define CHECK(c, msg) do { if (!(c)) { printf("FAIL: %s\n", msg); fails++; } } while (0)
@@ -62,6 +63,19 @@ int main(void)
     CHECK(S4_AGE_MS(t, 32780) == 20, "age across the 15-bit wrap");
     v.imu_fault = true; t = terrain_pack(&v);
     CHECK(!S4_VALID(t), "invalid on IMU fault");
+
+    v.imu_fault = false;
+    v.pitch_deg = NAN;
+    CHECK(!S4_VALID(terrain_pack(&v)), "NaN attitude invalidates snapshot");
+    v.pitch_deg = FLT_MAX;
+    v.high_peak_mm = INFINITY;
+    CHECK(!S4_VALID(terrain_pack(&v)), "infinite height invalidates snapshot");
+    v.high_peak_mm = 0.0f;
+    v.turn_valid = true;
+    v.turn_dps = -INFINITY;
+    t = terrain_pack(&v);
+    CHECK(S4_VALID(t) && !S4_TURN_OK(t), "invalid turn is field-local");
+    CHECK(S4_PITCH_DDEG(t) == 635, "largest finite pitch saturates");
 
     printf("size %zu bytes (was 38)\n", sizeof(S4_TERRAIN));
     printf("worst round-trip error: angle %.3f deg, turn %.2f deg/s, peak %.2f mm\n",

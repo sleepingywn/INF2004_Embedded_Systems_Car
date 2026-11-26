@@ -141,12 +141,13 @@ typedef enum {
  *  minimum for this algorithm.
  * --------------------------------------------------------------------- */
 typedef struct {
-	int32_t		err		: 8;	/* -100..+100, + = line to the left  */
-	uint32_t	state		: 3;	/* line_state_t                      */
-	uint32_t	seq		: 4;	/* wraps; consumer detects missed msgs */
-	uint32_t	fault		: 1;	/* IR fault                          */
-	uint32_t	bc_active	: 1;	/* barcode capture in progress: hold speed constant */
-	uint32_t	t_ms		: 15;	/* sample time in ms, wraps every 32.7 s */
+    /* Keep the original four-byte alignment and RP2040 message layout. */
+    _Alignas(uint32_t) int8_t err;  /* Positive values steer left. */
+    uint8_t  state     : 3;
+    uint8_t  seq       : 4;
+    uint8_t  fault     : 1;
+    uint16_t bc_active : 1;         /* Hold speed during barcode capture. */
+    uint16_t t_ms      : 15;        /* Wraps every 32.768 seconds. */
 } line_msg_t;
 
 /* ---------------------------------------------------------------------

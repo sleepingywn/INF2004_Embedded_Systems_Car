@@ -41,7 +41,6 @@ Add a new row for every run. Never edit or delete old rows.
 
 | Date | Test ID | Commit | Tester | Result | Log / evidence | Notes |
 |---|---|---|---|---|---|---|
-| YYYY-MM-DD | S2-U01 | `abc1234` | | PASS / FAIL | `logs/YYYY-MM-DD_….txt` | |
 
 Implementation status, 2026-10-29: S2-U03..U18 prepared but **NOT RUN**.
 No compilation, test program, firmware run or flash occurred during integration.

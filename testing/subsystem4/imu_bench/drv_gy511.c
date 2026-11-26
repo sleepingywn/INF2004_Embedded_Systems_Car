@@ -232,7 +232,7 @@ void gy511_i2c_scan(void)
         if (!device_answers(addr)) continue;
         found++;
         gy511_chip_t c = identify(addr);
-        /* ID bytes help identify an unknown chip: send these to Claude if needed */
+        /* Read the device ID bytes to identify the IMU. */
         printf("  found 0x%02X  [id regs 0x00=%02X 0x0D=%02X 0x0F=%02X]  %s\n", addr,
                read_reg(addr, 0x00) & 0xFF, read_reg(addr, 0x0D) & 0xFF,
                read_reg(addr, 0x0F) & 0xFF,

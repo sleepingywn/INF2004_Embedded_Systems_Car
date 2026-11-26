@@ -1,8 +1,26 @@
 # Videos
 
-Short videos of tests and demos running on the real hardware. A video shows
-what a log cannot: the LED blinking, the motor turning, the robot reaching
-the line. List **every** video in the table at the bottom of this page.
+## Video index
+
+| Date indexed | Team | Test-case video | Duration | Build recorded |
+|---|---|---|---|---|
+| 2026-11-26 | SE08, Buddies 1–4 | [SE08 PicoCar Test Cases](https://youtu.be/IBY-M7DeD0M) | 4:01 | Dashboard decoder `ee763d4`. The hardware clips do not identify a firmware commit. |
+
+## Chapters
+
+| Start | Test ID | What the recording shows |
+|---|---|---|
+| [0:00](https://youtu.be/IBY-M7DeD0M?t=0) | B1-01 / B1-10 | Wireless startup and dashboard connection |
+| [0:20](https://youtu.be/IBY-M7DeD0M?t=20) | B1-07 | Dashboard decoder passes four host checks |
+| [0:31](https://youtu.be/IBY-M7DeD0M?t=31) | M13 | Dashboard stop and onboard restart in separate runs |
+| [0:48](https://youtu.be/IBY-M7DeD0M?t=48) | M11 / S3-11 | Line tracking through left and right bends |
+| [1:43](https://youtu.be/IBY-M7DeD0M?t=103) | S3-12 | Dashboard shows 29/29 and the decoded letter Z |
+| [2:00](https://youtu.be/IBY-M7DeD0M?t=120) | M12 | Junction U-turn and return along the incoming line |
+| [2:25](https://youtu.be/IBY-M7DeD0M?t=145) | — | Barcode route setting on the dashboard |
+| [2:46](https://youtu.be/IBY-M7DeD0M?t=166) | S4-U12 | Hump detection and height measurement |
+| [3:29](https://youtu.be/IBY-M7DeD0M?t=209) | S4-U10 | Lift detection and stop report |
+| [3:41](https://youtu.be/IBY-M7DeD0M?t=221) | S4-U19 | Serial heading reading during a turn |
+| [3:54](https://youtu.be/IBY-M7DeD0M?t=234) | S4-U10 | Overturn detection and stop report |
 
 ## What to record
 
@@ -10,7 +28,7 @@ the line. List **every** video in the table at the bottom of this page.
 - **Say what it is.** Show or say the test ID (e.g. `S2-U03`, `INT-01`) or
   the demo name at the start.
 - **Show the commit.** Before recording, run `git rev-parse --short HEAD` and
-  keep the terminal in shot for a moment, or put it in the table below.
+  keep the terminal in shot for a moment, or put it in the video index above.
 - **Show the result.** Keep both the hardware and, if it matters, the
   console output in view.
 - **Landscape**, steady, good light. No music needed.
@@ -28,14 +46,6 @@ in the repo stays in the git history for good, even if deleted later, and
 slows every clone for the whole team. Video files are ignored by
 `.gitignore` for this reason.
 
-Then add a row to the table below. If the video is evidence for a test, also
+Then add a row to the video index above. If the video is evidence for a test, also
 put its link in the *Log / evidence* column of that test's row in
 `testing/.../TEST_LOG.md`.
-
-## Video index
-
-Newest at the bottom. Never delete a row.
-
-| Date | Subsystem | Test ID / demo | Commit | Student ID | Link | Notes |
-|---|---|---|---|---|---|---|
-| 2026-11-26 (indexed) | S1–S4 | SE08 test case compilation | Decoder `ee763d4`; physical builds unverified | Unrecorded | [Watch the unlisted compilation](https://youtu.be/IBY-M7DeD0M) | 4:01. Wireless startup [0:00](https://youtu.be/IBY-M7DeD0M?t=0), decoder [0:20](https://youtu.be/IBY-M7DeD0M?t=20), stop/restart [0:31](https://youtu.be/IBY-M7DeD0M?t=31), bends [0:48](https://youtu.be/IBY-M7DeD0M?t=48), Z decode [1:43](https://youtu.be/IBY-M7DeD0M?t=103), U-turn [2:00](https://youtu.be/IBY-M7DeD0M?t=120), route setting [2:25](https://youtu.be/IBY-M7DeD0M?t=145), hump height [2:46](https://youtu.be/IBY-M7DeD0M?t=166), lift [3:29](https://youtu.be/IBY-M7DeD0M?t=209), heading [3:41](https://youtu.be/IBY-M7DeD0M?t=221), overturn [3:54](https://youtu.be/IBY-M7DeD0M?t=234). |

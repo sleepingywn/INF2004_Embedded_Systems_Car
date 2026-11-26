@@ -23,3 +23,6 @@ Add a new row for every run. Never edit or delete old rows.
 | Date | Test ID | Commit | Tester | Result | Log / evidence | Notes |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | S2-U01 | `abc1234` | | PASS / FAIL | `logs/YYYY-MM-DD_….txt` | |
+| 2026-11-26 (indexed) | M13 | Unverified | SE08 | Partial | [0:31](https://youtu.be/IBY-M7DeD0M?t=31) | Dashboard Start/Stop and an onboard restart are shown in separate runs. Stop latency was not measured. |
+| 2026-11-26 (indexed) | M11 | Unverified | SE08 | Two example passes | [0:48](https://youtu.be/IBY-M7DeD0M?t=48) | Opposite bends shown. The video does not establish all repetitions or the speed comparison. |
+| 2026-11-26 (indexed) | M12 | Unverified | SE08 | Return-line run observed | [2:00](https://youtu.be/IBY-M7DeD0M?t=120) | The robot pivots at the junction and returns along the incoming line. Missing-line trial not shown. |

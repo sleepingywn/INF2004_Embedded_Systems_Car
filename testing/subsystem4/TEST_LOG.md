@@ -23,3 +23,6 @@ Add a new row for every run. Never edit or delete old rows.
 | Date | Test ID | Commit | Tester | Result | Log / evidence | Notes |
 |---|---|---|---|---|---|---|
 | YYYY-MM-DD | S4-U01 | `abc1234` | | PASS / FAIL | `logs/YYYY-MM-DD_….txt` | |
+| 2026-11-26 (indexed) | S4-U12 | Unverified | SE08 | Hump events observed | [2:46](https://youtu.be/IBY-M7DeD0M?t=166) | Dashboard advances to one hump and 13 mm. Separate USB footage reports a 9.9 mm peak. |
+| 2026-11-26 (indexed) | S4-U10 | Unverified | SE08 | Lift and overturn stops observed | [3:29](https://youtu.be/IBY-M7DeD0M?t=209) | Serial stop reports accompany the lift and the overturn ([3:54](https://youtu.be/IBY-M7DeD0M?t=234)). |
+| 2026-11-26 (indexed) | S4-U19 | Unverified | SE08 | Partial | [3:41](https://youtu.be/IBY-M7DeD0M?t=221) | Serial heading reaches +82 degrees. A measured reference angle is unavailable. |

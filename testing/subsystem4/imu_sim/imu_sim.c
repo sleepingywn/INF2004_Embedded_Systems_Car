@@ -48,8 +48,9 @@ static void report(const imu_logic_t *s, uint32_t ev, float t)
     if (ev & IMU_EVT_TILT)
         printf("[%7.2f s] TILT            pitch %+5.1f, roll %+5.1f deg\n",
                t, s->pitch_deg, s->roll_deg);
-    if (ev & IMU_EVT_COLLISION)
-        printf("[%7.2f s] COLLISION       |a| = %.2f g\n", t, s->accel_mag_g);
+    if (ev & IMU_EVT_LIFTED)
+        printf("[%7.2f s] LIFTED          %s  up %+.2f g  tilt %.1f deg\n", t,
+               s->lift_by_tilt ? "(overturned)" : "(lifted)", s->lift_peak_up_g, s->tilt_total_deg);
 }
 
 static void log_row(const imu_logic_t *s, float t)
@@ -154,6 +155,8 @@ static int run_fake(bool use_comp)
         if (t >= 9.5f && t < 10.0f) lin = -0.3f;
         if (t >= 10.5f && t < 10.5f + dt) knock = 1.5f;
         if (t >= 12.0f && t < 14.0f) { pitch = 30.0f; dist = 0.0f; }
+        /* the car drives on/off the slope: wheels turning around the edges */
+        s.wheels_moving = (t >= 11.7f && t < 12.3f) || (t >= 13.7f && t < 14.3f);
 
         float pr = pitch * 0.0174533f;
         imu_accel_t a = { sinf(pr) + lin + noise() + knock,
@@ -215,6 +218,7 @@ static int run_fake_onesided(float height_mm)
         if (t >= 7.0f && t < 7.5f) lin =  0.15f;        /* speed up */
         if (t >= 7.5f && t < 8.0f) lin = -0.15f;        /* brake    */
         if (t >= 9.0f && t < 11.0f) pitch = 30.0f;      /* parked on a slope */
+        s.wheels_moving = (t >= 8.7f && t < 9.3f) || (t >= 10.7f && t < 11.3f);  /* drive on/off */
         uint32_t ev = imu_logic_update(&s, mount(pitch, roll, lin), dt, dist, 0.0f);
         report(&s, ev, t);
         log_row(&s, t);

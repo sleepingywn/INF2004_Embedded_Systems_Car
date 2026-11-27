@@ -185,7 +185,6 @@ typedef struct {
     uint8_t pause_eligible,pause_used_left,pause_used_right,pause_budget;
     uint32_t pause_age_left_ms,pause_age_right_ms;
     uint32_t settle_age_left_ms,settle_age_right_ms; /* UINT32_MAX if unused */
-    uint32_t pause_window_left_ms,pause_window_right_ms,pause_window_limit_ms;
 } motion_encoder_failure_t;
 typedef struct {
     uint32_t first_timeout_ms, first_timeout_interval_ms, max_loop_ms;

@@ -663,7 +663,7 @@ void motion_line_console_help(void)
 #endif
 #if MOTION_LINE_DEMO
 #if MOTION_LINE_ADAPTIVE
-    tm_printf((UB*)"[line] ADAPTIVE v5: v2 steering baseline, bounded straight crossing, bounded pause settling; no tight-curve deadline. GP20 Start/Stop.\n");
+    tm_printf((UB*)"[line] ADAPTIVE v5: v2 steering baseline, bounded straight crossing, rollback-tolerant wheel feedback; no tight-curve deadline. GP20 Start/Stop.\n");
     tm_printf((UB*)"[line] adaptive modes: 0 track, 1 uncertain, 2 search, 3 mark, 4 route required, 5 recovery exhausted, 6 invalid, 7 crossing, 8 crossing exhausted.\n");
     tm_printf((UB*)"[line] reason: 0 none, 1 recovery time, 2 recovery distance, 3 sweep exhausted, 4 mark time, 5 mark distance, 6 crossing time, 7 crossing distance, 8 route command, 9 invalid pair.\n");
 #if MOTION_LINE_ROUTE
@@ -741,14 +741,12 @@ void motion_line_console_status(void)
                 (UINT)e->origin_left,(UINT)e->origin_right);
             tm_printf((UB*)"[line] encoder speed_previous=%d,%d target=%d,%d\n",
                 (INT)e->speed_previous_left,(INT)e->speed_previous_right,(INT)e->target_left,(INT)e->target_right);
-            tm_printf((UB*)"[line] encoder pause eligible=0x%x used=%u,%u budget=%u delta=%d,%d prior_target=%d,%d prior_duty=%u,%u\n",
+            tm_printf((UB*)"[line] encoder pause eligible=0x%x used=%u,%u budget=%u (0=unlimited) delta=%d,%d prior_target=%d,%d prior_duty=%u,%u\n",
                 (UINT)e->pause_eligible,(UINT)e->pause_used_left,(UINT)e->pause_used_right,(UINT)e->pause_budget,
                 (INT)e->delta_left,(INT)e->delta_right,(INT)e->prior_target_left,(INT)e->prior_target_right,
                 (UINT)e->prior_duty_left,(UINT)e->prior_duty_right);
             tm_printf((UB*)"[line] encoder pause_age_ms=%u,%u last_settle_age_ms=%u,%u (4294967295=not applicable)\n",
                 (UINT)e->pause_age_left_ms,(UINT)e->pause_age_right_ms,(UINT)e->settle_age_left_ms,(UINT)e->settle_age_right_ms);
-            tm_printf((UB*)"[line] encoder window_age_ms=%u,%u window_limit_ms=%u (0=legacy; 4294967295=inactive)\n",
-                (UINT)e->pause_window_left_ms,(UINT)e->pause_window_right_ms,(UINT)e->pause_window_limit_ms);
         }
     }
     if(motion_debug_line(&line,&sampled)==E_OK)tm_printf((UB*)"[line] IR line_state=%u error=%d fault=%u age_ms=%u\n",

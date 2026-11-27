@@ -60,3 +60,38 @@ is required before builds, host tests or any target execution.
 
 GP28's existing S3-U04 FAIL is still unresolved. Retest wiring and the open
 VBAT jumper before accepting calibration or moving the vehicle.
+
+## 24 November 2026 · GP26 analogue barcode sensor with hood fitted
+
+At operating height with the car stopped, 22 USB diagnostic snapshots per labelled spot gave these 12-bit raw ADC values. GP27 and GP28 were outside this calibration.
+
+| Spot | Minimum | Median (upper middle) | Maximum |
+|---|---:|---:|---:|
+| White margin | 180 | 188 | 195 |
+| Narrow black bar | 324 | 333 | 337 |
+| Wide black bar | 2878 | 2885 | 2889 |
+| Thin white gap | 226 | 234 | 244 |
+
+Retained white 200, bar start 240, minimum rise 60, reference cap 300, half-peak end rule and 8-sample hold. The fixed threshold recognises the white margin. The thin gap needs the relative rule. Even the weakest stationary narrow bar was 80 counts above the highest stationary thin-gap reading.
+
+For a sensitivity check, retained the historical Z trace geometry and noise and fitted a second model to the hood medians (centred narrow bar assumed to fill 1/1.6 of the spot). In the existing spot-scale 0.6–0.9 simulation, the installed settings decoded 77/80 traces. A temporary candidate with white 210, bar start 260, rise 70 and cap 320 decoded 60/80. These figures are simulations. The route suite and the historical 21-scan replay passed.
+
+Two physical Z passes were captured with the installed settings. The first ended at 27 elements; logged gap minima included 830 and 1118. The second reached 29 elements and decoded Z by time and distance; the highest reported gap minimum was 283. The dashboard reported Z. A missing bar/space pair is consistent with weak separation during the first pass. Extrema alone cannot identify the missed edge. The console marked both scans outside an active V5 run; they do not establish the driving success rate.
+
+[Raw stationary readings](logs/2026-11-24_hood_static_adc.csv) · [USB widths and extrema from both passes](logs/2026-11-24_hood_Z_passes.txt)
+
+### Five driving passes reported at 18:20 Singapore time
+
+The USB capture ended around 18:19:36 and the dashboard subsequently saw a new Pico boot (1932663337). MQTT event frames carried three distinct nonempty barcode snapshots from that boot. The previous boot's sequence 11 was already present before this test and is excluded.
+
+| Barcode sequence | Motion epoch | Sample time since boot | Elements | Letter |
+|---:|---:|---:|---:|---|
+| 3 | 5 | 31.580 s | 29 | Z |
+| 5 | 8 | 48.976 s | 5 | unreadable |
+| 8 | 11 | 71.827 s | 29 | Z |
+
+Two distinct Z decodes confirmed. Snapshot sequence gaps prevent assigning every capture to a physical pass. The five-element fragment may be incidental. This batch has no complete set of width or raw-level traces, so its five-pass success rate is undetermined. No threshold adjustment based on this batch.
+
+### 18:24 single driving pass on Z
+
+The active decoder returned Z by time and distance on 29 elements. In the data character the wide space measured 398 ms versus 150 ms for the next widest, and 252 versus 102 encoder counts (minimum ratio 1.25). Across the scan, the lowest bar peak was 289 ADC and the highest gap minimum was 219. The old diagnostic decoder returned unknown. The route console armed the U-turn action. At review time the dashboard file had no new receipt for this pass. [USB scan evidence](logs/2026-11-24_hood_Z_drive_single.txt)

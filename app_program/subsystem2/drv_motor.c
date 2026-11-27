@@ -20,6 +20,17 @@ _Static_assert(MOTION_LEFT_A == 8u && MOTION_LEFT_B == 9u && MOTION_RIGHT_A == 1
                "This driver owns the fixed Robo Pico motor connections");
 #define MOTOR_REG(slice, offset) (PWM_BASE + (slice) * 0x14u + (offset))
 
+#if MOTION_LINE_ROUTE
+/* GP22 is PWM slice 3 channel A on the Robo Pico. Divider = clock in MHz,
+   giving a 1 MHz counter; 500 ticks per period produces a 2 kHz chirp. */
+#define BUZZER_REG(offset) MOTOR_REG(3u, offset)
+#define BUZZER_PERIOD_TICKS 500u
+void barcode_buzzer_set(bool sounding)
+{
+    out_w(BUZZER_REG(PWM_CHx_CC), sounding ? BUZZER_PERIOD_TICKS / 2u : 0u);
+}
+#endif
+
 void motor_hw_stop(void)
 {
     /* Both A and B LOW = brake, Robo Pico datasheet Table 3.
@@ -49,6 +60,15 @@ ER motor_hw_init(void)
     {
         return E_SYS;
     }
+#if MOTION_LINE_ROUTE
+    out_w(BUZZER_REG(PWM_CHx_CSR), 0);
+    out_w(BUZZER_REG(PWM_CHx_DIV), TMCLK_MHz * 16u);
+    out_w(BUZZER_REG(PWM_CHx_TOP), BUZZER_PERIOD_TICKS - 1u);
+    out_w(BUZZER_REG(PWM_CHx_CTR), 0);
+    barcode_buzzer_set(false);
+    pwm_set_pin(22u);
+    set_w(BUZZER_REG(PWM_CHx_CSR), PWM_CH_CSR_EN);
+#endif
     for (unsigned slice = MOTOR_SLICE_LEFT; slice <= MOTOR_SLICE_RIGHT; ++slice)
     {
         out_w(MOTOR_REG(slice, PWM_CHx_CSR), 0);

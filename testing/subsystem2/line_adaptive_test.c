@@ -62,6 +62,23 @@ static void scenarios(uint32_t start,unsigned dt,int sign)
     out=line_adaptive_step(&s,line_levels_pack(50,50),start,dt,0,0);
     assert(out.mode==LINE_ADAPT_ROUTE_REQUIRED && s.stop_reason==LINE_STOP_ROUTE_COMMAND);
 }
+static void bend_hold(int sign)
+{
+    line_adaptive_t s={0};
+    uint16_t bend=line_levels_pack(sign>0 ? 23:1,sign>0 ? 1:23);
+    for(unsigned t=0;t<400;t+=20)
+        line_adaptive_step(&s,bend,t,20,0,0);
+    uint16_t white=line_levels_pack(2,1);
+    line_adaptive_output_t first=line_adaptive_step(&s,white,400,20,0,0);
+    line_adaptive_output_t held=line_adaptive_step(&s,white,480,20,35,40);
+    assert((first.right-first.left)*sign>0 && first.left==held.left && first.right==held.right);
+    line_adaptive_output_t faded=line_adaptive_step(&s,white,580,20,65,80);
+    assert((faded.right-faded.left)*sign>0 && la_abs(faded.right-faded.left)<la_abs(held.right-held.left));
+    line_adaptive_t reacquire=s;
+    assert(line_adaptive_step(&reacquire,bend,600,20,75,90).mode==LINE_ADAPT_TRACK);
+    assert(line_adaptive_step(&s,white,680,20,100,120).mode==LINE_ADAPT_SEARCH);
+}
+
 static void owner_wrapper(void)
 {
     line_follow_t f;line_follow_begin(&f,0,0,0,0,0);
@@ -77,10 +94,10 @@ static void owner_wrapper(void)
     }
     line_follow_t before=f;
     assert(f.adaptive.paused[0] && !f.speed.left.duty && !f.speed.left.target_cps);
-    /* V5 accepts settling only near pause entry, never delayed reverse drift. */
+    /* A late rollback on the paused wheel is still valid odometry. */
     assert(line_follow_step_observed(&f,0u-(l-1),r+12,0,2500,2500,&line,2500,1,1,true,true,
-        line_levels_pack(95,5))==LINE_STEP_ENCODER);
-    assert(f.encoder_reject==LINE_ENCODER_LEFT_RECEDING && !f.pause_reverse_used[0]);
+        line_levels_pack(95,5))==LINE_STEP_OK);
+    assert(!f.encoder_reject && f.pause_reverse_used[0]==1);
     f=before;
     assert(line_follow_step_observed(&f,0u-l,r,0,2500,2500,&line,2300,1,1,true,true,
         line_levels_pack(95,5))==LINE_STEP_IR);
@@ -112,6 +129,7 @@ int main(void)
     for(unsigned dt=20;dt<=60;dt+=20)for(int sign=-1;sign<=1;sign+=2) {
         scenarios(0,dt,sign);scenarios(UINT32_MAX-500,dt,sign);
     }
+    bend_hold(1);bend_hold(-1);
     owner_wrapper();
     puts("PASS adaptive: sustained/reversed curves, uncertainty, noisy recovery, marks, guards, clock wrap, 20/40/60ms");
 }

@@ -39,6 +39,7 @@ ID tk_cre_flg(const T_CFLG*a){(void)a;return 1;}
 ID tk_cre_cyc(const T_CCYC*a){(void)a;return 1;}
 ID app_start_task(FP a,int b,int c,const char*d){(void)a;(void)b;(void)c;(void)d;return 1;}
 ER tk_sta_cyc(ID a){(void)a;return E_OK;}
+void barcode_buzzer_set(bool sounding){(void)sounding;}
 ER motor_hw_init(void){return E_OK;}
 ER encoder_hw_init(void){return E_OK;}
 void encoder_hw_snapshot(encoder_raw_t *r){
@@ -167,6 +168,10 @@ ER tk_wai_flg(ID a,UINT b,UINT c,UINT*d,int e){
             if(scenario%2)--fake_raw.right;else ++fake_raw.left;
         }
         if(scenario==76 && clock_ms==500)fake_raw.right=state.right_count-1u;
+        if(((scenario>=72 && scenario<=76) || (scenario>=79 && scenario<=84) || scenario==86) &&
+           clock_ms>=1000 && !stop_injected) {
+            assert(motion_stop()==E_OK);stop_injected=true;
+        }
         if(scenario>=77 && scenario<=88) {
             unsigned inside=scenario%2 ? 0u:1u;
             if(line_pause_eligible(&line_trial)&(1u<<inside)) {

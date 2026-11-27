@@ -22,6 +22,11 @@ def main():
         subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem2/line_route_test.c",
                         "app_program/subsystem2/motion_logic.c", "-o", exe], cwd=ROOT, check=True)
         subprocess.run([exe], cwd=ROOT, check=True)
+        exe = str(Path(temp) / "line-barcode.exe")
+        subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem3/line_barcode_handoff_test.c",
+                        "app_program/subsystem3/sensor_line.c", "app_program/subsystem3/barcode_sense.c",
+                        "-o", exe], cwd=ROOT, check=True)
+        subprocess.run([exe], cwd=ROOT, check=True)
         # Barcode capture with 16-bit widths and the 1.5 s quiet time.
         exe = str(Path(temp) / "handoff.exe")
         subprocess.run(["gcc", *FLAGS, *OWNER, "testing/subsystem2/ir_handoff_integration_test.c",

@@ -21,6 +21,8 @@
 
 #define FAULT_AFTER	5	/* failed reads in a row -> IMU fault (100 ms) */
 #define REINIT_EVERY	50	/* while faulted, retry the sensor every 1 s   */
+#define FROZEN_AFTER	25	/* identical raw x,y,z for 25 reads (0.5 s)    */
+				/* -> IMU fault: a live sensor always has noise */
 #define PRINT_EVERY	50	/* status line every 50 x 20 ms = 1 s          */
 
 EXPORT volatile BOOL s4_status_print = TRUE;	/* status line on/off */
@@ -119,9 +121,37 @@ LOCAL imu_motion_t	motion_now = IMU_MOTION_UNKNOWN;
 LOCAL imu_motion_t	motion_shown = IMU_MOTION_UNKNOWN;	/* last printed       */
 LOCAL UB		motion_same;			/* cycles unchanged   */
 #define MOTION_PRINT_HOLD	3	/* print a change once it held 3 x 20 ms */
-_Static_assert(IMU_MOTION_STOPPED == S4_MOTION_STOPPED && IMU_MOTION_IMPACT == S4_MOTION_IMPACT &&
+_Static_assert(IMU_MOTION_STOPPED == S4_MOTION_STOPPED && IMU_MOTION_LIFTED == S4_MOTION_LIFTED &&
 	       IMU_MOTION_ON_HUMP == S4_MOTION_ON_HUMP,
 	       "S4_MOTION_* must match imu_motion_t");
+
+/* ----------------------------------------------------------------
+ *  Lifted / overturned -> stop the motors (12 Nov 2026; replaces the
+ *  collision event).  Lifting the car ends the run in the demo.
+ *  motion_stop() is what GP20 uses: it ends the current motion request and
+ *  turns both motors off; GP20 can start a new run afterwards.
+ *  edge = TRUE on the LIFTED event: stop unconditionally.
+ *  edge = FALSE while still lifted: stop again only if something is
+ *  driving (a run started while the car is held), at most every 100 ms.
+ * ---------------------------------------------------------------- */
+LOCAL UW lift_last_stop_us;
+LOCAL void lift_stop_motors(BOOL edge)
+{
+	UW now = now_us();
+	if (!edge) {
+		motion_status_t m;
+		if (now - lift_last_stop_us < 100000u) return;
+		if (motion_get_status(&m) != E_OK) return;
+		/* only a run that is actually driving: after a run ends (IDLE, or
+		   ERROR while "GP20 retry ready") repeated stops would spam the
+		   console and could interfere with the GP20 retry (car test 19 Nov) */
+		if ((m.state == MOTION_IDLE || m.state == MOTION_ERROR) &&
+		    !motion_left_duty(&m) && !motion_right_duty(&m)) return;
+		tm_printf((UB*)"terrain: still lifted -> motors stopped\n");
+	}
+	lift_last_stop_us = now;
+	(void)motion_stop();
+}
 
 /* ---------------------------------------------------------------- */
 
@@ -301,9 +331,17 @@ LOCAL void print_events(UINT ev)
 		print_tenths("  roll", to_tenths(logic.roll_deg));
 		tm_printf((UB*)"\n");
 	}
-	if (ev & IMU_EVT_COLLISION) {
-		tm_printf((UB*)"terrain: COLLISION  |a| %d mg\n",
-			  (INT)(logic.accel_mag_g * 1000.0f));
+	if (ev & IMU_EVT_LIFTED) {
+		if (logic.lift_by_tilt) {
+			tm_printf((UB*)"terrain: OVERTURNED");
+			print_tenths("  tilt", to_tenths(logic.tilt_total_deg));
+		} else {
+			tm_printf((UB*)"terrain: LIFTED%s  up %+d mg  rise %d mm/s",
+				  (UB*)(logic.lift_by_handle ? " (picked up: tilt moved, wheels still)" :
+					logic.lift_by_stop ? " (rose while driving, then wheels stopped)" : ""),
+				  (INT)(logic.lift_peak_up_g * 1000.0f), (INT)(logic.lift_peak_vel * 9810.0f));
+		}
+		tm_printf((UB*)" -> motors stopped\n");
 	}
 }
 
@@ -325,9 +363,11 @@ LOCAL void print_status(void)
 		tm_printf((UB*)"  v --");
 	}
 	tm_printf((UB*)"  %s", imu_motion_name(motion_now));
-	tm_printf((UB*)" |a| %d mg  %s  humps %u  highest %u mm",
-		  s4_diag.accel_mag_mg, imu_hump_state_name(logic.hump_state),
+	tm_printf((UB*)" |a| %d mg  rise %d mm/s  %s  humps %u  highest %u mm",
+		  s4_diag.accel_mag_mg, (INT)(logic.rise_max * 9810.0f),
+		  imu_hump_state_name(logic.hump_state),
 		  (UINT)snapshot.hump_count, (UINT)snapshot.high_peak_mm);
+	logic.rise_max = 0.0f;		/* rise = highest upward speed in the last second */
 	tm_printf((UB*)"  | exec max %u us (read %u, logic %u)  slow %u  print max %u us"
 		  "  jitter max %u us  overruns %u  i2c err %u%s\n",
 		  s4_diag.exec_max_us, s4_diag.read_max_us, s4_diag.logic_max_us,
@@ -386,7 +426,9 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 	imu_config_t	cfg;
 	gy511_accel_t	raw;
 	UW		start_us, prev_us, fail_run = 0;
-	BOOL		fault = FALSE, announced_cal = FALSE;
+	BOOL		fault = FALSE, announced_cal = FALSE, got;
+	gy511_accel_t	last_raw = {0.0f, 0.0f, 0.0f};
+	UW		same_run = 0;
 
 	(void)stacd; (void)exinf;
 
@@ -428,7 +470,34 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 		}
 
 		/* ---- read + process (this is what "exec" measures) ---- */
-		if (!fault && gy511_read(&raw)) {
+		got = (!fault && gy511_read(&raw)) ? TRUE : FALSE;
+
+		/* Frozen data (seen 18 Nov 2026 on the car: |a| stuck at
+		   2592 mg, i2c err 0) is a sensor fault, not a lift.  Drop the
+		   calibration and the LIFTED latch (both built on bad data),
+		   re-initialise the chip and recalibrate once it reads again.
+		   This way a stuck sensor cannot keep the motors off. */
+		if (got) {
+			if (raw.x == last_raw.x && raw.y == last_raw.y && raw.z == last_raw.z) {
+				same_run++;
+			} else {
+				same_run = 0;
+			}
+			last_raw = raw;
+			if (same_run >= FROZEN_AFTER) {
+				same_run = 0;
+				got = FALSE;
+				fault = TRUE;
+				imu_logic_init(&logic, &cfg);
+				announced_cal = FALSE;
+				motion_now = motion_shown = IMU_MOTION_UNKNOWN;
+				record_event(S4_EV_IMU_FAULT, 2);
+				tk_set_flg(flg_terrain, S4_EVT_IMU_FAULT);
+				tm_printf((UB*)"terrain: IMU FAULT (readings frozen for 0.5 s) -- re-initialising\n");
+			}
+		}
+
+		if (got) {
 			UINT  ev;
 			UW    read_us = now_us() - start_us, logic_start;
 			float dt = (float)(start_us - prev_us) * 1e-6f;
@@ -448,6 +517,16 @@ EXPORT void terrain_task(INT stacd, void *exinf)
                 acc_g = 0.0f;
 			}
 			car_accel_g = acc_g;
+
+			/* picked-up check needs "wheels really still": no encoder data
+			   counts as moving (check off); spin turns count as moving */
+			/* free-spin cue: only plain driving (route arcs run the outer
+			   wheel fast on purpose) */
+			logic.wheel_speed_mm_s = (wheel_ok && wheel_turn_dps < 10.0f &&
+				wheel_turn_dps > -10.0f) ? wheel_speed_mm_s : 0.0f;
+			logic.wheels_moving = !wheel_ok || S4_PRETEND_SPEED_MM_S > 0 ||
+				wheel_speed_mm_s > 3.0f || wheel_speed_mm_s < -3.0f ||
+				wheel_turn_dps > 3.0f || wheel_turn_dps < -3.0f;
 
 			/* Bench override: pretend to move (S4_PRETEND_SPEED_MM_S) */
 			if (S4_PRETEND_SPEED_MM_S > 0) {
@@ -505,12 +584,12 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 			}
 
 			if (ev & (IMU_EVT_HUMP_ENTRY | IMU_EVT_HUMP_DONE |
-				  IMU_EVT_TILT | IMU_EVT_COLLISION)) {
+				  IMU_EVT_TILT | IMU_EVT_LIFTED)) {
 				UINT bits = 0;
 				if (ev & IMU_EVT_HUMP_ENTRY) bits |= S4_EVT_HUMP_ENTRY;
 				if (ev & IMU_EVT_HUMP_DONE)  bits |= S4_EVT_HUMP_DONE;
 				if (ev & IMU_EVT_TILT)       bits |= S4_EVT_TILT;
-				if (ev & IMU_EVT_COLLISION)  bits |= S4_EVT_COLLISION;
+				if (ev & IMU_EVT_LIFTED)     bits |= S4_EVT_LIFTED;
 				/* B4-FR9: write the records first, then the flag */
 				if (ev & IMU_EVT_HUMP_ENTRY)
 					record_event(S4_EV_HUMP_ENTRY, (W)(logic.hump_peak_angle * 10.0f));
@@ -521,11 +600,18 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 					float tr = logic.roll_deg  < 0 ? -logic.roll_deg  : logic.roll_deg;
 					record_event(S4_EV_TILT, (W)((tp > tr ? tp : tr) * 10.0f));
 				}
-				if (ev & IMU_EVT_COLLISION)
-					record_event(S4_EV_COLLISION, (W)s4_diag.accel_mag_mg);
+				if (ev & IMU_EVT_LIFTED) {
+					/* Stop first, record after: the stop is the point. */
+					lift_stop_motors(TRUE);
+					record_event(S4_EV_LIFTED, logic.lift_by_tilt
+						? -(W)(logic.tilt_total_deg * 10.0f)
+						: (W)(logic.lift_peak_up_g * 1000.0f));
+				}
 				tk_set_flg(flg_terrain, bits);
 				print_events(ev);
 			}
+			/* While still lifted/overturned, a new run is stopped too. */
+			if (logic.lifted && !(ev & IMU_EVT_LIFTED)) lift_stop_motors(FALSE);
 			if (logic.calibrated && !announced_cal) {
 				tm_printf((UB*)"terrain: calibrated");
 				print_tenths("  mounting pitch", to_tenths(logic.pitch0));
@@ -552,6 +638,9 @@ EXPORT void terrain_task(INT stacd, void *exinf)
 				tk_clr_flg(flg_terrain, ~(UINT)S4_EVT_IMU_FAULT);
 				tm_printf((UB*)"terrain: IMU fault cleared (%s at 0x%02x)\n",
 					  gy511_chip_name(), gy511_address());
+				if (!logic.calibrated) {
+					tm_printf((UB*)"terrain: calibrating -- keep the car STILL and LEVEL for 2 s\n");
+				}
 			}
 		}
 

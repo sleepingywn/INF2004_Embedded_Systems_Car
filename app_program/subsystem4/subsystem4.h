@@ -9,12 +9,12 @@
  *	  terrain_task (priority 18) is woken every 20 ms by a cyclic handler,
  *	  reads the GY-511 accelerometer over I2C0 (GP16 SDA / GP17 SCL) and
  *	  runs imu_logic: pitch, roll, hump detection and height, tilt and
- *	  collision.  The CAR MUST STAND STILL ON LEVEL GROUND FOR THE FIRST
+ *	  lift / overturn (motors stopped).  The CAR MUST STAND STILL ON LEVEL GROUND FOR THE FIRST
  *	  2 s after power-up: that is the calibration.
  *
  *	What other subsystems can use
  *	  IF-06  s4_get_terrain()  latest terrain snapshot, copied under a mutex
- *	  IF-07  flg_terrain       event flag: hump, tilt, collision, IMU fault
+ *	  IF-07  flg_terrain       event flag: hump, tilt, lifted, IMU fault
  */
 
 #ifndef SUBSYSTEM4_H
@@ -57,10 +57,10 @@ IMPORT ER s4_get_terrain(S4_TERRAIN *out);
 /* ---------------------------------------------------------------------
  *  IF-07: terrain events (event flag owned by S4)
  *  Event bits are SET by S4 and stay set until a consumer clears them, so
- *  a tilt or collision can never be lost the way a full queue can lose
+ *  a tilt or lift can never be lost the way a full queue can lose
  *  a message.  Only ONE consumer (the Vehicle Controller) should clear the
  *  event bits, e.g.
- *	tk_wai_flg(flg_terrain, S4_EVT_TILT | S4_EVT_COLLISION,
+ *	tk_wai_flg(flg_terrain, S4_EVT_TILT | S4_EVT_LIFTED,
  *		   TWF_ORW | TWF_BITCLR, &ptn, TMO_POL);
  *  S4_EVT_IMU_FAULT is a LEVEL: S4 sets it while the sensor is failing and
  *  clears it on recovery.  Never clear it yourself.  The team's shared
@@ -70,7 +70,8 @@ IMPORT ER s4_get_terrain(S4_TERRAIN *out);
 #define S4_EVT_HUMP_ENTRY	0x0001	/* started climbing a hump              */
 #define S4_EVT_HUMP_DONE	0x0002	/* finished a hump: peak in IF-06       */
 #define S4_EVT_TILT		0x0004	/* abnormal tilt (> 25 deg) off a hump  */
-#define S4_EVT_COLLISION	0x0008	/* sudden impact (> 0.8 g spike)        */
+#define S4_EVT_LIFTED		0x0008	/* lifted or overturned: S4 has already
+					   called motion_stop() (end of run)    */
 #define S4_EVT_IMU_FAULT	0x0010	/* level: sensor not answering          */
 
 IMPORT ID	flg_terrain;
@@ -81,9 +82,9 @@ IMPORT ID	flg_terrain;
  *  by the flag always finds the matching record.  One record per event
  *  type keeps the LATEST occurrence; count tells you how many there were.
  *	UINT ptn;  S4_EVENTS e;
- *	if (tk_wai_flg(flg_terrain, S4_EVT_COLLISION, TWF_ORW | TWF_BITCLR,
+ *	if (tk_wai_flg(flg_terrain, S4_EVT_LIFTED, TWF_ORW | TWF_BITCLR,
  *		       &ptn, TMO_POL) == E_OK && s4_get_events(&e) == E_OK) {
- *		... e.ev[S4_EV_COLLISION].time_ms, .value (mg) ...
+ *		... e.ev[S4_EV_LIFTED].time_ms, .value ...
  *	}
  * --------------------------------------------------------------------- */
 #define S4_SOURCE_IMU		4	/* event source id: subsystem 4 (IMU) */
@@ -91,7 +92,7 @@ IMPORT ID	flg_terrain;
 #define S4_EV_HUMP_ENTRY	0	/* record index = bit number of S4_EVT_* */
 #define S4_EV_HUMP_DONE		1
 #define S4_EV_TILT		2
-#define S4_EV_COLLISION		3
+#define S4_EV_LIFTED		3
 #define S4_EV_IMU_FAULT		4
 #define S4_EV_NUM		5
 
@@ -101,7 +102,8 @@ typedef struct {
 	W	value;		/* HUMP_ENTRY: hump angle x10 deg
 				   HUMP_DONE:  peak height mm
 				   TILT:       tilt x10 deg
-				   COLLISION:  |a| in mg
+				   LIFTED:     upward accel in mg above 1 g,
+				               or -(tilt x10 deg) if overturned
 				   IMU_FAULT:  1 = fault set, 0 = cleared          */
 } S4_EVENT_REC;
 
@@ -132,7 +134,7 @@ IMPORT ER s4_reset_run(void);
 #define S4_MOTION_SPINNING	4
 #define S4_MOTION_ON_HUMP	5
 #define S4_MOTION_TILTED	6
-#define S4_MOTION_IMPACT	7
+#define S4_MOTION_LIFTED	7
 #define S4_MOTION(t)		((int)(t).motion_class)
 
 /* ---------------------------------------------------------------------

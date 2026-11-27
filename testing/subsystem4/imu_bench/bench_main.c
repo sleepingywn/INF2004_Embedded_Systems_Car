@@ -75,8 +75,9 @@ static void print_events(uint32_t ev, const imu_logic_t *s, float t, bool csv)
     if (ev & IMU_EVT_TILT)
         printf("%s[%7.2f s] TILT           pitch %+5.1f roll %+5.1f\n",
                pre, t, s->pitch_deg, s->roll_deg);
-    if (ev & IMU_EVT_COLLISION)
-        printf("%s[%7.2f s] COLLISION      |a| %.2f g\n", pre, t, s->accel_mag_g);
+    if (ev & IMU_EVT_LIFTED)
+        printf("%s[%7.2f s] LIFTED         %s up %+.2f g tilt %.1f deg\n", pre, t,
+               s->lift_by_tilt ? "(overturned)" : "(lifted)", s->lift_peak_up_g, s->tilt_total_deg);
 }
 
 int main(void)

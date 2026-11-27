@@ -21,7 +21,8 @@ static const unsigned scan_z[29] = {66,117,368,113,255,117,104,298,88,125,83,126
                                     128,270,325,82,138,90,195,320,46,305,111,74,344,76};
 
 /* Build a 1 ms sensor trace: 300 ms white, the pattern, 300 ms white. */
-static int trace(const unsigned *w, double spot_scale, double noise, unsigned *raw, int max)
+static int trace(const unsigned *w, double spot_scale, double noise, unsigned *raw, int max,
+                 double white, double contrast, double exponent)
 {
     static unsigned char ideal[20000];
     int n = 0;
@@ -34,7 +35,7 @@ static int trace(const unsigned *w, double spot_scale, double noise, unsigned *r
         int a = t - spot / 2, b = t + spot / 2, c = 0, m = 0;
         for (int k = a; k <= b; k++) if (k >= 0 && k < n) { m++; c += ideal[k]; }
         double f = (double)c / m;
-        double r = 177.0 + 1323.0 * pow(f, 4.5) + noise * ((double)rand() / RAND_MAX - 0.5) * 2.0;
+        double r = white + contrast * pow(f, exponent) + noise * ((double)rand() / RAND_MAX - 0.5) * 2.0;
         raw[t] = r < 0 ? 0 : (unsigned)r;
     }
     return n;
@@ -66,7 +67,7 @@ static char run(const unsigned *raw, int n, int relative, unsigned *count_out)
     return route_code39_decode(&m);
 }
 
-int main(void)
+static void check_model(double white, double contrast, double exponent)
 {
     static unsigned raw[20000];
     /* spot x0.6-0.9: realistic; x1.0-1.2: spot much wider than the 46 ms gap,
@@ -76,7 +77,7 @@ int main(void)
         double spot = si / 10.0;
         for (int seed = 0; seed < 20; seed++) {
             srand(seed + 1);
-            int n = trace(scan_z, spot, 25.0, raw, 20000);
+            int n = trace(scan_z, spot, 25.0, raw, 20000, white, contrast, exponent);
             unsigned cf, cr;
             char f = run(raw, n, 0, &cf), r = run(raw, n, 1, &cr);
             trials++;
@@ -93,6 +94,25 @@ int main(void)
     assert(rel_wrong == 0);
     assert(rel_ok > fixed_ok);
     assert(real_ok * 100 >= real_n * 95);
+
+}
+
+int main(void)
+{
+    check_model(177, 1323, 4.5);
+    /* Hood fitted, 24 Nov: medians white 188, narrow 333, wide 2885.
+       Estimate exponent assuming a centred narrow bar fills 1/1.6 of the spot.
+       Retain the original noise stress and separately test the measured gap. */
+    check_model(188, 2885 - 188, log((333.0 - 188) / (2885 - 188)) / log(1.0 / 1.6));
+    bc_level_t hood;
+    bc_level_init(&hood);
+    assert(!bc_level_black(&hood, false, 195));
+    bool bar = bc_level_black(&hood, false, 324);
+    assert(bar);
+    for (unsigned i = 0; i < BC_LVL_HOLD; ++i)
+        bar = bc_level_black(&hood, bar, 244);
+    assert(!bar);
+    assert(bc_level_black(&hood, false, 324));
 
     /* Plain white with noise: never a bar. */
     {

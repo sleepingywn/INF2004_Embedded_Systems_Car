@@ -24,49 +24,14 @@ int main(void)
             diagnostics.line_step==LINE_STEP_ROUTE_REQUIRED && diagnostics.line_stop_reason==LINE_STOP_ROUTE_COMMAND && stopped_at==300);
         if(scenario==65 || scenario==70)assert(state.barcode==3);
         if(scenario==66 || scenario==67 || scenario==70 || scenario==71)assert(state.rejected_barcodes);
-        if(scenario>=72 && scenario<=76) {
-            /* These are the observer's frozen fields after reset_control and
-             * many idle cycles, not values read directly from a live trial. */
-            motion_diagnostics_t frozen;assert(motion_get_diagnostics(&frozen)==E_OK);
-            motion_encoder_failure_t *e=&frozen.encoder_failure;
-            bool right=scenario==73 || scenario==75 || scenario==76;
-            assert(state.faults==MOTION_FAULT_ENCODER && diagnostics.line_step==LINE_STEP_ENCODER);
-            assert(e->reason==(right ? LINE_ENCODER_RIGHT_RECEDING:LINE_ENCODER_LEFT_RECEDING));
-            assert(e->pause_budget==2 && e->raw_valid && !e->speed_reason);
-            assert((right ? e->delta_right:e->delta_left)==(scenario==74 || scenario==75 ? -2:-1));
-            assert(e->pause_eligible==(scenario==73 || scenario==75 ? 2:1));
-            if(scenario==76) {
-                assert(e->prior_target_right>0 && e->prior_duty_right>0);
-                assert(!e->pause_used_right && e->pause_age_right_ms==UINT32_MAX && e->settle_age_right_ms==UINT32_MAX);
-            } else {
-                assert((right ? e->prior_target_right:e->prior_target_left)==0);
-                assert((right ? e->prior_duty_right:e->prior_duty_left)==0);
-                assert((right ? e->pause_used_right:e->pause_used_left)==0);
-                assert((right ? e->settle_age_right_ms:e->settle_age_left_ms)==UINT32_MAX);
-                assert((right ? e->pause_age_right_ms:e->pause_age_left_ms)>20);
-            }
-            assert(stopped_at==500u);
-            assert(e->pause_window_limit_ms==LINE_PAUSE_SETTLE_MS);
-        }
-        if(scenario==77 || scenario==78 || scenario==87)
+        if((scenario>=72 && scenario<=84) || scenario==86 || scenario==87)
             assert(stop_injected && !state.faults && state.result==MOTION_CANCELLED);
-        if(scenario==88)assert(state.faults==MOTION_FAULT_EXTERNAL);
-        if(scenario>=79 && scenario<=86) {
+        if(scenario==85) {
             motion_diagnostics_t frozen;assert(motion_get_diagnostics(&frozen)==E_OK);
-            motion_encoder_failure_t *e=&frozen.encoder_failure;
-            bool right=scenario%2==0;
-            assert(state.faults==MOTION_FAULT_ENCODER && diagnostics.line_step==LINE_STEP_ENCODER);
-            assert(e->pause_budget==2 && e->pause_window_limit_ms==LINE_PAUSE_SETTLE_MS);
-            if(scenario==85)assert(e->reason==LINE_ENCODER_INVALID_EDGES);
-            else if(scenario==86)assert(e->reason==LINE_ENCODER_LEFT_RECEDING && e->prior_duty_left>0);
-            else {
-                assert(e->reason==(right ? LINE_ENCODER_RIGHT_RECEDING:LINE_ENCODER_LEFT_RECEDING));
-                assert((right ? e->pause_used_right:e->pause_used_left)==(scenario<=80 ? 2:0));
-                assert((right ? e->pause_window_right_ms:e->pause_window_left_ms)==
-                    (scenario<=80 ? 80u:scenario<=82 ? 40u:140u));
-                assert((right ? e->delta_right:e->delta_left)==(scenario==81 || scenario==82 ? -3:-1));
-            }
+            assert(state.faults==MOTION_FAULT_ENCODER);
+            assert(frozen.encoder_failure.reason==LINE_ENCODER_INVALID_EDGES);
         }
+        if(scenario==88)assert(state.faults==MOTION_FAULT_EXTERNAL);
         bool crossed=false,reacquired=false;
         bool observed=false;
         for(unsigned i=0;i<line_history.count;++i) {
